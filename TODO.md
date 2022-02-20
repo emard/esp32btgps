@@ -2,17 +2,18 @@
 
 esp32
 
+    [ ] instead of default lat=46, calculate_grid(latitude) at first point of new storage
+    [ ] what happens to kml and stat in tunnel mode?
     [ ] optional stat for whole day, allows continuation between reboots
     [x] arrow heading before turn is a bit off, fixed by static new_heading
-    [ ] creation timestamp to stat arrows or ascending time
+    [x] creation timestamp to stat arrows or ascending time
     [ ] avoid double nmea parsing for kml and stat (CPU saving)
     [x] stat speed min-max range
-    [ ] demo circular run
-    [ ] calculate_grid(latitude) at first point of new storage
+    [ ] kml config option for lines and arrows
+    [ ] kml demo circular run
     [x] report pass count on RDS and LCD
-    [ ] when standing, display LAT/LON in decimal format
+    [x] when standing, display LAT/LON in decimal format
     [x] ESP32 reports IRI 20% smaller than wav2kml (disable matrix_write)
-    [ ] store firstnmea, count number of returns to the same point
     [ ] at each stop (with temperatures) write iri99avg
     [ ] display last iri99avg in .wav files list
     [x] configurable speed for reporting every 100/20 m
