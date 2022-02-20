@@ -101,6 +101,7 @@ void clear_storage(void)
     s_stat.snap_point[i].n = 0; // stat counter
   }
   s_stat.wr_snap_ptr = 0;
+  s_stat.prev_snap_ptr = -1;
   stat_travel_mm = 0;
   round_count = 1;
 }
@@ -211,6 +212,7 @@ void stat_iri_proc(char *nmea, int nmea_len)
 void stat_nmea_proc(char *nmea, int nmea_len)
 {
   static int16_t closest_index = -1;
+  // static int16_t prev_index = -1; // to avoid double stat on the same point
   static int32_t prev_stat_travel_mm = 0; // for new point
   static int32_t closest_found_dist = 999999; // [m] distance to previous found existing point
   static int32_t closest_found_stat_travel_mm = 999999;
@@ -274,7 +276,7 @@ void stat_nmea_proc(char *nmea, int nmea_len)
           }
           if(stat_travel_mm > SNAP_DECISION_MM) // at 120 m we have to decide, new or existing
           {
-            if(closest_index >= 0 && closest_found_dist < SNAP_RANGE_M) // x+y < SNAP_RANGE_M [m]
+            if(closest_index >= 0 && closest_index != s_stat.prev_snap_ptr && closest_found_dist < SNAP_RANGE_M) // x+y < SNAP_RANGE_M [m]
             {
               // TODO update statistics at existing lon/lat
               stat_travel_mm -= closest_found_stat_travel_mm; // adjust travel to snapped point
@@ -288,6 +290,7 @@ void stat_nmea_proc(char *nmea, int nmea_len)
                 s_stat.snap_point[closest_index].vmin = closest_kmh;
               if(closest_kmh > s_stat.snap_point[closest_index].vmax)
                 s_stat.snap_point[closest_index].vmax = closest_kmh;
+              s_stat.prev_snap_ptr = closest_index; // prevents snap again
             }
             else // create new point
             {
@@ -305,6 +308,7 @@ void stat_nmea_proc(char *nmea, int nmea_len)
                   s_stat.snap_point[new_index].daytime = new_daytime;
                   // set initial speed, informative only
                   s_stat.snap_point[new_index].vmin = s_stat.snap_point[new_index].vmax = new_kmh;
+                  s_stat.prev_snap_ptr = new_index; // prevents snap again
                 }
                 //printf("new\n");
               }
@@ -322,8 +326,19 @@ void stat_nmea_proc(char *nmea, int nmea_len)
             have_new = 0;
           }
         }
-        
       }
+      #if 0
+      // this helps to prevent 2x stat but
+      // may introduces discontinuety to gps tracking
+      else // too large jump
+      {
+        // reset values for new search
+        closest_found_stat_travel_mm = 0;
+        closest_index = -1;
+        closest_found_dist = 999999;
+        have_new = 0;
+      }
+      #endif
       // printf("%.6f° %.6f° travel=%d m\n", flatlon[0], flatlon[1], stat_travel_mm/1000);
       stat_travel_prev_latlon[0] = flatlon[0];
       stat_travel_prev_latlon[1] = flatlon[1];

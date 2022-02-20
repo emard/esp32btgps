@@ -68,6 +68,7 @@ struct s_stat
 {
   int8_t lat; // latitude from which grid should be calculated
   int wr_snap_ptr; // pointer to free snap point index
+  int prev_snap_ptr; // to prevent double snap to the same point
   int16_t hash_grid[hash_grid_size][hash_grid_size];
   struct s_snap_point snap_point[snap_point_max];
 };
@@ -85,7 +86,7 @@ void calculate_grid(int8_t lat);
 void clear_storage(void);
 int store_lon_lat(float lon, float lat, float heading);
 void print_storage(void);
-int find_xya(int xm, int ym, uint16_t a, uint8_t ais);
+int find_xya(int xm, int ym, uint8_t a, uint8_t ais);
 void stat_iri_proc(char *nmea, int nmea_len);
 void stat_nmea_proc(char *nmea, int nmea_len);
 int check_crc(char *nmea, int len);
