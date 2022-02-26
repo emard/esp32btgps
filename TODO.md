@@ -121,6 +121,8 @@ esp32
 core
 
     [ ] 12-byte spi buf to wav buf alightment filter
+    [ ] 0xFF glitches still appear sometimes in left sensor
+    [ ] core analzyer, SPI register report of signal validity
     [x] trellis weak FM (fixed by signed->unsigned multiply)
     [ ] fix or ignore glitches: left sensor sometimes reads one sample all 3 axis
         sometimes as 0x00 or 0xFF. depends on GP/GN 4/8/16 mA and cable length
