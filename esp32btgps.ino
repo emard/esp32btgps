@@ -694,7 +694,7 @@ void handle_fast_enough(void)
       write_string_to_wav(stop_delimiter);
       close_logs(); // save data in case of power lost
       write_last_nmea();
-      write_stat(&tm_session);
+      write_stat_file(&tm_session);
       stopcount++;
       Serial.print(speed_kmh);
       Serial.println(" km/h not fast enough - stop logging");

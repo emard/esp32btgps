@@ -1192,7 +1192,7 @@ void write_kml_header(struct tm *tm)
 
 // save stat database to prevent data loss from
 // unexpected reboot or power off
-void write_stat(struct tm *tm)
+void write_stat_file(struct tm *tm)
 {
   generate_filename_sta(tm);
   File file_stat = SD_MMC.open(filename_data, FILE_WRITE);
@@ -1207,7 +1207,7 @@ void write_stat(struct tm *tm)
     Serial.println("write stat failed.");
 }
 
-int read_stat(String filename_stat)
+int read_stat_file(String filename_stat)
 {
   File file_stat = SD_MMC.open(filename_stat, FILE_READ);
   if(file_stat)
@@ -1567,7 +1567,7 @@ void finalize_kml(File &kml, String file_name)
     file_kml = SD_MMC.open(file_name, FILE_APPEND);
     // try to open file name with .sta extension instead of .kml
     String file_name_sta = file_name.substring(0,file_name.length()-4) + ".sta";
-    if(read_stat(file_name_sta)) // if .sta file read succeeds, add arrows to .kml, delete .sta file.
+    if(read_stat_file(file_name_sta)) // if .sta file read succeeds, add arrows to .kml, delete .sta file.
     {
       logs_are_open = 1;
       kml_init();
