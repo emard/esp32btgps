@@ -3,7 +3,7 @@
 esp32
 
     [ ] beep when SD mount failed (no speak)
-    [ ] sometimes (esp32 off while gps on), double arrows written to kml
+    [ ] gps off and .sta file remains
     [ ] instead of default lat=46, calculate_grid(latitude) at first point of new storage
     [ ] what happens to kml and stat in tunnel mode?
     [ ] optional stat for whole day, allows continuation between reboots
