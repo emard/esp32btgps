@@ -22,6 +22,7 @@ float stat_travel_prev_latlon[2] = {46.0,16.0}; // stored previous value for tra
 int32_t stat_travel_mm = 0;
 uint8_t round_count = 1;
 uint8_t stat_speed_kmh = 80;
+int prev_snap_ptr = -1;
 
 extern int daytime; // from main module
 
@@ -101,7 +102,7 @@ void clear_storage(void)
     s_stat.snap_point[i].n = 0; // stat counter
   }
   s_stat.wr_snap_ptr = 0;
-  s_stat.prev_snap_ptr = -1;
+  prev_snap_ptr = -1;
   stat_travel_mm = 0;
   round_count = 1;
 }
@@ -276,7 +277,7 @@ void stat_nmea_proc(char *nmea, int nmea_len)
           }
           if(stat_travel_mm > SNAP_DECISION_MM) // at 120 m we have to decide, new or existing
           {
-            if(closest_index >= 0 && closest_index != s_stat.prev_snap_ptr && closest_found_dist < SNAP_RANGE_M) // x+y < SNAP_RANGE_M [m]
+            if(closest_index >= 0 && closest_index != prev_snap_ptr && closest_found_dist < SNAP_RANGE_M) // x+y < SNAP_RANGE_M [m]
             {
               // TODO update statistics at existing lon/lat
               stat_travel_mm -= closest_found_stat_travel_mm; // adjust travel to snapped point
@@ -290,7 +291,7 @@ void stat_nmea_proc(char *nmea, int nmea_len)
                 s_stat.snap_point[closest_index].vmin = closest_kmh;
               if(closest_kmh > s_stat.snap_point[closest_index].vmax)
                 s_stat.snap_point[closest_index].vmax = closest_kmh;
-              s_stat.prev_snap_ptr = closest_index; // prevents snap again
+              prev_snap_ptr = closest_index; // prevents snap again
             }
             else // create new point
             {
@@ -308,7 +309,7 @@ void stat_nmea_proc(char *nmea, int nmea_len)
                   s_stat.snap_point[new_index].daytime = new_daytime;
                   // set initial speed, informative only
                   s_stat.snap_point[new_index].vmin = s_stat.snap_point[new_index].vmax = new_kmh;
-                  s_stat.prev_snap_ptr = new_index; // prevents snap again
+                  prev_snap_ptr = new_index; // prevents snap again
                 }
                 //printf("new\n");
               }

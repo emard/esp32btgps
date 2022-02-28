@@ -68,7 +68,6 @@ struct s_stat
 {
   int8_t lat; // latitude from which grid should be calculated
   int wr_snap_ptr; // pointer to free snap point index
-  int prev_snap_ptr; // to prevent double snap to the same point
   int16_t hash_grid[hash_grid_size][hash_grid_size];
   struct s_snap_point snap_point[snap_point_max];
 };
