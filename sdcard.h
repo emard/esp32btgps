@@ -81,6 +81,7 @@ int open_pcm(char *wav); // open wav filename
 void beep_pcm(int n);
 void write_rds(uint8_t *a, int n);
 void write_stat_file(struct tm *tm);
+void delete_stat_file(struct tm *tm);
 int read_stat_file(String filename_stat);
 void write_stat_arrows(void);
 void finalize_data(struct tm *tm);

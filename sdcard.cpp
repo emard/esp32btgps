@@ -1207,6 +1207,12 @@ void write_stat_file(struct tm *tm)
     Serial.println("write stat failed.");
 }
 
+void delete_stat_file(struct tm *tm)
+{
+  generate_filename_sta(tm);
+  SD_MMC.remove(filename_data);
+}
+
 int read_stat_file(String filename_stat)
 {
   File file_stat = SD_MMC.open(filename_stat, FILE_READ);
