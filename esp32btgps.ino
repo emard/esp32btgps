@@ -24,6 +24,7 @@
 // #define IDF4 1
 
 #include "pins.h"
+#include "spidma.h"
 #include "web.h"
 #include "kml.h"
 #include "geostat.h"

@@ -5,9 +5,6 @@
 #include "SD_MMC.h"
 #include "RDS.h"
 #include "nmea.h"
-// hardware buffer size in bytes at fpga core (must be divisible by 12)
-// 3072, 6144, 9216, 12288, 15360
-#define SPI_READER_BUF_SIZE 9216
 extern int card_is_mounted;
 extern int pcm_is_open;
 extern int sensor_check_status;
@@ -39,6 +36,12 @@ extern uint8_t log_wav_kml; // 1-wav 2-kml 3-both
 extern uint8_t KMH_START, KMH_STOP;
 extern uint8_t KMH_BTN;
 extern uint8_t G_RANGE; // +-2/4/8 g sensor range for reading +-32000
+extern uint8_t FILTER_ADXL355_CONF; // see datasheet adxl355 p.38 0:1kHz ... 10:0.977Hz
+extern uint8_t FILTER_ADXRS290_CONF; // see datasheet adxrs290 p.11 0:480Hz ... 7:20Hz
+extern float T_OFFSET_ADXL355_CONF[2]  ; // L,R
+extern float T_SLOPE_ADXL355_CONF[2]   ; // L,R
+extern float T_OFFSET_ADXRS290_CONF[2] ; // L,R
+extern float T_SLOPE_ADXRS290_CONF[2]  ; // L,R
 extern uint8_t KMH_REPORT1;
 extern uint32_t MM_REPORT1, MM_REPORT2; // mm report each travel distance
 extern uint8_t adxl355_regio;
@@ -49,12 +52,6 @@ extern uint8_t btn, btn_prev;
 
 void mount(void);
 void umount(void);
-void spi_init(void);
-void rds_init(void);
-void spi_speed_write(int spd);
-void spi_srvz_read(uint32_t *srvz);
-uint8_t spi_btn_read(void);
-void spi_rds_write(void);
 void rds_message(struct tm *tm);
 void rds_report_ip(struct tm *tm);
 void set_fm_freq(void);
