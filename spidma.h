@@ -22,3 +22,19 @@ uint8_t spi_btn_read(void);
 void spi_rds_write(void);
 uint16_t spi_slave_ptr(void);
 void spi_slave_read(uint16_t a, uint16_t n);
+// uint8_t adxl355_available(void);
+
+void rds_message(struct tm *tm);
+void rds_report_ip(struct tm *tm);
+void set_fm_freq(void);
+void cold_init_sensors(void);
+void warm_init_sensors(void);
+void clr_lcd(void);
+void lcd_print(uint8_t x, uint8_t y, uint8_t invert, char *a);
+void write_tag(char *a);
+int play_pcm(int n);
+int open_pcm(char *wav); // open wav filename
+void beep_pcm(int n);
+void write_rds(uint8_t *a, int n);
+void spi_slave_test(void);
+void spi_direct_test(void);
