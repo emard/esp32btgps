@@ -454,7 +454,10 @@ void speech()
       tprev_wav = t_ms; // prevent too often starting of the speech
     }
     else
+    {
+      beep_pcm(1024); // beep if mount failed
       speakfile = NULL; // consumed
+    }
   }
   else
   {
