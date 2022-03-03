@@ -455,7 +455,7 @@ void speech()
     }
     else
     {
-      beep_pcm(1024); // beep if mount failed
+      beep_pcm(1024); // beep if it can't speak (mount failed)
       speakfile = NULL; // consumed
     }
   }
