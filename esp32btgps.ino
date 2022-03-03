@@ -759,16 +759,14 @@ void handle_reconnect(void)
       open_logs(&tm_session);
       write_stat_arrows(); // write arrows with final statistics
       delete_stat_file(&tm_session);
-      clear_storage();
-      // TODO: delete .sta file
     }
   }
   close_logs();
   write_last_nmea();
   session_log = 0; // request new timestamp file name when reconnected
-  //ls();
   finalize_data(&tm); // finalize all except current session (if one file per day)
   umount();
+  clear_storage(); // finalize reads .sta file to s_stat, here we clear s_stat
   iri99sum = iri99count = iri99avg = 0; // reset iri99 average
 
   if(sensor_check_status)
