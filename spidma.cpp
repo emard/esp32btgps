@@ -448,10 +448,10 @@ void rds_message(struct tm *tm)
       memcpy(disp_short, "STOP", 4);
     rds.ct(year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, 0);
   }
-  else // NULL pointer
+  else // tm NULL pointer
   {
     // null pointer, dummy time
-    if(total_bytes)
+    if(sdcard_ok)
     {
       sprintf(disp_short, "OFF    X");
       sprintf(disp_long,  "SEARCHING FOR %s SENSOR %s", name_obd_gps[mode_obd_gps], sensor_check_status ? (adxl355_regio ? "ACEL ADXL355" : "GYRO ADXRS290") : "NONE");
@@ -631,33 +631,6 @@ int play_pcm(int n)
     Serial.println("PCM done");
     #endif
   }
-  return n;
-}
-
-int open_pcm(char *wav)
-{
-  if(pcm_is_open)
-    return 0;
-  int n = 3584; // bytes to play for initiall buffer fill
-  // to generate wav files:
-  // espeak-ng -v hr -f speak.txt -w speak.wav; sox speak.wav --no-dither -r 11025 -b 8 output.wav reverse trim 1s reverse
-  // "--no-dither" reduces noise
-  // "-r 11025 -b 8" is sample rate 11025 Hz, 8 bits per sample
-  // "reverse trim 1s reverse" cuts off 1 sample from the end, to avoid click
-  file_pcm = SD_MMC.open(wav, FILE_READ);
-  if(file_pcm)
-  {
-    file_pcm.seek(44); // skip header to get data
-    pcm_is_open = 1;
-    play_pcm(n); // initially fill the play buffer, max buffer is 4KB
-  }
-  else
-  {
-    Serial.print("can't open file ");
-    pcm_is_open = 0;
-    n = 0;
-  }
-  Serial.println(wav); // print which file is playing now
   return n;
 }
 

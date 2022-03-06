@@ -62,6 +62,7 @@ uint8_t btn, btn_prev;
 // SD status
 uint64_t total_bytes = 0, used_bytes, free_bytes;
 uint32_t free_MB;
+uint8_t sdcard_ok = 1;
 
 void SD_status(void)
 {
@@ -113,6 +114,7 @@ void mount(void)
   if(card_is_mounted)
     return;
   if(!SD_MMC.begin()){
+        sdcard_ok = 0;
         Serial.println("Card Mount Failed");
         return;
   }
@@ -120,6 +122,7 @@ void mount(void)
   uint8_t cardType = SD_MMC.cardType();
 
   if(cardType == CARD_NONE){
+        sdcard_ok = 0;
         Serial.println("No SD_MMC card attached");
         return;
   }
@@ -141,6 +144,7 @@ void mount(void)
   Serial.printf("Used space: %lluMB\n", SD_MMC.usedBytes() / (1024 * 1024));
   Serial.printf("Free space: %lluMB\n", (SD_MMC.totalBytes()-SD_MMC.usedBytes()) / (1024 * 1024));
 
+  sdcard_ok = 1;
   card_is_mounted = 1;
   logs_are_open = 0;
 }
@@ -156,6 +160,35 @@ void umount(void)
 void ls(void)
 {
   listDir(SD_MMC, "/", 0);
+}
+
+int open_pcm(char *wav)
+{
+  if(pcm_is_open)
+    return 0;
+  int n = 3584; // bytes to play for initiall buffer fill
+  // to generate wav files:
+  // espeak-ng -v hr -f speak.txt -w speak.wav; sox speak.wav --no-dither -r 11025 -b 8 output.wav reverse trim 1s reverse
+  // "--no-dither" reduces noise
+  // "-r 11025 -b 8" is sample rate 11025 Hz, 8 bits per sample
+  // "reverse trim 1s reverse" cuts off 1 sample from the end, to avoid click
+  file_pcm = SD_MMC.open(wav, FILE_READ);
+  if(file_pcm)
+  {
+    sdcard_ok = 1;
+    file_pcm.seek(44); // skip header to get data
+    pcm_is_open = 1;
+    play_pcm(n); // initially fill the play buffer, max buffer is 4KB
+  }
+  else
+  {
+    sdcard_ok = 0;
+    Serial.print("can't open file ");
+    pcm_is_open = 0;
+    n = 0;
+  }
+  Serial.println(wav); // print which file is playing now
+  return n;
 }
 
 void write_wav_header(void)

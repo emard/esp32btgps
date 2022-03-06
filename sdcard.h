@@ -32,6 +32,7 @@ extern uint8_t datetime_is_set;
 extern struct tm tm, tm_session; // tm_session gives new filename when reconnected
 extern uint64_t free_bytes;
 extern uint32_t free_MB;
+extern uint8_t sdcard_ok;
 extern uint8_t log_wav_kml; // 1-wav 2-kml 3-both
 extern uint8_t KMH_START, KMH_STOP;
 extern uint8_t KMH_BTN;
@@ -57,6 +58,7 @@ void mount(void);
 void umount(void);
 void ls(void);
 void SD_status();
+int open_pcm(char *wav); // open wav filename
 void open_logs(struct tm *tm);
 void write_logs(void);
 void write_string_to_wav(char *a);

@@ -33,7 +33,6 @@ void clr_lcd(void);
 void lcd_print(uint8_t x, uint8_t y, uint8_t invert, char *a);
 void write_tag(char *a);
 int play_pcm(int n);
-int open_pcm(char *wav); // open wav filename
 void beep_pcm(int n);
 void write_rds(uint8_t *a, int n);
 void spi_slave_test(void);
