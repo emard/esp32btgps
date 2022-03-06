@@ -152,14 +152,14 @@ void nmea2latlon(char *a, struct int_latlon *latlon)
   a[35] = a0;
 }
 
-void latlon2float(struct int_latlon *latlon, float flatlon[])
+void latlon2float(struct int_latlon *latlon, float *lat, float *lon)
 {
-  flatlon[0] = latlon->lat_deg + abs(latlon->lat_umin)*1.66666666e-8;
+  *lat = latlon->lat_deg + abs(latlon->lat_umin)*1.66666666e-8;
   if(latlon->lat_umin < 0)
-    flatlon[0] = -flatlon[0];
-  flatlon[1] = latlon->lon_deg + abs(latlon->lon_umin)*1.66666666e-8;
+    *lat = -*lat;
+  *lon = latlon->lon_deg + abs(latlon->lon_umin)*1.66666666e-8;
   if(latlon->lon_umin < 0)
-    flatlon[1] = -flatlon[1];
+    *lon = -*lon;
 }
 
 uint16_t nmea2iheading(char *nmea)

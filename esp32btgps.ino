@@ -775,6 +775,12 @@ void handle_reconnect(void)
   finalize_data(&tm); // finalize all except current session (if one file per day)
   umount();
   clear_storage(); // finalize reads .sta file to s_stat, here we clear s_stat
+  // x_kml_line initialize with last_latolon.
+  // this fixes when powered on while driving with fast_enough speed,
+  // it prevents long line over the globe from lat=0,lon=0 to current point
+  latlon2float(&last_latlon, &(x_kml_line->lat[0]), &(x_kml_line->lon[0]));
+  x_kml_line->lat[1] = x_kml_line->lat[0];
+  x_kml_line->lon[1] = x_kml_line->lon[0];
   iri99sum = iri99count = iri99avg = 0; // reset iri99 average
 
   if(sensor_check_status)
@@ -858,14 +864,7 @@ void draw_kml_line(char *line)
     // strcpy(lastnmea, line); // copy line to last nmea as tmp buffer (overwritten by parser)
     // parse lastnmea -> ilatlon (parsing should not spoil nmea string)
     nmea2latlon(line, &ilatlon);
-    float *lat = &(x_kml_line->lat[ipt]);
-    float *lon = &(x_kml_line->lon[ipt]);
-    *lat = ilatlon.lat_deg + abs(ilatlon.lat_umin)*1.66666666e-8;
-    if(ilatlon.lat_umin < 0)
-      *lat = -*lat;
-    *lon = ilatlon.lon_deg + abs(ilatlon.lon_umin)*1.66666666e-8;
-    if(ilatlon.lon_umin < 0)
-      *lon = -*lon;
+    latlon2float(&ilatlon, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
     x_kml_line->value     = iri20avg;
     x_kml_line->left20    = iri20[0];
     x_kml_line->right20   = iri20[1];

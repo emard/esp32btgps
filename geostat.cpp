@@ -232,12 +232,12 @@ void stat_nmea_proc(char *nmea, int nmea_len)
     {
       //printf("%s\n", nmea);
       nmea2latlon(nmea, &ilatlon);
-      float flatlon[2];
-      latlon2float(&ilatlon, flatlon);
+      float lat, lon;
+      latlon2float(&ilatlon, &lat, &lon);
       uint8_t heading = (256.0/3600)*nmea2iheading(nmea); // 0-3600 -> 0-256
-      uint32_t lon2mm = dlon2mm(flatlon[0]);
-      uint32_t   dxmm = fabs(flatlon[1]-stat_travel_prev_latlon[1]) *  lon2mm;
-      uint32_t   dymm = fabs(flatlon[0]-stat_travel_prev_latlon[0]) * dlat2mm;
+      uint32_t lon2mm = dlon2mm(lat);
+      uint32_t   dxmm = fabs(lon-stat_travel_prev_latlon[1]) *  lon2mm;
+      uint32_t   dymm = fabs(lat-stat_travel_prev_latlon[0]) * dlat2mm;
       uint32_t   d_mm = sqrt(dxmm*dxmm + dymm*dymm);
       if(d_mm < IGNORE_TOO_LARGE_JUMP_MM) // ignore too large jumps > 40m
       {
@@ -249,8 +249,8 @@ void stat_nmea_proc(char *nmea, int nmea_len)
           // we assume we have got some new point here
           if(prev_stat_travel_mm <= SEGMENT_LENGTH_MM)
           {
-            new_lat = flatlon[0];
-            new_lon = flatlon[1];
+            new_lat = lat;
+            new_lon = lon;
             new_heading = heading;
             new_daytime = daytime/20; // new_daytime is in 2-second ticks 0-43199
             new_iri[0] = iri[0];
@@ -262,7 +262,7 @@ void stat_nmea_proc(char *nmea, int nmea_len)
           // continue search until travel 120 m for existing point if found.
           // if not found after 120 m, create new lat/lon snap point.
           // direction insensitivty 8, means 256 is 360 deg, and to add 128 m for 180 deg reverse direction snap point
-          int16_t index = find_xya((int)floor(flatlon[1] * lon2gridm), (int)floor(flatlon[0] * lat2gridm), heading, ANGULAR_INSENSITIVITY_RSHIFT);
+          int16_t index = find_xya((int)floor(lon * lon2gridm), (int)floor(lat * lat2gridm), heading, ANGULAR_INSENSITIVITY_RSHIFT);
           if(index >= 0) // found something
           {
             if(found_dist < closest_found_dist)
@@ -341,8 +341,8 @@ void stat_nmea_proc(char *nmea, int nmea_len)
       }
       #endif
       // printf("%.6f° %.6f° travel=%d m\n", flatlon[0], flatlon[1], stat_travel_mm/1000);
-      stat_travel_prev_latlon[0] = flatlon[0];
-      stat_travel_prev_latlon[1] = flatlon[1];
+      stat_travel_prev_latlon[0] = lat;
+      stat_travel_prev_latlon[1] = lon;
     }
 }
 
