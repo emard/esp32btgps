@@ -456,7 +456,10 @@ void speech()
         tprev_wav = t_ms; // prevent too often starting of the speech
       }
       else
+      {
         beep_pcm(1024); // beep if it can't speak (open failed)
+        speakfile = NULL; // consumed
+      }
     }
     else
     {

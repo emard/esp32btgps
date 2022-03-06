@@ -460,7 +460,7 @@ void rds_message(struct tm *tm)
     {
       sprintf(disp_short, "SD?    X");
       sprintf(disp_long,  "INSERT SD CARD SENSOR %s", sensor_check_status ? (adxl355_regio ? "ACEL ADXL355" : "GYRO ADXRS290") : "NONE");
-      beep_pcm(1024);
+      //beep_pcm(1024);
     }
     rds.ct(2000, 0, 1, 0, 0, 0);
   }
