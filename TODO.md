@@ -2,8 +2,8 @@
 
 esp32
 
-    [ ] beep when SD mount failed (no speak)
-    [ ] gps off and .sta file remains
+    [x] beep when SD mount failed (no speak)
+    [x] gps off and .sta file remains
     [ ] instead of default lat=46, calculate_grid(latitude) at first point of new storage
     [ ] what happens to kml and stat in tunnel mode?
     [ ] optional stat for whole day, allows continuation between reboots
@@ -20,7 +20,7 @@ esp32
     [ ] display last iri99avg in .wav files list
     [x] configurable speed for reporting every 100/20 m
     [x] LCD: if no SD card, print insert SD card
-    [ ] LCD: file list, print 1 line for kml/wav instead of 2 lines
+    [ ] LCD: file list, print 1 line for wav or kml if wav disabled
     [x] FM short beep if no SD
     [x] crash after temperatures in log, sprintf 20 bytes overrun
     [x] right sensor temperature -199.9C, lower SPI freq 8->5 MHz
