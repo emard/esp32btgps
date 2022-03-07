@@ -780,7 +780,7 @@ void handle_reconnect(void)
   clear_storage(); // finalize reads .sta file to s_stat, here we clear s_stat
   // this fixes when powered on while driving with fast_enough speed,
   // it prevents long line over the globe from lat=0,lon=0 to current point
-  x_kml_line->lat[0] = x_kml_line->lat[1] = 100.0; // normal lat is less than 90 deg
+  x_kml_line->lat[0] = x_kml_line->lat[1] = 100.0; // 100 deg for undefined point. Normal lat is less than 90 deg
   #if 0
   // x_kml_line initialize with last_latolon.
   latlon2float(&last_latlon, &(x_kml_line->lat[0]), &(x_kml_line->lon[0]));
