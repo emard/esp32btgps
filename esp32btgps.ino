@@ -778,12 +778,15 @@ void handle_reconnect(void)
   finalize_data(&tm); // finalize all except current session (if one file per day)
   umount();
   clear_storage(); // finalize reads .sta file to s_stat, here we clear s_stat
-  // x_kml_line initialize with last_latolon.
   // this fixes when powered on while driving with fast_enough speed,
   // it prevents long line over the globe from lat=0,lon=0 to current point
+  x_kml_line->lat[0] = x_kml_line->lat[1] = 100.0; // normal lat is less than 90 deg
+  #if 0
+  // x_kml_line initialize with last_latolon.
   latlon2float(&last_latlon, &(x_kml_line->lat[0]), &(x_kml_line->lon[0]));
   x_kml_line->lat[1] = x_kml_line->lat[0];
   x_kml_line->lon[1] = x_kml_line->lon[0];
+  #endif
   iri99sum = iri99count = iri99avg = 0; // reset iri99 average
 
   if(sensor_check_status)
@@ -868,44 +871,47 @@ void draw_kml_line(char *line)
     // parse lastnmea -> ilatlon (parsing should not spoil nmea string)
     nmea2latlon(line, &ilatlon);
     latlon2float(&ilatlon, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
-    x_kml_line->value     = iri20avg;
-    x_kml_line->left20    = iri20[0];
-    x_kml_line->right20   = iri20[1];
-    x_kml_line->left100   = iri[0];
-    x_kml_line->right100  = iri[1];
-    x_kml_line->speed_kmh = speed_mms*3.6e-3;
-    nmea2kmltime(line, timestamp);
-    x_kml_line->timestamp = timestamp;
-    kml_line(x_kml_line);
-    #if 0
-    // TODO: don't write arrows now, but
-    // collect statistics and write it
-    // after GPS is turned off.
-    if(travel_report1_prev != travel_report1) // every 100m draw arrow
+    if(fabs(x_kml_line->lat[0]) <= 90.0 && fabs(x_kml_line->lat[1]) <= 90.0)
     {
-      x_kml_arrow->lat   = *lat;
-      x_kml_arrow->lon   = *lon;
-      x_kml_arrow->value = iriavg;
-      x_kml_arrow->left  = iri[0];
-      x_kml_arrow->left_stdev = 0.0;
-      x_kml_arrow->right = iri[1];
-      x_kml_arrow->right_stdev = 0.0;
-      x_kml_arrow->n = 1;
-      x_kml_arrow->speed_kmh = x_kml_line->speed_kmh;
-      char *b = nthchar(line, 8, ','); // position to heading
-      char str_heading[5] = "0000"; // storage for parsing
-      str_heading[0] = b[1];
-      str_heading[1] = b[2];
-      str_heading[2] = b[3];
-      str_heading[3] = b[5]; // skip b[4]=='.'
-      //str_heading[4] = 0;
-      int iheading = strtol(str_heading, NULL, 10); // parse as integer
-      x_kml_arrow->heading   = iheading*0.1; // convert to float
-      x_kml_arrow->timestamp = timestamp;
-      kml_arrow(x_kml_arrow);
+      x_kml_line->value     = iri20avg;
+      x_kml_line->left20    = iri20[0];
+      x_kml_line->right20   = iri20[1];
+      x_kml_line->left100   = iri[0];
+      x_kml_line->right100  = iri[1];
+      x_kml_line->speed_kmh = speed_mms*3.6e-3;
+      nmea2kmltime(line, timestamp);
+      x_kml_line->timestamp = timestamp;
+      kml_line(x_kml_line);
+      #if 0
+      // TODO: don't write arrows now, but
+      // collect statistics and write it
+      // after GPS is turned off.
+      if(travel_report1_prev != travel_report1) // every 100m draw arrow
+      {
+        x_kml_arrow->lat   = x_kml_line->lat[ipt];
+        x_kml_arrow->lon   = x_kml_line->lon[ipt];
+        x_kml_arrow->value = iriavg;
+        x_kml_arrow->left  = iri[0];
+        x_kml_arrow->left_stdev = 0.0;
+        x_kml_arrow->right = iri[1];
+        x_kml_arrow->right_stdev = 0.0;
+        x_kml_arrow->n = 1;
+        x_kml_arrow->speed_kmh = x_kml_line->speed_kmh;
+        char *b = nthchar(line, 8, ','); // position to heading
+        char str_heading[5] = "0000"; // storage for parsing
+        str_heading[0] = b[1];
+        str_heading[1] = b[2];
+        str_heading[2] = b[3];
+        str_heading[3] = b[5]; // skip b[4]=='.'
+        //str_heading[4] = 0;
+        int iheading = strtol(str_heading, NULL, 10); // parse as integer
+        x_kml_arrow->heading   = iheading*0.1; // convert to float
+        x_kml_arrow->timestamp = timestamp;
+        kml_arrow(x_kml_arrow);
+      }
+      #endif
+      write_log_kml(0); // normal
     }
-    #endif
-    write_log_kml(0); // normal
     //write_log_kml(1); // debug (for OBD)
     ipt ^= 1; // toggle 0/1
   }
