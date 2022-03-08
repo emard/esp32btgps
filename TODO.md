@@ -2,11 +2,13 @@
 
 esp32
 
+    [ ] what happens to kml and stat in tunnel mode?
+    [ ] tunnel mode kml generate follow the same direction
+    [ ] optional stat for whole day, allows continuation between reboots
+    [ ] OBD testing (check previously failing devices) with new arduino esp32 2.0.x
     [x] beep when SD mount failed (no speak)
     [x] gps off and .sta file remains
-    [ ] instead of default lat=46, calculate_grid(latitude) at first point of new storage
-    [ ] what happens to kml and stat in tunnel mode?
-    [ ] optional stat for whole day, allows continuation between reboots
+    [x] instead of default lat=46, calculate_grid(latitude) at first point of new storage
     [x] arrow heading before turn is a bit off, fixed by static new_heading
     [x] creation timestamp to stat arrows or ascending time
     [ ] avoid double nmea parsing for kml and stat (CPU saving)
@@ -24,7 +26,6 @@ esp32
     [x] FM short beep if no SD
     [x] crash after temperatures in log, sprintf 20 bytes overrun
     [x] right sensor temperature -199.9C, lower SPI freq 8->5 MHz
-    [ ] tunnel mode kml generate follow the same direction
     [x] support arduino ESP32 v2.0.x and ESP32DMASPI v0.2.0
     [x] allow wifi reconnect at arduino ESP32 v2.0.x, check disabled wifiMulti.run()
     [x] LCD display with freq and status
