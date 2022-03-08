@@ -102,6 +102,7 @@ void clear_storage(void)
     s_stat.snap_point[i].n = 0; // stat counter
   }
   s_stat.wr_snap_ptr = 0;
+  s_stat.lat = 100;
   prev_snap_ptr = -1;
   stat_travel_mm = 0;
   round_count = 1;
@@ -232,6 +233,13 @@ void stat_nmea_proc(char *nmea, int nmea_len)
     {
       //printf("%s\n", nmea);
       nmea2latlon(nmea, &ilatlon);
+      if(s_stat.lat > 90)
+      {
+        if(ilatlon.lat_deg < 90)
+          calculate_grid(ilatlon.lat_deg);
+        else
+          return;
+      }
       float lat, lon;
       latlon2float(&ilatlon, &lat, &lon);
       uint8_t heading = (256.0/3600)*nmea2iheading(nmea); // 0-3600 -> 0-256
