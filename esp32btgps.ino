@@ -781,12 +781,6 @@ void handle_reconnect(void)
   // this fixes when powered on while driving with fast_enough speed,
   // it prevents long line over the globe from lat=0,lon=0 to current point
   x_kml_line->lat[0] = x_kml_line->lat[1] = 100.0; // 100 deg for undefined point. Normal lat is less than 90 deg
-  #if 0
-  // x_kml_line initialize with last_latolon.
-  latlon2float(&last_latlon, &(x_kml_line->lat[0]), &(x_kml_line->lon[0]));
-  x_kml_line->lat[1] = x_kml_line->lat[0];
-  x_kml_line->lon[1] = x_kml_line->lon[0];
-  #endif
   iri99sum = iri99count = iri99avg = 0; // reset iri99 average
 
   if(sensor_check_status)
@@ -1089,6 +1083,15 @@ void handle_gps_line_complete(void)
           stat_speed_kmh = speed_mms*3.6e-3;
           stat_nmea_proc(line, line_i-1);
         }
+        #if 0
+        // TODO tunnel mode
+        if(speed_ckt < 0 && fast_enough > 0) // no GPS fix but fast enough, tunnel mode
+        {
+          // generate line with incrementing steps
+          // constant speed, keep direction, ignore earth curvature,
+          // similar to OBD, see obd_line_complete() below
+        }
+        #endif
         report_iri();
         report_status();
         toggle_flag ^= 1; // 0/1 alternating IRI-100 and IRI-20, no bandwidth for both
