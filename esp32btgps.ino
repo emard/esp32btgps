@@ -1080,10 +1080,15 @@ void handle_gps_line_complete(void)
         set_date_from_tm(&tm);
         handle_session_log(); // will open logs if fast enough (new filename when reconnected)
         travel_gps(); // calculate travel length
-        draw_kml_line(line);
         strcpy(lastnmea, line); // copy line to last nmea for storage
-        stat_speed_kmh = speed_mms*3.6e-3;
-        stat_nmea_proc(line, line_i-1);
+        // prevent long line jumps from last stop to current position:
+        // when signal inbetween was lost or cpu rebooted
+        if(speed_ckt >= 0 && fast_enough > 0) // valid GPS FIX signal and moving
+        {
+          draw_kml_line(line);
+          stat_speed_kmh = speed_mms*3.6e-3;
+          stat_nmea_proc(line, line_i-1);
+        }
         report_iri();
         report_status();
         toggle_flag ^= 1; // 0/1 alternating IRI-100 and IRI-20, no bandwidth for both
