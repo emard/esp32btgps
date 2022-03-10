@@ -154,6 +154,7 @@ core
 wav2kml
 
     [ ] csv dump
+    [ ] geostat in python
     [ ] if nmea line checksum wrong don't process it
     [ ] on track and placemarks indicate tunnel mode
     [ ] motor vibration (RPM) sensing, conversion to speed
