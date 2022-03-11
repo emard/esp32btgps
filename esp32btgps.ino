@@ -355,6 +355,7 @@ void setup() {
   speakaction[1] = NULL;
   speakfiles = speakaction;
 
+  reset_kml_line(x_kml_line);
   spi_speed_write(0); // normal
 }
 
@@ -708,6 +709,7 @@ void handle_fast_enough(void)
       write_last_nmea();
       if(s_stat.wr_snap_ptr != 0)
         write_stat_file(&tm_session);
+      reset_kml_line(x_kml_line);
       stopcount++;
       Serial.print(speed_kmh);
       Serial.println(" km/h not fast enough - stop logging");
@@ -780,7 +782,7 @@ void handle_reconnect(void)
   clear_storage(); // finalize reads .sta file to s_stat, here we clear s_stat
   // this fixes when powered on while driving with fast_enough speed,
   // it prevents long line over the globe from lat=0,lon=0 to current point
-  x_kml_line->lat[0] = x_kml_line->lat[1] = 100.0; // 100 deg for undefined point. Normal lat is less than 90 deg
+  reset_kml_line(x_kml_line);
   iri99sum = iri99count = iri99avg = 0; // reset iri99 average
 
   if(sensor_check_status)
@@ -1077,7 +1079,7 @@ void handle_gps_line_complete(void)
         strcpy(lastnmea, line); // copy line to last nmea for storage
         // prevent long line jumps from last stop to current position:
         // when signal inbetween was lost or cpu rebooted
-        if(speed_ckt >= 0 && fast_enough > 0) // valid GPS FIX signal and moving
+        if(speed_ckt >= 0 && fast_enough > 0) // valid GPS FIX signal and moving, draw line and update statistics
         {
           draw_kml_line(line);
           stat_speed_kmh = speed_mms*3.6e-3;

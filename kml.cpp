@@ -273,6 +273,11 @@ m=0
   return c32 | 0xF0000000;
 }
 
+void reset_kml_line(struct s_kml_line *kl)
+{
+  kl->lat[0] = kl->lat[1] = 100.0; // 100 deg for undefined point. Normal lat is less than 90 deg
+}
+
 void kml_line(struct s_kml_line *kl)
 {
   if(kmlbuf_pos+str_kml_line_len > kmlbuf_len) // rather loose data than crash

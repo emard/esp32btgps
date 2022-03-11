@@ -40,5 +40,6 @@ void kml_footer(char *begin, char *end);
 
 void kml_arrow(struct s_kml_arrow *ka);
 void kml_line(struct s_kml_line *kl);
+void reset_kml_line(struct s_kml_line *kl);
 
 #endif
