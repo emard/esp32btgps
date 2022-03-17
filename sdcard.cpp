@@ -961,7 +961,9 @@ void finalize_data(struct tm *tm){
             // print on LCD
             char *is_wav = strstr(file.name(),".wav");
             char *is_today = strstr(file.name(),todaystr);
-            if(is_today && is_wav)
+            // if both wav and kml are enabled then list only wav
+            // if only kml is configured, then list kml
+            if(is_today && (is_wav != NULL || (log_wav_kml == 2 && is_kml != NULL)) )
             {
               int wrap_lcd_n = lcd_n % max_lcd_n; // wraparound last N lines
               char *txbufptr = (char *)spi_master_tx_buf+5+(wrap_lcd_n<<5);
@@ -970,7 +972,7 @@ void finalize_data(struct tm *tm){
               if(is_wav)
                 sprintf(txbufptr+17, " %4d min", file.size()/720000);
               if(is_kml)
-                sprintf(txbufptr+17, " %4d MB", file.size()/(1024*1024));
+                sprintf(txbufptr+17, " %4d min", file.size()/360000); // approx minutes
               lcd_n++;
             }
         }
