@@ -2,6 +2,8 @@
 
 esp32
 
+    [ ] if wav is not enabled (only kml) then no-sensors reported although sensors work
+        (try to check is IRI = 0 as no-sensors condition)
     [ ] what happens to kml and stat in tunnel mode?
     [ ] tunnel mode kml generate follow the same direction
     [ ] optional stat for whole day, allows continuation between reboots
@@ -22,7 +24,7 @@ esp32
     [ ] display last iri99avg in .wav files list
     [x] configurable speed for reporting every 100/20 m
     [x] LCD: if no SD card, print insert SD card
-    [ ] LCD: file list, print 1 line for wav or kml if wav disabled
+    [x] LCD: file list, print 1 line for wav or kml if wav disabled
     [x] FM short beep if no SD
     [x] crash after temperatures in log, sprintf 20 bytes overrun
     [x] right sensor temperature -199.9C, lower SPI freq 8->5 MHz
@@ -127,6 +129,7 @@ core
         as 0x00 or 0xFF (wavhexdump.sh 15-bit).
         depends on GP/GN 4/8/16 mA and cable length but no combination fits
     [ ] core analzyer, SPI register report of signal validity
+    [ ] on initial screen write REBOOT, power OFF->ON as user guidance
     [x] 12-byte spi buf to wav buf alignment
     [x] trellis weak FM (fixed by signed->unsigned multiply)
     [x] core reports IRI 20% smaller than wav2kml (forgot to disable write_matrix)
