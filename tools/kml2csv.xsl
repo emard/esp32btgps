@@ -25,7 +25,14 @@
       <xsl:for-each select="kml:Placemark[kml:Style/kml:IconStyle]">
         <xsl:value-of select="position()"/><xsl:text>00,</xsl:text>
         <xsl:value-of select="kml:name"/><xsl:text>,</xsl:text>
-        <xsl:value-of select="kml:Style/kml:IconStyle/kml:heading"/><xsl:text>,</xsl:text>
+        <!-- Heading for arrow icon is rotated 180 deg.
+             After correction: (x+180) mod 360:
+           0: ↑ north
+          90: → east
+         180: ↓ south
+         270: ← west
+        -->
+        <xsl:value-of select="format-number((kml:Style/kml:IconStyle/kml:heading + 180) mod 360, '##0.0')"/><xsl:text>,</xsl:text>
         <xsl:value-of select="kml:Point/kml:coordinates"/><xsl:text>,</xsl:text>
         <xsl:value-of select="kml:TimeStamp/kml:when"/><xsl:text>,</xsl:text>
         <xsl:call-template name="tokenize">
