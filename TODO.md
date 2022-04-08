@@ -154,9 +154,10 @@ core
     [x] SPI slave for speed and iri
     [x] random inbalance in L/R calc results (slope ready not used)
 
-wav2kml
+tools (wav2kml etc)
 
-    [ ] csv dump
+    [ ] csv sh script runnable from any directory
+    [x] csv dump
     [ ] geostat in python
     [ ] if nmea line checksum wrong don't process it
     [ ] on track and placemarks indicate tunnel mode
