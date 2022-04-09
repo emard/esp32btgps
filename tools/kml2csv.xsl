@@ -16,7 +16,7 @@
   <xsl:template match="text()"/>
 
   <xsl:template match="/">
-    <xsl:text>"travel [m]","IRI100 [mm/m]","heading [°]","arrow","lon [°]","lat [°]","time","left","right","count","speed"&#xA;</xsl:text>
+    <xsl:text>"travel [m]","IRI100 [mm/m]","arrow","heading [°]","lon [°]","lat [°]","time","left","right","repeat","speed"&#xA;</xsl:text>
     <xsl:apply-templates/>
   </xsl:template>
 
@@ -33,12 +33,12 @@
          270: ← west
         -->
         <xsl:variable name="deg" select="(kml:Style/kml:IconStyle/kml:heading + 180) mod 360"/>
-        <xsl:value-of select="format-number($deg, '##0.0')"/><xsl:text>,</xsl:text>
         <xsl:text>"</xsl:text>
         <xsl:call-template name="direction_arrow">
           <xsl:with-param name="deg" select="$deg"/>
         </xsl:call-template>
         <xsl:text>",</xsl:text>
+        <xsl:value-of select="format-number($deg, '##0.0')"/><xsl:text>,</xsl:text>
         <xsl:value-of select="kml:Point/kml:coordinates"/><xsl:text>,</xsl:text>
         <xsl:value-of select="kml:TimeStamp/kml:when"/><xsl:text>,</xsl:text>
         <xsl:call-template name="tokenize">
