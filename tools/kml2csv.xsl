@@ -34,9 +34,7 @@
         -->
         <xsl:variable name="deg" select="(kml:Style/kml:IconStyle/kml:heading + 180) mod 360"/>
         <xsl:text>"</xsl:text>
-        <xsl:call-template name="direction_arrow">
-          <xsl:with-param name="deg" select="$deg"/>
-        </xsl:call-template>
+        <xsl:value-of select="substring('↑↗→↘↓↙←↖',1+floor((($deg + 22.5) div 45 ) mod 8),1)"/>
         <xsl:text>",</xsl:text>
         <xsl:value-of select="format-number($deg, '##0.0')"/><xsl:text>,</xsl:text>
         <xsl:value-of select="kml:Point/kml:coordinates"/><xsl:text>,</xsl:text>
@@ -65,11 +63,13 @@
     </xsl:choose>
   </xsl:template>
 
+  <!--
   <xsl:template name="direction_arrow">
     <xsl:param name="deg" select="0"/>
     <xsl:variable name="arrow_index" select="floor((($deg + 22.5) div 45 ) mod 8)"/>
     <xsl:variable name="arrows" select="'↑↗→↘↓↙←↖'"/>
     <xsl:value-of select="substring($arrows,1+$arrow_index,1)"/>
   </xsl:template>
+  -->
 
 </xsl:stylesheet>
