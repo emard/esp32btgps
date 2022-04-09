@@ -2,6 +2,8 @@
 
 esp32
 
+    [ ] kml: arrows in separate foloder (close/open folders)
+    [ ] kml: id's (maybe names too) for folders and icons
     [ ] if wav is not enabled (only kml) then no-sensors reported although sensors work
         (try to check is IRI = 0 as no-sensors condition)
     [ ] what happens to kml and stat in tunnel mode?
