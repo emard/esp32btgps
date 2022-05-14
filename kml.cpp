@@ -52,9 +52,9 @@ where \"uncertainty\" represents 2σ = 95%% coverage.\n\
 ]]>\n\
     </description>\n\
     <visibility>1</visibility>\n\
-    <Folder id=\"folderid\">\n\
-      <name>Recorded data</name>\n\
-      <description>onboard kml generator</description>\n\
+    <Folder id=\"lines\">\n\
+      <name>Lines</name>\n\
+      <description>Lines with measurement details</description>\n\
       <visibility>1</visibility>\n\
 ";
 
@@ -137,6 +137,14 @@ int str_kml_arrow_pos_right_stdev;
 int str_kml_arrow_pos_n;
 int str_kml_arrow_pos_color;
 int str_kml_arrow_len;
+
+const char *str_kml_arrows_folder = "\
+    </Folder>\n\
+    <Folder id=\"statistics\">\n\
+      <name>Statistics</name>\n\
+      <description>Arrows with statistics</description>\n\
+      <visibility>1</visibility>\n\
+";
 
 const char *str_kml_footer = "\
     </Folder>\n\

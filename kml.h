@@ -28,6 +28,7 @@ extern int str_kml_footer_len;
 extern int str_kml_line_len;
 extern int str_kml_arrow_len;
 
+extern const char *str_kml_arrows_folder;
 extern const char *str_kml_footer_simple;
 extern int str_kml_footer_simple_len;
 

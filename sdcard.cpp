@@ -904,6 +904,7 @@ void finalize_kml(File &kml, String file_name)
     {
       logs_are_open = 1;
       kml_init();
+      file_kml.write((uint8_t *)str_kml_arrows_folder, strlen(str_kml_arrows_folder));
       write_stat_arrows();
       logs_are_open = 0;
       SD_MMC.remove(file_name_sta);

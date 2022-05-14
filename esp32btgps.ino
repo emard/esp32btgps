@@ -11,7 +11,7 @@
 // #define IDF3 1
 // #define IDF4 0
 
-// boards manager -> esp32 v2.0.2 install
+// boards manager -> esp32 v2.0.3 install
 // in loop_web(): monitorWiFi() can not be used
 // disable warnings for 4-byte alignment
 // edit ~/Arduino/libraries/ESP32DMASPI/ESP32DMASPIMaster.h transfer()
