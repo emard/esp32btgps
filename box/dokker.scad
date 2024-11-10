@@ -24,8 +24,9 @@ mount_pad_hole=1.8;
 
 // PCB mount rails
 sensor_pcb  = [20.4,20.4,1.6]; // xyz pcb size ADXL355
-sensor_rail_clr = [0.4,0,0.2];
-sensor_rail_dim = [6,20]; // sensor rail d,h
+// sensor_rail_clr = [0.4,0,0.2]; // nozzle 0.4 layer 0.3 mm
+sensor_rail_clr = [0.7,0,0.35]; // nozzle 0.8 layer 0.5 mm
+sensor_rail_dim = [7,20]; // sensor rail d,h
 
 // cover mount pads
 cover_mtpad_width=width-(curvature_r+2*thick)/sqrt(2);
