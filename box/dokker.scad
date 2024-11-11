@@ -25,7 +25,7 @@ mount_pad_hole=1.8;
 // PCB mount rails
 sensor_pcb  = [20.4,20.4,1.6]; // xyz pcb size ADXL355
 // sensor_rail_clr = [0.4,0,0.2]; // nozzle 0.4 layer 0.3 mm
-sensor_rail_clr = [0.7,0,0.35]; // nozzle 0.8 layer 0.5 mm
+sensor_rail_clr = [0.6,0,0.33]; // nozzle 0.8 layer 0.5 mm
 sensor_rail_dim = [7,20]; // sensor rail d,h
 
 // cover mount pads
@@ -445,7 +445,7 @@ pos_connector = [1.27,3.5,8];
 module connector_holder()
 {
   dim_conn_inner = [23,6.5,7];
-  dim_conn_outer = dim_conn_inner+[4,4,-0.01];
+  dim_conn_outer = dim_conn_inner+[6,6,-0.01];
   translate(pos_connector)
   {
     difference()
@@ -455,7 +455,7 @@ module connector_holder()
       box(dim_conn_inner);
       // notch cut
       translate([0,-dim_conn_inner[1]/2,1])
-        box([5,4,10]);
+        box([5,6,10]);
     };
     // fitting for pcb holder rails
     fitting_depth=8;
@@ -471,20 +471,20 @@ module connector_holder()
             box([dim_conn_outer[0],2,fitting_depth]);
           // left-right
           for(i=[-1,1])
-            translate([i*12.5,-1.5,-3.5-fitting_depth/2])
+            translate([i*13.5,-1.5,-3.5-fitting_depth/2])
               box([2,13,fitting_depth]);
           // under bottom
           translate([0,-6,-2])
           difference()
           {
-            box([27,4,6]);
+            box([29,6,6]);
             // print friendly 45 deg cut
-            translate([0,-2,5])
+            translate([0,-3,5])
               rotate([45,0,0])
-                box([27+0.01,7,7]);
+                box([29+0.01,7,7]);
             // notch cut (again)
-            translate([0,1,0])
-              box([5,2.4,6]);
+            translate([0,1.5,0])
+              box([5,3,6]);
           }
         }
         // cut for rails
@@ -524,7 +524,7 @@ kutijica(
   magnet   = 0,
   chep     = 1,
   slider   = 1,
-  strana   = 1
+  strana   = 1  // 1:L -1:R
 );
 translate([0,0,-depth/2+sensor_pcb[1]/2])
   rotate([-90,0,0])
