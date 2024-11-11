@@ -492,7 +492,7 @@ module connector_holder()
         for(i=[-1,1])
         {
           translate([-1.3+i*10,0,-10])
-            box([2.4,40,10]);
+            box([2.2,40,10]);
         }
         // cut to fit rail joint reinforement
         if(1)
@@ -501,7 +501,7 @@ module connector_holder()
               box([5,5,10]);
         // horizontal rail cut
         translate([0,-3.5,-10])
-          box([40,2.4,10]);
+          box([40,2.2,10]);
       }
   }
 }
