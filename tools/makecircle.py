@@ -77,7 +77,7 @@ g_scale = 8 # accelerometer digital scale setting 2/4/8 g full scale 32000
 iscale = 32000/g_scale/9.81 # factor conversion from [m/s**2] to sensor binary reading
 rp = 500.0 # [m] path radius
 w = vx / rp # [rad/s] angular speed
-nturns = 10 # use 3 to shoreten calc time
+nturns = 10 # use 3 to shorten calc time
 nsamples = int(nturns*2*rp*math.pi/vx/dt) # num of samples for N turns
 tag = "" # tag queue string starts as empty
 for i in range(nsamples):
@@ -86,7 +86,7 @@ for i in range(nsamples):
     int(1000*math.sin(i/20)), int(1000*math.sin(i/30)), iaz,
     int(1000*math.sin(i/20)), int(1000*math.sin(i/30)), iaz
   ))
-  if i % 200 == 0: # every 200 samples = 0,2 seconds
+  if i % 200 == 0: # every 200 samples = 0.2 seconds
     isec = i//1000 # [s] integer seconds
     angle = int(i*w*dt*180.0/math.pi) # [deg]
     angle_bidirectional = abs(angle-360*5) # [deg]

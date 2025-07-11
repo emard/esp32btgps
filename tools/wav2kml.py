@@ -5,20 +5,21 @@
 
 # TODO option to colorize with calc values
 
-from fastkml import kml, styles
-from shapely.geometry import Point, LineString, Polygon
+#from fastkml import kml, styles
+#from shapely.geometry import Point, LineString, Polygon
 from sys import argv
 from colorsys import hsv_to_rgb
 from math import pi,ceil,sqrt,sin,cos,tan,asin,atan2
 from functools import reduce
 from operator import xor
 import numpy as np
+import kml # local file "kml.py"
 
 # calculate
 # 0:IRI from wav tags,
 # 1:IRI calculated from z-accel wav data (adxl355)
 # 2:IRI calculated from xyz-gyro wav data (adxrs290) angular velocity
-calculate  = 0
+calculate  = 1
 # accel/gyro, select constant and data wav channel
 if calculate == 1: # accel adxl355
   g_scale    = 8 # 2/4/8 g is 32000 integer reading
@@ -40,7 +41,7 @@ if calculate == 2: # gyro adxrs290
   # slope DC remove by inc/dec of angular velocity offset at each sampling length
   dc_remove_step = 1.0e-4
 
-red_iri = 2.5 # colorization default 2.5
+# kml.red_iri = 2.5 # colorization default 2.5
 
 # PPS tag appears as "!" in the data stream, keep it 0 disabled
 show_pps = 0
@@ -56,12 +57,14 @@ a_sample_dt = 1/1000 # s (1kHz accelerometer sample rate)
 
 # number of buffered vz speed points for IRI averaging
 n_buf_points = int(iri_length/sampling_length + 0.5)
+n_buf_points20 = n_buf_points//5 # 20 m buf points
 rvz = np.zeros(2).astype(np.uint32)# vz speed contains values scaled as unsigned integer (um/s)
 # dimension 2 is for 0=left 1=right index
 rvz_buf = np.zeros((n_buf_points,2)).astype(np.uint32)
 rvz_buf_ptr = 0 # buffer pointer, runs 0 .. n_buf_points-1, next wraparound to 0
 # sum of rectified speeds in um/s, dimension 2 is for 0=left, 1=right
 srvz = np.zeros(2).astype(np.uint32)
+srvz20 = np.zeros(2).astype(np.uint32)
 # slope reconstructed from z-accel and x-speed
 slope = np.zeros(2).astype(np.float32)
 # for slope DC remove
@@ -214,12 +217,13 @@ def gyro_dc_remove():
 # initialization before first data entry
 # usually called at stops because slope is difficult to keep after the stop
 def reset_iri():
-  global ZL, ZR, rvz_buf, rvz_buf_ptr, srvz, slope, slope_prev, azl0, azr0
+  global ZL, ZR, rvz_buf, rvz_buf_ptr, srvz, srvz20, slope, slope_prev, azl0, azr0
   global phi, theta, psi, prev_phi, prev_theta, prev_psi, dc_p, dc_q, dc_r
   # multiply all matrix elements with 0 resets them to 0
   ZL *= 0
   ZR *= 0
   srvz *= 0
+  srvz20 *= 0
   rvz_buf *= 0
   rvz_buf_ptr = 0
   slope *= 0
@@ -238,13 +242,14 @@ def reset_iri():
 # enter slope, calculate running average
 # slope = dz/dx (tangent)
 def enter_slope(slope_l:float, slope_r:float):
-  global rvz, rvz_buf, rvz_buf_ptr, srvz
+  global rvz, rvz_buf, rvz_buf_ptr, srvz, srvz20
   slope2model(slope_l, slope_r) # updates ZL, ZR
   # scale shock absorber speed to integer um/s
   rvz[0] = int(abs(1.0e6 * (ZL[0]-ZL[2])))
   rvz[1] = int(abs(1.0e6 * (ZR[0]-ZR[2])))
   # running average
   srvz += rvz - rvz_buf[rvz_buf_ptr] # subtract from sum old data 100 m before
+  srvz20 += rvz - rvz_buf[(rvz_buf_ptr+n_buf_points-n_buf_points20)%n_buf_points]
   rvz_buf[rvz_buf_ptr] = rvz # new data
   # next pointer with wraparound
   rvz_buf_ptr += 1
@@ -619,33 +624,7 @@ time_1st    = None
 time_last   = None
 lonlat_1st  = None
 
-k = kml.KML()
-ns = '{http://www.opengis.net/kml/2.2}'
-d = kml.Document(ns, id='docid', name='PROFILOG', description='profilog from wav2kml generator')
-#f = kml.Folder(ns, 'fid', 'f name', 'f description')
-k.append(d)
-#d.append(f)
-#nf = kml.Folder(ns, 'nested-fid', 'nested f name', 'nested f description')
-#f.append(nf)
-recorded_data_description="\
-100 m segment cuts with statistics.\n\
-Click any point on the track to display mm/m value of a 100 m\n\
-segment measured before the point. Value represents average\n\
-rectified speed in the shock absorber over 100 m segment\n\
-and divided by standard speed of 80 km/h. Value comes from the\n\
-numeric model that calculates response at standard speed,\n\
-removing dependency on actual speed at which measurement has been done.\n\
-\n\
-Color codes:\n\
-<font color=\"red\">%.1f</font>, <font color=\"orange\">%.1f</font>, <font color=\"green\">%.1f</font>, <font color=\"cyan\">%.1f</font>, \
-<font color=\"blue\">%.1f</font>, <font color=\"violet\">%.1f</font>, <font color=\"magenta\">0.0</font>\n\
-" % (red_iri, 2.0/2.5*red_iri, 1.5/2.5*red_iri, 1.0/2.5*red_iri,
-0.5/2.5*red_iri, 0.3/2.5*red_iri)
-f2 = kml.Folder(ns, id='folderid', name='Recorded data', description=recorded_data_description)
-d.append(f2)
-t = kml.TimeStamp()
-
-arrow_icon_href="http://maps.google.com/mapfiles/kml/shapes/arrow.png"
+print(kml.header(name="PROFILOG"),end="")
 
 # buffer to read wav
 b=bytearray(12)
@@ -780,36 +759,37 @@ for wavfile in argv[1:]:
               iri_avg_main = iri_avg
               if iri20_avg > 0:
                 iri_avg_main = iri20_avg
-              ls0 = styles.LineStyle(ns,
-                color=("%08X" % color32(iri_avg_main/red_iri)), width=6)
-              lsty0 = styles.Style(styles = [ls0])
-              p1 = kml.Placemark(ns, 'id',
-                name=("%.2f" % iri_avg_main),
-                description=(
-                  ("L100=%.2f mm/m\n"
-                   "R100=%.2f mm/m\n"
-                   "L20=%.2f, R20=%.2f\n"
-                   "Lc=%.2f, Rc=%.2f\n"
-                   "azl0=%.3e, azr0=%.3e\n"
-                   "slope_l=%.3e, slope_r=%.3e\n"
-                   "phi=%.1f, theta=%.1f, psi=%.1f\n"
-                   "v=%.1f km/h\n%s"
-                  ) %
-                  (iri_left, iri_right,
-                   iri20_left, iri20_right,
-                   srvz[0] / (n_buf_points*1000), srvz[1] / (n_buf_points*1000),
-                   azl0, azr0,
-                   slope[0], slope[1],
-                   phi*180/pi, theta*180/pi, psi*180/pi,
-                   speed_kmh, datetime.decode("utf-8"))),
-                styles=[lsty0])
-              #p1_iri_left  = kml.Data(name="IRI_LEFT" , display_name="IRI_LEFT" , value="%.2f" % iri_left )
-              #p1_iri_right = kml.Data(name="IRI_RIGHT", display_name="IRI_RIGHT", value="%.2f" % iri_right)
-              #p1.extended_data = kml.UntypedExtendedData(elements=[p1_iri_left, p1_iri_right])
-              p1.geometry = LineString([lonlat_prev, lonlat])
-              t.timestamp, dummy = t.parse_str(datetime) # "2021-07-03T11:22:33Z"
-              p1.timeStamp = t.timestamp
-              f2.append(p1)
+              print(kml.line(
+                value=iri_avg_main,
+                left20=iri20_left,right20=iri20_right, # normal: from wav
+                #left20=srvz[0]/(n_buf_points*1000), right20=srvz[1]/(n_buf_points*1000), # debug: calculated
+                left100=iri_left,right100=iri_right,
+                speed=speed_kmh,
+                lon1=lonlat_prev[0],lat1=lonlat_prev[1],
+                lon2=lonlat[0],lat2=lonlat[1],
+                timestamp=datetime.decode("utf-8")
+                ),end="")
+              # NOTE: useful debug data from old code:
+              #p1 = kml.Placemark(ns, 'id',
+              #  name=("%.2f" % iri_avg_main),
+              #  description=(
+              #    ("L100=%.2f mm/m\n"
+              #     "R100=%.2f mm/m\n"
+              #     "L20=%.2f, R20=%.2f\n"
+              #     "Lc=%.2f, Rc=%.2f\n"
+              #     "azl0=%.3e, azr0=%.3e\n"
+              #     "slope_l=%.3e, slope_r=%.3e\n"
+              #     "phi=%.1f, theta=%.1f, psi=%.1f\n"
+              #     "v=%.1f km/h\n%s"
+              #    ) %
+              #    (iri_left, iri_right,
+              #     iri20_left, iri20_right,
+              #     srvz[0] / (n_buf_points*1000), srvz[1] / (n_buf_points*1000),
+              #     azl0, azr0,
+              #     slope[0], slope[1],
+              #     phi*180/pi, theta*180/pi, psi*180/pi,
+              #     speed_kmh, datetime.decode("utf-8"))),
+              #  styles=[lsty0])
             else: # discontinuety, reset travel
               travel = 0.0
               travel_next = 0.0
@@ -836,26 +816,15 @@ for wavfile in argv[1:]:
               iri20_avg=(iri20_left+iri20_right)/2
           except:
             pass
-          # disabled placemarks arrows here
-          # placed later from statistics
-          #if travel > travel_next:
-          #  while travel > travel_next:
-          #    travel_next += segment_m
-          #  is0 = styles.IconStyle(ns, "id",
-          #    color=("%08X" % color32(iri_avg/red_iri)),
-          #    scale=0.7,
-          #    heading=(180+heading)%360,
-          #    icon_href=arrow_icon_href)
-          #  isty0 = styles.Style(styles = [is0])
-          #  p0 = kml.Placemark(ns, 'id',
-          #    # name=("%.2f" % iri_avg),
-          #    description=("L=%.2f mm/m\nR=%.2f mm/m\n%.1f km/h (%.1f-%.1f km/h)\n%s" % (iri_left, iri_right, speed_kmh, kmh_min, kmh_max, datetime.decode("utf-8"))),
-          #    styles=[isty0])
-          #  p0.geometry = Point(lonlat)
-          #  p0.timeStamp = t.timestamp
-          #  f2.append(p0)
-          #  kmh_max = 0.0
-          #  kmh_min = 999.9
+          if calculate==1:
+            # if calculation is on, replace
+            # wav tag values with calculated values
+            iri_left=srvz[0]/(n_buf_points*1000)
+            iri_right=srvz[1]/(n_buf_points*1000)
+            iri_avg=(iri_left+iri_right)/2
+            iri20_left=srvz20[0]/(n_buf_points20*1000)
+            iri20_right=srvz20[1]/(n_buf_points20*1000)
+            iri20_avg=(iri20_left+iri20_right)/2
           # append to GPS list
           gps_list.append((seek, datetime, lonlat, speed_kmh, heading, iri_left, iri_right))
       # delete, consumed
@@ -880,83 +849,51 @@ if True:
     if pt["directional_index"] < 0:
       flip_heading = 180;
     iri_avg = (pt["iri_left"] + pt["iri_right"]) / 2
-    is0 = styles.IconStyle(ns, "id",
-              color=("%08X" % color32(iri_avg/red_iri)),
-              scale=0.7,
-              heading=(180+pt["heading"]+flip_heading)%360,
-              icon_href=arrow_icon_href)
-    isty0 = styles.Style(styles = [is0])
-    p0 = kml.Placemark(ns, 'id',
-              name=("%.2f" % iri_avg),
-              description=("L=%.2f mm/m\nR=%.2f mm/m\nL2=%.2f, R2=%.2f\ndir_ind=%d\nsnapstate=%d" %
-                (pt["iri_left"], pt["iri_right"],
-                 srvz[0] / (n_buf_points*1000), srvz[1] / (n_buf_points*1000),
-                 pt["directional_index"], pt["snapstate"],
-                )),
-              styles=[isty0])
-    p0.geometry = Point(pt["lonlat"])
-    t.timestamp, dummy = t.parse_str(pt["timestamp"])
-    p0.timeStamp = t.timestamp
-    f2.append(p0)
+    # in left,light are wav tag values
+    # in stdev_left, std_right field are calculated values
+    # FIXME: Every calculated srvz should be stored in snp.cut_list
+    # BUG: srvz currently contains last value so
+    # all placemarks will have the same srvz
+    print(kml.arrow(
+      value=iri_avg,
+      left=pt["iri_left"],left_stdev=srvz[0]/(n_buf_points*1000),
+      right=pt["iri_right"],right_stdev=srvz[1]/(n_buf_points*1000),
+      n=pt["n"],speed_min=50,speed_max=60,
+      lon=pt["lonlat"][0],lat=pt["lonlat"][1],
+      heading=(180+pt["heading"]+flip_heading)%360,
+      timestamp=pt["timestamp"].decode("utf-8")
+      ),end="")
+    # NOTE: useful debug data to be shown:
+    # pt["directional_index"], pt["snapstate"],
 
   # placemarks with statistics
-  for key,pt in snp.snap_stat.items(): # only the unique snap points
+  if True:
+   for key,pt in snp.snap_stat.items(): # only the unique snap points
     # some headings are reverse, use directional index
     # to orient them correctly
     flip_heading = 0
     if pt["directional_index"] < 0:
       flip_heading = 180;
     iri_avg = (pt["avg_left"] + pt["avg_right"]) / 2
-    is0 = styles.IconStyle(ns, "id",
-              color=("%08X" % color32(iri_avg/red_iri)),
-              scale=1.0,
-              heading=(180+pt["heading"]+flip_heading)%360,
-              icon_href=arrow_icon_href)
-    isty0 = styles.Style(styles = [is0])
-    p0 = kml.Placemark(ns, 'id',
-              name=("%.2f" % iri_avg),
-              description=(("L=%.2f ± %.2f mm/m\n"
-                            "R=%.2f ± %.2f mm/m\n"
-                            "N=%d\n"
-                            "Value ± is 2σ = 95%% coverage\n"
-                            "dir_ind=%d\n"
-                            "snapstate=%d\n"
-                            "%s"
-                            ) %
-                            (
-                             pt["avg_left" ], 2*pt["std_left" ],
-                             pt["avg_right"], 2*pt["std_right"],
-                             pt["n"],
-                             pt["directional_index"],
-                             pt["snapstate"],
-                             pt["timestamp"].decode("utf-8"),
-                            )
-              ),
-              styles=[isty0])
-    p0.geometry = Point(pt["lonlat"])
-    t.timestamp, dummy = t.parse_str(pt["timestamp"])
-    p0.timeStamp = t.timestamp
-    f2.append(p0)
+    print(kml.arrow(
+      value=iri_avg,
+      left=pt["avg_left"],left_stdev=2*pt["std_left"],
+      right=pt["avg_right"],right_stdev=2*pt["std_right"],
+      n=pt["n"],speed_min=50,speed_max=60,
+      lon=pt["lonlat"][0],lat=pt["lonlat"][1],
+      heading=(180+pt["heading"]+flip_heading)%360,
+      timestamp=pt["timestamp"].decode("utf-8")
+      ),end="")
+    # NOTE: useful debug data to be shown:
+    # pt["directional_index"], pt["snapstate"],
 
-# output to string with hard-replace "description" to add LookAt tag
-if True:
-  if time_last:
-    print(k.to_string(prettyprint=True).replace(
-  "</Document>",
-  "  <LookAt>\n\
-      <longitude>%f</longitude>\n\
-      <latitude>%f</latitude>\n\
-      <heading>0</heading>\n\
-      <tilt>0</tilt>\n\
-      <range>2000</range>\n\
-      <altitudeMode>relativeToGround</altitudeMode>\n\
-      <TimeSpan>\n\
-        <begin>%s</begin>\n\
-        <end>%s</end>\n\
-      </TimeSpan>\n\
-    </LookAt>\n\
-  </Document>" % (lonlat_1st[0], lonlat_1st[1], time_1st.decode("utf-8"), time_last.decode("utf-8"))
-    ))
-  else:
-    print(k.to_string(prettyprint=True))
-
+if time_last:
+  end_timestamp=time_last
+else:
+  end_timestamp=time_1st
+print(kml.footer(
+    lon=lonlat_1st[0],lat=lonlat_1st[1],
+    heading=0,
+    begin=time_1st.decode("utf-8"),
+    end=end_timestamp.decode("utf-8")
+    ),end="")
