@@ -75,10 +75,22 @@ vx = 80/3.6 # [m/s] vehicle speed [km/h] -> [m/s]
 accel = accel_sim(dt, vx) # accelerometer z-axis simulator
 g_scale = 8 # accelerometer digital scale setting 2/4/8 g full scale 32000
 iscale = 32000/g_scale/9.81 # factor conversion from [m/s**2] to sensor binary reading
-rp = 500.0 # [m] path radius
+r_earth = 6366.0E3 # [m] earth radius to convert [m] to lat/lon degrees
+# GPS position of center of "circle" of "rp" radius on the earth
+# currently allowed only positive values for N/E locations (europe/asia)
+lat_center = 45.5 # [deg]
+lon_center = 16.5 # [deg]
+# microminutes
+lat_center_umin = int((lat_center-int(lat_center))*60.0E6) # [umin]
+lon_center_umin = int((lon_center-int(lon_center))*60.0E6) # [umin]
+# convert [meters] -> lat/lon degrees near circle center
+m2latdeg = 1.0/6366000*180/math.pi                             # [deg/m]
+m2londeg = 1.0/6366000*180/math.pi/cos(lat_center*math.pi/180) # [deg/m]
+rp = 3000/(2*math.pi) # [m] path radius for 3 km circumference
 w = vx / rp # [rad/s] angular speed
-nturns = 10 # use 3 to shorten calc time
+nturns = 10 # use 2 to shorten calc time
 nsamples = int(nturns*2*rp*math.pi/vx/dt) # num of samples for N turns
+tag_interval = 100 # [samples]
 tag = "" # tag queue string starts as empty
 for i in range(nsamples):
   iaz = int(iscale*accel.z())
@@ -86,31 +98,37 @@ for i in range(nsamples):
     int(1000*math.sin(i/20)), int(1000*math.sin(i/30)), iaz,
     int(1000*math.sin(i/20)), int(1000*math.sin(i/30)), iaz
   ))
-  if i % 200 == 0: # every 200 samples = 0.2 seconds
+  if i % tag_interval == 0: # NMEA+IRI tag every 100 samples = 0.1 seconds if queue is ready
     isec = i//1000 # [s] integer seconds
     angle = int(i*w*dt*180.0/math.pi) # [deg]
-    angle_bidirectional = abs(angle-360*5) # [deg]
+    angle_bidirectional = abs(angle-180*nturns) # [deg] after half of turns reverse direction
     angle_imperfection = angle_bidirectional # % 360
     lr = rp + rp/100*math.sin(angle/10) # [m] + 1% imperfection (radius)
-    lx = lr * math.sin(angle_imperfection*math.pi/180)
-    ly = lr * math.cos(angle_imperfection*math.pi/180)
-    lonumin = int(30000000 + 768 * lx) # EW direction
-    latumin = int(30000000 + 540 * ly) # NS direction
+    lx = lr * math.sin(angle_imperfection*math.pi/180) # [m]
+    ly = lr * math.cos(angle_imperfection*math.pi/180) # [m]
+    lat = lat_center + m2latdeg * ly # [deg] NS direction
+    lon = lon_center + m2londeg * lx # [deg] EW direction
+    # integer microminutes lat/lon
+    latumin = int(60.0E6*(lat-int(lat))) # [umin]
+    lonumin = int(60.0E6*(lon-int(lon))) # [umin]
+    # after half of turns "angle_bidirectional" reverses
+    # so here we have to reverse "heading" with "flip"
     flip = 0
-    if angle < 360*5:
+    if angle < 180*nturns:
       flip = 180
+    # heading: N=0° E=90° S=180° W=270°
     heading = (angle_bidirectional+90+flip) % 360
     gps_data = "GPRMC,%02d%02d%02d.%1d,A,%02d%02d.%06d,N,%03d%02d.%06d,E,%06.2f,%05.1f,%02d%02d%02d,000.0,E,N" % (
       isec//3600,isec//60%60,isec%60,i//100%10, # hms.1/10
-      45,latumin//1000000,latumin%1000000,  # lat
-      16,lonumin//1000000,lonumin%1000000,  # lon
-      vx*1.944, # kt (43.2 kt = 80 km/h)
+      int(lat),latumin//1000000,latumin%1000000, # lat
+      int(lon),lonumin//1000000,lonumin%1000000, # lon
+      vx*1.944, # [kt] (43.2 kt = 80 km/h)
       heading,
       1,1,1  # dmy
     )
     tag += " $%s*%02X " % (gps_data, checksum(gps_data))
     # alternate iri 100/20
-    if (i // 200) & 1:
+    if (i // tag_interval) & 1:
       iri_data = ("L%05.2fR%05.2f" % (1.0, 1.0)) # iri100
     else:
       iri_data = ("L%05.2fS%05.2f" % (1.0, 1.0)) # iri20 has "S" instead of "R"
