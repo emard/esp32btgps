@@ -881,7 +881,7 @@ if True:
       right=pt["avg_right"],right_stdev=2*pt["std_right"],
       n=pt["n"],speed_min=50,speed_max=60,
       lon=pt["lonlat"][0],lat=pt["lonlat"][1],
-      heading=(180+pt["heading"]+flip_heading)%360,
+      heading=(pt["heading"]+flip_heading)%360,
       timestamp=pt["timestamp"].decode("utf-8")
       ),end="")
     # NOTE: useful debug data to be shown:
