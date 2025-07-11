@@ -3,6 +3,10 @@ apt install flac
 
 flac --channel-map=none  --ignore-chunk-sizes /tmp/file.wav
 
+Google Earth running in browser without installing it:
+
+https://earth.google.com
+
 Install Googe Earth
 
 To install Google Earth on Debian 10, we need to install gdebi package on your Debian 10 system. If you have not installed gdebi package install it by running following command in terminal:
