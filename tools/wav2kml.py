@@ -418,7 +418,8 @@ class snap:
   #        length and about equal or larger than GPS accuracy.
   # creates a list of new points to snap
   # when new point is considered, existing list is searched
-  # if the point can somewhere otherwise it is placed as a new point
+  # if the point alredy can snap to somewhere otherwise
+  # it is placed as a new point
   def snap_segments(self):
     # print("Snapping to %.1f m segments, snap distance: %.1f m" % (length, snap))
     #self.init_gps_tracking()
@@ -441,6 +442,7 @@ class snap:
     for gps in gps_list:
       # add to the track length using great circle formula
       # prev_prev_gps_track_length = self.prev_gps_track_length
+      #print(gps)
       self.prev_gps_track_length += self.current_gps_segment_length
       self.prev_gps = self.next_gps
       self.next_gps = gps
@@ -465,20 +467,20 @@ class snap:
       nearest_point = None
       index = 0
       for snap_point in self.snap_list:
-       if snap_point["directional_index"] > 0:
-        #print(snap_point)
-        new_distance = distance(snap_point["lonlat"][1], snap_point["lonlat"][0], self.next_gps[gps_lonlat][1], self.next_gps[gps_lonlat][0])
-        # find the nearest distance and its list index
-        if distance_m == None or new_distance < distance_m:
+        if snap_point["directional_index"] > 0:
+          #print(snap_point)
+          new_distance = distance(snap_point["lonlat"][1], snap_point["lonlat"][0], self.next_gps[gps_lonlat][1], self.next_gps[gps_lonlat][0])
+          # find the nearest distance and its list index
+          if distance_m == None or new_distance < distance_m:
             distance_m = new_distance
             nearest_index = index
             # current point along the track
             #nearest_point = self.next_gps
             nearest_point = snap_point
-        index += 1
+          index += 1
       cut_index = index # if we don't find nearest previous point, cut after last point
       if nearest_index != None:
-        # print("nearest index ", nearest_index, " distance: ", distance)
+        #print("nearest index ", nearest_index, " distance: ", distance_m)
         
         # heading of the nearest point
         nearest_heading = self.snap_list[nearest_index]["heading"]
@@ -541,13 +543,13 @@ class snap:
         direction = 1
         if nearest_index != None and snapstate == 2:
           heading_difference = ((heading_deg - nearest_heading) % 360)
-          # print "heading difference %.02f %.02f" % (heading, nearest_heading)
+          #print("heading difference %.02f %.02f" % (heading, nearest_heading))
           if heading_difference > 90 and heading_difference < 270:
             direction = -1
         else:
           nearest_heading = heading_deg
         #if direction < 0:
-        #  print "found reverse heading index %d" % cut_index
+        #  print("found reverse heading index %d" % cut_index)
         #if nearest_index != None:
         #  segment_index = nearest_index
         #else:
