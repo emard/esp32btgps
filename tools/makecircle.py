@@ -10,11 +10,26 @@ x,y,z = symbols("x y z", real=True)
 def fpath_sympy(x):
   # this makes profile with IRI=1 m/km
   return \
-    +2.1e-3*cos(2*pi*0.09*x+0.02/0.0111111*cos(2*pi*0.0111111*x))
+    +0.915e-3*sin(2*pi*x)
 
-# example: this makes profile with IRI=1 m/km
-#    +2.1e-3*cos(2*pi*0.09*x+0.02/0.0111111*cos(2*pi*0.0111111*x))
-#    +5.0e-6*cos(2*pi*4.50*x+0.10/0.0526315*cos(2*pi*0.0526315*x))  # should not affect IRI much
+# each example makes a profile with IRI=1 m/km:
+
+#    +0.915e-3*sin(2*pi*x)
+# clean sine 1 m wavelength
+
+#    +1.07e-3*sin(2*pi*0.2*x)
+# clean sine 5 m wavelength
+
+#    +2.15e-3*sin(2*pi*0.09*x)
+# clean sine 11.111 m wavelength
+
+#    +2.1e-3*sin(2*pi*0.09*x+0.02/0.0111111*sin(2*pi*0.0111111*x))
+# wobbling sine around 11.111 m wavelength
+
+#    +2.1e-3*sin(2*pi*0.09*x+0.02/0.0111111*sin(2*pi*0.0111111*x))
+#    +0.5e-3*sin(2*pi*4.50*x+0.10/0.0526315*sin(2*pi*0.0526315*x))  # negligible contribution
+# superposition of two wobbling sines:
+# first wobbles around 11.111 m wavelength and second wobbles around 0.222222 m wavelength
 
 d1fpath_sympy = diff(  fpath_sympy(x),x) # 1st derivative
 d2fpath_sympy = diff(d1fpath_sympy   ,x) # 2nd derivative
@@ -76,6 +91,8 @@ accel = accel_sim(dt, vx) # accelerometer z-axis simulator
 g_scale = 8 # accelerometer digital scale setting 2/4/8 g full scale 32000
 iscale = 32000/g_scale/9.81 # factor conversion from [m/s**2] to sensor binary reading
 r_earth = 6366.0E3 # [m] earth radius to convert [m] to lat/lon degrees
+# GPS date
+day,month,year = 12,1,22
 # GPS position of center of "circle" of "rp" radius on the earth
 # currently allowed only positive values for N/E locations (europe/asia)
 lat_center = 45.5 # [deg]
@@ -90,7 +107,7 @@ rp = 3000/(2*math.pi) # [m] path radius for 3 km circumference
 w = vx / rp # [rad/s] angular speed
 nturns = 10 # use 2 to shorten calc time
 nsamples = int(nturns*2*rp*math.pi/vx/dt) # num of samples for N turns
-tag_interval = 100 # [samples]
+tag_interval = 150 # [samples]
 tag = "" # tag queue string starts as empty
 for i in range(nsamples):
   iaz = int(iscale*accel.z())
@@ -100,7 +117,7 @@ for i in range(nsamples):
   ))
   if i % tag_interval == 0: # NMEA+IRI tag every 100 samples = 0.1 seconds if queue is ready
     isec = i//1000 # [s] integer seconds
-    angle = int(i*w*dt*180.0/math.pi) # [deg]
+    angle = i*w*dt*180.0/math.pi # [deg]
     angle_bidirectional = abs(angle-180*nturns) # [deg] after half of turns reverse direction
     angle_imperfection = angle_bidirectional # % 360
     lr = rp + rp/100*math.sin(angle/10) # [m] + 1% imperfection (radius)
@@ -124,7 +141,7 @@ for i in range(nsamples):
       int(lon),lonumin//1000000,lonumin%1000000, # lon
       vx*1.944, # [kt] (43.2 kt = 80 km/h)
       heading,
-      1,1,1  # dmy
+      day,month,year # dmy
     )
     tag += " $%s*%02X " % (gps_data, checksum(gps_data))
     # alternate iri 100/20
