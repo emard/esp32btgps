@@ -58,8 +58,8 @@ for i in range(1,points):
   # x10 to fit on the same plot,
   # on wtp-46 plot left side is displacement with scale: 0-8
   # on wtp-46 plot right side is iri with scale 0-0.8
-  print("%3d %6.2f YP=0x%08X IRI=%9.5f VZ=0x%08X" % (i,x[i],yp,iri[i], roughness.Z[0]-roughness.Z[2] + 0x100000000 & 0xFFFFFFFF ))
-  print("Z=[ 0x%08X 0x%08X 0x%08X 0x%08X ]" % (roughness.Z[0] + 0x100000000 & 0xFFFFFFFF, roughness.Z[1] + 0x100000000 & 0xFFFFFFFF, roughness.Z[2] + 0x100000000 & 0xFFFFFFFF,roughness.Z[3] + 0x100000000 & 0xFFFFFFFF))
+  print("%3d %6.2f YP=0x%08X IRI=%9.5f VZ=0x%08X" % (i,x[i],yp,iri[i], np.uint32(roughness.Z[0]-roughness.Z[2]) ))
+  print("Z=[ 0x%08X 0x%08X 0x%08X 0x%08X ]" % (np.uint32(roughness.Z[0]), np.uint32(roughness.Z[1]), np.uint32(roughness.Z[2]), np.uint32(roughness.Z[3])))
   print(roughness.Z);
   print("")
   #print(i,"z",z[i],"iri",iri[i])
