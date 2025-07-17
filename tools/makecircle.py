@@ -10,26 +10,27 @@ x,y,z = symbols("x y z", real=True)
 def fpath_sympy(x):
   # this makes profile with IRI=1 m/km
   return \
-    +0.915e-3*sin(2*pi*x)
+    +1.08e-3*sin(2*pi*0.2*x)
 
 # each example makes a profile with IRI=1 m/km:
 
-#    +0.915e-3*sin(2*pi*x)
+#    +0.921e-3*sin(2*pi*x)
 # clean sine 1 m wavelength
 
-#    +1.07e-3*sin(2*pi*0.2*x)
+#    +1.08e-3*sin(2*pi*0.2*x)
 # clean sine 5 m wavelength
 
 #    +2.15e-3*sin(2*pi*0.09*x)
 # clean sine 11.111 m wavelength
 
-#    +2.1e-3*sin(2*pi*0.09*x+0.02/0.0111111*sin(2*pi*0.0111111*x))
+#    +2.13e-3*sin(2*pi*0.09*x+0.02/0.0111111*sin(2*pi*0.0111111*x))
 # wobbling sine around 11.111 m wavelength
 
-#    +2.1e-3*sin(2*pi*0.09*x+0.02/0.0111111*sin(2*pi*0.0111111*x))
-#    +0.5e-3*sin(2*pi*4.50*x+0.10/0.0526315*sin(2*pi*0.0526315*x))  # negligible contribution
+#    +2.12e-3*sin(2*pi*0.09*x+0.02/0.0111111*sin(2*pi*0.0111111*x))
+#    +0.50e-3*sin(2*pi*4.50*x+0.10/0.0526315*sin(2*pi*0.0526315*x))  # negligible contribution
 # superposition of two wobbling sines:
 # first wobbles around 11.111 m wavelength and second wobbles around 0.222222 m wavelength
+
 
 d1fpath_sympy = diff(  fpath_sympy(x),x) # 1st derivative
 d2fpath_sympy = diff(d1fpath_sympy   ,x) # 2nd derivative
