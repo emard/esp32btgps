@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import math, numpy, struct
+import goldencar
 from sympy import *
 
 # set some vars that take part in following symbolc function and differentiation
@@ -10,27 +11,28 @@ x,y,z = symbols("x y z", real=True)
 def fpath_sympy(x):
   # this makes profile with IRI=1 m/km
   return \
-    +1.08e-3*sin(2*pi*0.2*x)
+    +1.07e-3*sin(2*pi*0.2*x)
 
 # each example makes a profile with IRI=1 m/km:
 
-#    +0.921e-3*sin(2*pi*x)
+#    +0.92e-3*sin(2*pi*x)
 # clean sine 1 m wavelength
 
-#    +1.08e-3*sin(2*pi*0.2*x)
+#    +1.07e-3*sin(2*pi*0.2*x)
 # clean sine 5 m wavelength
 
-#    +2.15e-3*sin(2*pi*0.09*x)
+#    +2.116e-3*sin(2*pi*0.09*x)
 # clean sine 11.111 m wavelength
 
-#    +2.13e-3*sin(2*pi*0.09*x+0.02/0.0111111*sin(2*pi*0.0111111*x))
+#    +2.1e-3*sin(2*pi*0.09*x+0.01/0.0111111*sin(2*pi*0.0111111*x))
 # wobbling sine around 11.111 m wavelength
+# along pathlen_m IRI varies around 1.00+-0.05 with period 90 m
 
-#    +2.12e-3*sin(2*pi*0.09*x+0.02/0.0111111*sin(2*pi*0.0111111*x))
-#    +0.50e-3*sin(2*pi*4.50*x+0.10/0.0526315*sin(2*pi*0.0526315*x))  # negligible contribution
+#    +2.1e-3*sin(2*pi*0.09*x+0.01/0.0111111*sin(2*pi*0.0111111*x)) \
+#    +0.1e-3*sin(2*pi*4.50*x+0.00/0.0526315*sin(2*pi*0.0526315*x))  # negligible contribution
 # superposition of two wobbling sines:
 # first wobbles around 11.111 m wavelength and second wobbles around 0.222222 m wavelength
-
+# along pathlen_m IRI varies around 1.00+-0.05 with period 90 m
 
 d1fpath_sympy = diff(  fpath_sympy(x),x) # 1st derivative
 d2fpath_sympy = diff(d1fpath_sympy   ,x) # 2nd derivative
@@ -69,7 +71,20 @@ def checksum(x):
     s ^= ord(b)
   return s & 0xFF
 
-f = open("/tmp/circle.wav", "wb")
+# calculate IRI by entering ideal slope to response matrix model
+pathlen_m = 1000 # [m] calculate ideal IRI after this length
+goldencar.sampling_length=0.05 # [m]
+goldencar.new_sampling_length()
+goldencar.reset_iri()
+n_points = int(pathlen_m/goldencar.sampling_length)
+#print("sampling points:",n_points,"every:",goldencar.sampling_length*100,"cm")
+for i in range(n_points):
+  slope=d1fpath(i*goldencar.sampling_length)
+  goldencar.enter_slope(slope,slope)
+print("generating sensor response with IRI%.0f = %.3f mm/m after %.0f m" % (goldencar.iri_length,goldencar.iri()[0],pathlen_m))
+output_filename="/tmp/circle.wav"
+print("writing", output_filename)
+f = open(output_filename, "wb")
 hdr  = b"RIFF" + bytearray([0x00, 0x00, 0x00, 0x00]) # chunk size bytes (len, including hdr), file growing, not yet known
 hdr += b"WAVE"
 # subchunk1: fmt
@@ -112,9 +127,11 @@ tag_interval = 150 # [samples]
 tag = "" # tag queue string starts as empty
 for i in range(nsamples):
   iaz = int(iscale*accel.z())
+  # iaz//4: x and y channels are not used
+  # in x and y sensors pick small signal related to iaz
   sample = bytearray(struct.pack("<hhhhhh", 
-    int(1000*math.sin(i/20)), int(1000*math.sin(i/30)), iaz,
-    int(1000*math.sin(i/20)), int(1000*math.sin(i/30)), iaz
+    iaz//4, iaz//4, iaz,
+    iaz//4, iaz//4, iaz
   ))
   if i % tag_interval == 0: # NMEA+IRI tag every 100 samples = 0.1 seconds if queue is ready
     isec = i//1000 # [s] integer seconds
