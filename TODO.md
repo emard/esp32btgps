@@ -155,6 +155,7 @@ core
     [x] FM frequency set
     [x] SPI slave for speed and iri
     [x] random inbalance in L/R calc results (slope ready not used)
+    [ ] report identical GPS positions in wav and kml
 
 tools (wav2kml etc)
 
