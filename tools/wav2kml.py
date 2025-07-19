@@ -362,7 +362,7 @@ class snap:
   def __init__(self):
     # cut data into segment length [m]
     segment_length = 100.0    # [m]
-    segment_snap   =  12.0    # [m]
+    segment_snap   =  15.0    # [m]
     start_length   =   0.0    # analyze from this length [m]
     stop_length    =   1.0e9  # analyze up to this length [m]
 
