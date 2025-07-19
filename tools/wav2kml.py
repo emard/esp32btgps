@@ -19,7 +19,7 @@ import kml # local file "kml.py"
 # 0:IRI from wav tags,
 # 1:IRI calculated from z-accel wav data (adxl355)
 # 2:IRI calculated from xyz-gyro wav data (adxrs290) angular velocity
-calculate  = 1
+calculate = 1
 # accel/gyro, select constant and data wav channel
 if calculate == 1: # accel adxl355
   g_scale    = 8 # 2/4/8 g is 32000 integer reading
