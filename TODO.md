@@ -124,6 +124,8 @@ esp32
     [x] kml date in the document description
     [x] sensor range +-2-4-8 g configurable
     [x] if left sensor is missing, right can be detected
+    [ ] report identical GPS positions in wav and kml
+    [ ] snap length config parameter
 
 core
 
@@ -155,14 +157,13 @@ core
     [x] FM frequency set
     [x] SPI slave for speed and iri
     [x] random inbalance in L/R calc results (slope ready not used)
-    [ ] report identical GPS positions in wav and kml
 
 tools (wav2kml etc)
 
     [ ] csv sh script runnable from any directory
     [x] csv dump
     [ ] geostat in python
-    [ ] if nmea line checksum wrong don't process it
+    [x] if nmea line checksum wrong don't process it
     [ ] on track and placemarks indicate tunnel mode
     [ ] motor vibration (RPM) sensing, conversion to speed
     [ ] calibrate accelerometer heading with GPS
@@ -176,6 +177,7 @@ tools (wav2kml etc)
     [x] snap
     [x] colorized description
         https://developers.google.com/kml/documentation/kml_tut
+    [ ] improve snap
 
 makecircle
 
