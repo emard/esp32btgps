@@ -626,7 +626,12 @@ time_1st    = None
 time_last   = None
 lonlat_1st  = None
 
-print(kml.header(name="PROFILOG"),end="")
+name="PROFILOG"
+if len(argv): # filename in kml hame
+  basename=argv[1][argv[1].rfind("/")+1:argv[1].rfind(".")]
+  if len(basename):
+    name+=" "+basename
+print(kml.header(name=name),end="")
 
 # buffer to read wav
 b=bytearray(12)
