@@ -67,7 +67,7 @@ BluetoothSerial SerialBT;
 //uint8_t GPS_MAC[6] = {0x10, 0xC6, 0xFC, 0x14, 0x6B, 0xD0};
 // String GPS_NAME = "Garmin GLO #46bd0"; // old from rpi box
 
-// char *GPS_PIN = "1234"; //<- standard pin would be provided by default
+// const char *GPS_PIN = "1234"; //<- standard pin would be provided by default
 
 bool connected = false;
 char *speakfile = NULL;
@@ -347,7 +347,7 @@ void setup() {
   init_srvz_iri(); // depends on sensor type detected
 
   SerialBT.begin("ESP32", true);
-  SerialBT.setPin(GPS_PIN.c_str());
+  SerialBT.setPin((const char *)GPS_PIN.c_str(), GPS_PIN.length());
   Serial.println("Bluetooth master started");
   Serial.println(esp_get_idf_version()); // v4.4-beta1-189-ga79dc75f0a
   //printf("sizeof(s_stat) = %d\n", sizeof(s_stat));
