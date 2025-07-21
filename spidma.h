@@ -2,9 +2,9 @@
 // Version 0.1.0 tested
 // Version 0.1.1 and 0.1.2 compile with arduino 1.8.19
 // Version 0.2.0 doesn't compile
-#include <ESP32DMASPIMaster.h> // Version 0.1.0 tested
-extern ESP32DMASPI::Master master;
-#include <driver/spi_master.h> // SPI_DMA_CH1
+#include <SPI.h> // Version 0.1.0 tested
+extern SPIClass *master;
+//#include <driver/spi_master.h> // SPI_DMA_CH1
 
 // hardware buffer size in bytes at fpga core (must be divisible by 12)
 // 3072, 6144, 9216, 12288, 15360
@@ -16,6 +16,8 @@ static const uint32_t BUFFER_SIZE = (SPI_READER_BUF_SIZE+6+4) & 0xFFFFFFFC; // m
 extern uint8_t  last_sensor_reading[12];
 
 void spi_init(void);
+void master_txrx(uint8_t *buf, int len);
+void master_tx_rx(uint8_t *txbuf, uint8_t *rxbuf, int len);
 void rds_init(void);
 void spi_speed_write(int spd);
 void spi_srvz_read(uint32_t *srvz);

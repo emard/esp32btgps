@@ -6,7 +6,6 @@
 #include "geostat.h" // round_count
 #include <WiFi.h> // for rds_report_ip()
 
-ESP32DMASPI::Master master;
 RDS rds;
 
 uint8_t* spi_master_tx_buf;
@@ -14,6 +13,31 @@ uint8_t* spi_master_rx_buf;
 uint8_t  last_sensor_reading[12];
 uint8_t adxl355_regio = 1; // REG I/O protocol 1:ADXL355 0:ADXRS290
 uint8_t adxl_devid_detected = 0; // 0xED for ADXL355, 0x92 for ADXRS290
+
+SPIClass *master = NULL;
+int master_CLK_Hz = 4000000;
+SPISettings master_spi_settings = SPISettings(4000000/*HZ*/, MSBFIRST, SPI_MODE3);
+
+// buf tx will be transmitted and
+// buf overwritten with rx
+void master_txrx(uint8_t *buf, int len)
+{
+  master->beginTransaction(master_spi_settings);
+  digitalWrite(PIN_CSN, LOW);
+  master->transfer(buf, len);
+  digitalWrite(PIN_CSN, HIGH);
+  master->endTransaction();
+}
+
+void master_tx_rx(uint8_t *txbuf, uint8_t *rxbuf, int len)
+{
+  master->beginTransaction(master_spi_settings);
+  digitalWrite(PIN_CSN, LOW);
+  memcpy(rxbuf, txbuf, len);
+  master->transfer(rxbuf, len);
+  digitalWrite(PIN_CSN, HIGH);
+  master->endTransaction();
+}
 
 void adxl355_write_reg(uint8_t a, uint8_t v)
 {
@@ -23,7 +47,7 @@ void adxl355_write_reg(uint8_t a, uint8_t v)
     spi_master_tx_buf[0] = a; // adxrs290 write reg addr a
   spi_master_tx_buf[1] = v;
   //digitalWrite(PIN_CSN, 0);
-  master.transfer(spi_master_tx_buf, NULL, 2);
+  master_txrx(spi_master_tx_buf, 2);
   //digitalWrite(PIN_CSN, 1);
 }
 
@@ -34,7 +58,7 @@ uint8_t adxl355_read_reg(uint8_t a)
   else
     spi_master_tx_buf[0] = a|0x80; // adxrs290 read reg addr a
   //digitalWrite(PIN_CSN, 0);
-  master.transfer(spi_master_tx_buf, spi_master_rx_buf, 2);
+  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 2);
   //digitalWrite(PIN_CSN, 1);
   return spi_master_rx_buf[1];
 }
@@ -48,7 +72,7 @@ void adxl355_ctrl(uint8_t x)
   spi_master_tx_buf[3] = 0x00; // adresss
   spi_master_tx_buf[4] = 0x00; // adresss
   spi_master_tx_buf[5] = x;
-  master.transfer(spi_master_tx_buf, NULL, 6);
+  master_txrx(spi_master_tx_buf, 6);
 }
 
 //                   sensor type         sclk polarity         sclk phase
@@ -173,7 +197,7 @@ void cold_init_sensors(void)
   delay(2); // wait for request direct mode to be accepted
   if(adxl_devid_detected == 0)
   {
-    master.setFrequency(4000000); // 5 MHz max ADXRS290
+    master_CLK_Hz = 4000000; // 5 MHz max ADXRS290
     for(int8_t j = 1; j >= 0; j--)
     {
       // first try 1:ADXL355, then 0:ADXRS290
@@ -196,10 +220,10 @@ void cold_init_sensors(void)
   serialno[0] = 0;
   serialno[1] = 0;
   if(adxl_devid_detected == 0xED) // ADXL355
-    master.setFrequency(4000000); // 8 MHz max ADXL355, no serial number
+    master_CLK_Hz = 4000000; // 8 MHz max ADXL355, no serial number
   if(adxl_devid_detected == 0x92) // ADXRS290 gyroscope has serial number
   { // read serial number
-    master.setFrequency(4000000); // 5 MHz max ADXRS290, read serial number
+    master_CLK_Hz = 4000000; // 5 MHz max ADXRS290, read serial number
     for(uint8_t lr = 0; lr < 2; lr++)
     {
       adxl355_ctrl(lr|2|CTRL_SELECT); // 2 core direct mode, 4 SCLK inversion
@@ -226,7 +250,7 @@ uint8_t adxl355_available(void)
   // read number of entries in the fifo
   spi_master_tx_buf[0] = ADXL355_FIFO_ENTRIES*2+1; // FIFO_ENTRIES read request
   //digitalWrite(PIN_CSN, 0);
-  master.transfer(spi_master_tx_buf, spi_master_rx_buf, 2);
+  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 2);
   //digitalWrite(PIN_CSN, 1);
   return spi_master_rx_buf[1]/3;
 }
@@ -240,7 +264,7 @@ uint16_t spi_slave_ptr(void)
   spi_master_tx_buf[3] = 0; // addr [15: 8]
   spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
   spi_master_tx_buf[5] = 0; // dummy
-  master.transfer(spi_master_tx_buf, spi_master_rx_buf, 8); // read, last 2 bytes are ptr value
+  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 8); // read, last 2 bytes are ptr value
   return spi_master_rx_buf[6]+(spi_master_rx_buf[7]<<8);
 }
 
@@ -254,7 +278,7 @@ void spi_slave_read(uint16_t a, uint16_t n)
   spi_master_tx_buf[3] = a >> 8; // addr [15: 8]
   spi_master_tx_buf[4] = a; // addr [ 7: 0] lsb
   spi_master_tx_buf[5] = 0; // dummy
-  master.transfer(spi_master_tx_buf, spi_master_rx_buf, 6+n); // read, last 2 bytes are ptr value
+  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 6+n); // read, last 2 bytes are ptr value
 }
 
 // read fifo to 16-buffer
@@ -267,7 +291,7 @@ uint8_t adxl355_rdfifo16(void)
     spi_master_tx_buf[0] = ADXL355_FIFO_DATA*2+1; // FIFO_DATA read request
     //spi_master_tx_buf[0] = ADXL355_XDATA3*2+1; // current data
     //digitalWrite(PIN_CSN, 0);
-    master.transfer(spi_master_tx_buf, spi_master_rx_buf, 10);
+    master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 10);
     //digitalWrite(PIN_CSN, 1);
     //spi_master_rx_buf[1] = 10; // debug
     //spi_master_rx_buf[2] = 12; // debug
@@ -286,23 +310,24 @@ uint8_t adxl355_rdfifo16(void)
 void spi_init(void)
 {
     // to use DMA buffer, use these methods to allocate buffer
-    spi_master_tx_buf = master.allocDMABuffer(BUFFER_SIZE);
-    spi_master_rx_buf = master.allocDMABuffer(BUFFER_SIZE);
+    //spi_master_tx_buf = master.allocDMABuffer(BUFFER_SIZE);
+    //spi_master_rx_buf = master.allocDMABuffer(BUFFER_SIZE);
 
     // adxl355   needs SPI_MODE1 (all lines directly connected)
     // spi_slave needs SPI_MODE3
     // adxl355  direct can use SPI_MODE3 with sclk inverted
     // adxrs290 direct can use SPI_MODE3 with sclk normal
-    master.setDataMode(SPI_MODE3); // for DMA, only 1 or 3 is available
-    master.setFrequency(4000000); // Hz 5 MHz initial, after autodect ADXL355: 8 MHz, ADXRS290: 5 MHz
-    master.setMaxTransferSize(BUFFER_SIZE); // bytes
-    master.setDMAChannel(SPI_DMA_CH1); // 1 or 2 only
-    master.setQueueSize(1); // transaction queue size
+    // master.setDataMode(SPI_MODE3); // for DMA, only 1 or 3 is available
+    master_CLK_Hz = 4000000; // Hz 5 MHz initial, after autodect ADXL355: 8 MHz, ADXRS290: 5 MHz
+    // master.setMaxTransferSize(BUFFER_SIZE); // bytes
+    // master.setDMAChannel(SPI_DMA_CH1); // 1 or 2 only
+    // master.setQueueSize(1); // transaction queue size
     pinMode(PIN_CSN, OUTPUT);
     digitalWrite(PIN_CSN, 1);
     // VSPI = CS:  5, CLK: 18, MOSI: 23, MISO: 19
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    master.begin(VSPI, PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CSN); // use -1 if no CSN
+    // master->begin(VSPI, PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CSN); // use -1 if no CSN
+    master->begin();
 }
 
 // must be called after spi_init when buffer is allocated
@@ -327,7 +352,7 @@ void spi_speed_write(int spd)
   spi_master_tx_buf[8] = icvx>>16;
   spi_master_tx_buf[9] = icvx>>8;
   spi_master_tx_buf[10]= icvx;
-  master.transfer(spi_master_tx_buf, NULL, 5+4+2); // write speed binary
+  master_txrx(spi_master_tx_buf, 5+4+2); // write speed binary
 }
 
 // returns 
@@ -341,7 +366,7 @@ void spi_srvz_read(uint32_t *srvz)
   spi_master_tx_buf[3] = 0; // addr [15: 8]
   spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
   spi_master_tx_buf[5] = 0; // dummy
-  master.transfer(spi_master_tx_buf, spi_master_rx_buf, 6+4*4); // read srvz binary
+  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 6+4*4); // read srvz binary
   srvz[0] = (spi_master_rx_buf[ 6]<<24)|(spi_master_rx_buf[ 7]<<16)|(spi_master_rx_buf[ 8]<<8)|(spi_master_rx_buf[ 9]);
   srvz[1] = (spi_master_rx_buf[10]<<24)|(spi_master_rx_buf[11]<<16)|(spi_master_rx_buf[12]<<8)|(spi_master_rx_buf[13]);
   srvz[2] = (spi_master_rx_buf[14]<<24)|(spi_master_rx_buf[15]<<16)|(spi_master_rx_buf[16]<<8)|(spi_master_rx_buf[17]);
@@ -356,7 +381,7 @@ uint8_t spi_btn_read(void)
   spi_master_tx_buf[3] = 0; // addr [15: 8]
   spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
   spi_master_tx_buf[5] = 0; // dummy
-  master.transfer(spi_master_tx_buf, spi_master_rx_buf, 6+1); // read srvz binary
+  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 6+1); // read srvz binary
   return spi_master_rx_buf[6];
 }
 
@@ -373,7 +398,7 @@ void spi_rds_write(void)
   //      1234567890123456789012345678901234567890123456789012345678901234
   rds.rt((char *)"Restart breaks normal functioning. Firmware needs maintenance.  ");
   rds.ct(2000,0,1,0,0,0);
-  master.transfer(spi_master_tx_buf, NULL, 5+(4+16+1)*13); // write RDS binary
+  master_txrx(spi_master_tx_buf, 5+(4+16+1)*13); // write RDS binary
   if(0)
   {
     for(int i = 0; i < 5+(4+16+1)*13; i++)
@@ -477,7 +502,7 @@ void rds_message(struct tm *tm)
   spi_master_tx_buf[2] = 0; // addr [23:16]
   spi_master_tx_buf[3] = 0; // addr [15: 8]
   spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
-  master.transfer(spi_master_tx_buf, NULL, 5+(4+16+1)*13); // write RDS binary
+  master_txrx(spi_master_tx_buf, 5+(4+16+1)*13); // write RDS binary
   // print to LCD display
   spi_master_tx_buf[1] = 0xC; // addr [31:24] msb to LCD
   spi_master_tx_buf[4] = 23; // addr [ 7: 0] lsb HOME X=22 Y=0
@@ -491,7 +516,7 @@ void rds_message(struct tm *tm)
     memcpy(spi_master_tx_buf+5+10, disp_long, 30);
     memcpy(spi_master_tx_buf+5+10+32, disp_long+30, len_disp_long-30);
   }
-  master.transfer(spi_master_tx_buf, NULL, 5+10+64); // write RDS to LCD
+  master_txrx(spi_master_tx_buf, 5+10+64); // write RDS to LCD
 }
 
 void rds_report_ip(struct tm *tm)
@@ -521,14 +546,14 @@ void rds_report_ip(struct tm *tm)
       spi_master_tx_buf[2] = 0; // addr [23:16]
       spi_master_tx_buf[3] = 0; // addr [15: 8]
       spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
-      master.transfer(spi_master_tx_buf, NULL, 5+(4+16+1)*13); // write RDS binary
+      master_txrx(spi_master_tx_buf, 5+(4+16+1)*13); // write RDS binary
       // print to LCD display
       spi_master_tx_buf[1] = 0xC; // addr [31:24] msb to LCD
       spi_master_tx_buf[4] = 23; // addr [ 7: 0] lsb X=22 Y=0
       memset(spi_master_tx_buf+5, 32, 10+64); // clear last 8 char of 1st and next 2 lines
       memcpy(spi_master_tx_buf+5, disp_short, strlen(disp_short)); // copy short RDS message
       memcpy(spi_master_tx_buf+5+10, disp_long, strlen(disp_long)); // copy long RDS message
-      master.transfer(spi_master_tx_buf, NULL, 5+10+64); // write RDS to LCD
+      master_txrx(spi_master_tx_buf, 5+10+64); // write RDS to LCD
     }
 }
 
@@ -540,7 +565,7 @@ void set_fm_freq(void)
   spi_master_tx_buf[3] = 0; // addr [15: 8]
   spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
   memcpy(spi_master_tx_buf+5, fm_freq, 8);
-  master.transfer(spi_master_tx_buf, NULL, 5+8); // write to FM freq
+  master_txrx(spi_master_tx_buf, 5+8); // write to FM freq
   // show freq on LCD
   for(uint8_t i = 0; i < 2; i++)
   {
@@ -550,7 +575,7 @@ void set_fm_freq(void)
     spi_master_tx_buf[3] = 0; // addr [15: 8]
     spi_master_tx_buf[4] = 1+(i?7:0); // addr [ 7: 0] lsb HOME X=0,6 Y=0
     sprintf((char *)spi_master_tx_buf+5, "%3d.%02d", fm_freq[i]/1000000, (fm_freq[i]%1000000)/10000);
-    master.transfer(spi_master_tx_buf, NULL, 5+6); // write to LCD
+    master_txrx(spi_master_tx_buf, 5+6); // write to LCD
   }
   // next RDS message will have new AF
   rds.af[0] = fm_freq[0]/100000;
@@ -565,7 +590,7 @@ void clr_lcd(void)
   spi_master_tx_buf[3] = 0; // addr [15: 8]
   spi_master_tx_buf[4] = 1; // addr [ 7: 0] lsb HOME X=0 Y=0
   memset(spi_master_tx_buf+5, 32, 480);
-  master.transfer(spi_master_tx_buf, NULL, 5+480); // write to LCD
+  master_txrx(spi_master_tx_buf, 5+480); // write to LCD
 }
 
 // print to LCD screen
@@ -578,7 +603,7 @@ void lcd_print(uint8_t x, uint8_t y, uint8_t invert, char *a)
   spi_master_tx_buf[4] = 1+x+((y&7)<<5); // addr [ 7: 0] lsb
   int l = strlen(a);
   memcpy(spi_master_tx_buf+5, a, l);
-  master.transfer(spi_master_tx_buf, NULL, 5+l); // write to LCD
+  master_txrx(spi_master_tx_buf, 5+l); // write to LCD
 }
 
 void write_tag(char *a)
@@ -591,7 +616,7 @@ void write_tag(char *a)
   spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
   for(i = 5; *a != 0; i++, a++)
     spi_master_tx_buf[i] = *a; // write tag char
-  master.transfer(spi_master_tx_buf, NULL, i); // write tag string
+  master_txrx(spi_master_tx_buf, i); // write tag string
 }
 
 // repeatedly call this to refill buffer with PCM data from file
@@ -616,7 +641,7 @@ int play_pcm(int n)
     spi_master_tx_buf[3] = 0; // addr [15: 8]
     spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
     file_pcm.read(spi_master_tx_buf+5, n);
-    master.transfer(spi_master_tx_buf, NULL, n+5); // write pcm to play
+    master_txrx(spi_master_tx_buf, n+5); // write pcm to play
     #if 0
     // debug print sending PCM packets
     Serial.print("PCM ");
@@ -649,7 +674,7 @@ void beep_pcm(int n)
     v += ((i+4)&8) ? -1 : 1;
     spi_master_tx_buf[i+5] = v*16; // create wav
   }
-  master.transfer(spi_master_tx_buf, NULL, n+5); // write pcm to play
+  master_txrx(spi_master_tx_buf, n+5); // write pcm to play
 }
 
 // write n bytes to 52-byte RDS memory
@@ -663,14 +688,14 @@ void write_rds(uint8_t *a, int n)
   spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
   for(i = 0; i < n; i++, a++)
     spi_master_tx_buf[i+5] = *a; // write RDS byte
-  master.transfer(spi_master_tx_buf, NULL, n+5); // write tag string
+  master_txrx(spi_master_tx_buf, n+5); // write tag string
 }
 void spi_direct_test(void)
 {
   // begin debug reading ID and printing
   spi_master_tx_buf[0] = ADXL355_DEVID_AD*2+1; // read ID (4 bytes expected)
   //digitalWrite(PIN_CSN, 0);
-  master.transfer(spi_master_tx_buf, spi_master_rx_buf, 5);
+  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 5);
   //digitalWrite(PIN_CSN, 1);
   for(int i = 1; i <= 4; i++)
   {
