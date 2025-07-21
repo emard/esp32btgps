@@ -14,7 +14,7 @@ uint8_t  last_sensor_reading[12];
 uint8_t adxl355_regio = 1; // REG I/O protocol 1:ADXL355 0:ADXRS290
 uint8_t adxl_devid_detected = 0; // 0xED for ADXL355, 0x92 for ADXRS290
 
-SPIClass *master = NULL;
+SPIClass master = SPIClass(VSPI);
 int master_CLK_Hz = 4000000;
 SPISettings master_spi_settings = SPISettings(4000000/*HZ*/, MSBFIRST, SPI_MODE3);
 
@@ -22,21 +22,21 @@ SPISettings master_spi_settings = SPISettings(4000000/*HZ*/, MSBFIRST, SPI_MODE3
 // buf overwritten with rx
 void master_txrx(uint8_t *buf, int len)
 {
-  master->beginTransaction(master_spi_settings);
-  digitalWrite(PIN_CSN, LOW);
-  master->transfer(buf, len);
-  digitalWrite(PIN_CSN, HIGH);
-  master->endTransaction();
+  master.beginTransaction(master_spi_settings);
+  //digitalWrite(PIN_CSN, LOW);
+  master.transfer(buf, len);
+  //digitalWrite(PIN_CSN, HIGH);
+  master.endTransaction();
 }
 
 void master_tx_rx(uint8_t *txbuf, uint8_t *rxbuf, int len)
 {
-  master->beginTransaction(master_spi_settings);
-  digitalWrite(PIN_CSN, LOW);
+  master.beginTransaction(master_spi_settings);
+  //digitalWrite(PIN_CSN, LOW);
   memcpy(rxbuf, txbuf, len);
-  master->transfer(rxbuf, len);
-  digitalWrite(PIN_CSN, HIGH);
-  master->endTransaction();
+  master.transfer(rxbuf, len);
+  //digitalWrite(PIN_CSN, HIGH);
+  master.endTransaction();
 }
 
 void adxl355_write_reg(uint8_t a, uint8_t v)
@@ -327,7 +327,7 @@ void spi_init(void)
     // VSPI = CS:  5, CLK: 18, MOSI: 23, MISO: 19
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
     // master->begin(VSPI, PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CSN); // use -1 if no CSN
-    master->begin();
+    master.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CSN);
 }
 
 // must be called after spi_init when buffer is allocated

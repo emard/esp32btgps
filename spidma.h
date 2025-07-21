@@ -3,7 +3,7 @@
 // Version 0.1.1 and 0.1.2 compile with arduino 1.8.19
 // Version 0.2.0 doesn't compile
 #include <SPI.h> // Version 0.1.0 tested
-extern SPIClass *master;
+//extern SPIClass master;
 //#include <driver/spi_master.h> // SPI_DMA_CH1
 
 // hardware buffer size in bytes at fpga core (must be divisible by 12)
