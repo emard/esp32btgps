@@ -704,7 +704,7 @@ void spi_slave_test(void)
   spi_master_tx_buf[6] = 0x22; // data
   spi_master_tx_buf[7] = 0x33; // data
   spi_master_tx_buf[8] = count++; // data
-  master.transfer(spi_master_tx_buf, 9); // write
+  master.transfer(spi_master_tx_buf, NULL, 9); // write
   #endif // end writing
   wptr = spi_slave_ptr();
   spi_master_tx_buf[0] = 1; // 1: read ram
@@ -988,6 +988,6 @@ void finalize_data(struct tm *tm){
       spi_master_tx_buf[2] = 0; // addr [23:16] (0:normal, 1:invert)
       spi_master_tx_buf[3] = 0; // addr [15: 8]
       spi_master_tx_buf[4] = 1+(3<<5); // addr [ 7: 0] lsb HOME X=0 Y=3
-      master.transfer(spi_master_tx_buf, 5+(limit_lcd_n<<5)); // write to LCD
+      master.transfer(spi_master_tx_buf, NULL, 5+(limit_lcd_n<<5)); // write to LCD
     }
 }

@@ -4,6 +4,7 @@
 // Version 0.2.0 doesn't compile
 #include <ESP32DMASPIMaster.h> // Version 0.1.0 tested
 extern ESP32DMASPI::Master master;
+#include <driver/spi_master.h> // SPI_DMA_CH1
 
 // hardware buffer size in bytes at fpga core (must be divisible by 12)
 // 3072, 6144, 9216, 12288, 15360
