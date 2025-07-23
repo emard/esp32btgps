@@ -10,6 +10,7 @@
 
 module spirw_slave_v
 #(
+  parameter c_read_cycle = 0, // 0:45F, 1:12F, adjust if SPI master reads rotated byte
   parameter c_addr_bits = 16,
   parameter c_sclk_capable_pin = 0 //, // 0-sclk is generic pin, 1-sclk is clock capable pin
 )
@@ -58,7 +59,7 @@ module spirw_slave_v
             begin
               if(R_bit_count[3:0] == 4'd7) // first bit in new byte, increment address from 5th SPI byte on
                 R_raddr[c_addr_bits-1:0] <= R_raddr[c_addr_bits-1:0] + 1;
-              if(R_bit_count[2:0] == 3'd1)
+              if(R_bit_count[2:0] == c_read_cycle)
                 R_request_read <= R_raddr[c_addr_bits];
               else
                 R_request_read <= 1'b0;
@@ -111,7 +112,7 @@ module spirw_slave_v
             begin
               if(R_bit_count[3:0] == 4'd7) // first bit in new byte, increment address from 5th SPI byte on
                 R_raddr[c_addr_bits-1:0] <= R_raddr[c_addr_bits-1:0] + 1;
-              if(R_bit_count[2:0] == 3'd1)
+              if(R_bit_count[2:0] == c_read_cycle)
                 R_request_read <= R_raddr[c_addr_bits];
               else
                 R_request_read <= 1'b0;

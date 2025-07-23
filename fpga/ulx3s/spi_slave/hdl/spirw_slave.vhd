@@ -8,6 +8,7 @@ use ieee.std_logic_arith.all;
 entity spirw_slave is
   generic
   (
+    c_read_cycle : natural := 0; -- 0:45F, 1:12F, adjust if SPI master reads rotated byte
     c_addr_bits : natural := 16;
     c_sclk_capable_pin : natural := 0 -- 0-sclk is generic pin, 1-sclk is clock capable pin
   );
@@ -27,6 +28,7 @@ architecture syn of spirw_slave is
   component spirw_slave_v -- verilog name and its parameters
   generic
   (
+    c_read_cycle : natural;
     c_addr_bits : natural;
     c_sclk_capable_pin : natural
   );
@@ -46,6 +48,7 @@ begin
   spirw_slave_v_inst: spirw_slave_v
   generic map
   (
+    c_read_cycle => c_read_cycle,
     c_addr_bits => c_addr_bits,
     c_sclk_capable_pin => c_sclk_capable_pin
   )
