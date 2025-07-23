@@ -8,7 +8,7 @@ If new SD card is factory formatted as EXFAT,
 it has to be reformatted to FAT32 before first use.
 Tested and works for 64GB SDXC Sandisk card.
 
-    mkfs.vaf -F32 -n PROFILOG /dev/sda1
+    mkfs.vfat -F32 -n PROFILOG /dev/sda1
 
 Generate audio .WAV files:
 
