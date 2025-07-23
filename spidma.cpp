@@ -23,19 +23,19 @@ SPISettings master_spi_settings = SPISettings(4000000/*HZ*/, MSBFIRST, SPI_MODE3
 void master_txrx(uint8_t *buf, int len)
 {
   master.beginTransaction(master_spi_settings);
-  //digitalWrite(PIN_CSN, LOW);
+  digitalWrite(PIN_CSN, LOW);
   master.transfer(buf, len);
-  //digitalWrite(PIN_CSN, HIGH);
+  digitalWrite(PIN_CSN, HIGH);
   master.endTransaction();
 }
 
 void master_tx_rx(uint8_t *txbuf, uint8_t *rxbuf, int len)
 {
   master.beginTransaction(master_spi_settings);
-  //digitalWrite(PIN_CSN, LOW);
+  digitalWrite(PIN_CSN, LOW);
   memcpy(rxbuf, txbuf, len);
   master.transfer(rxbuf, len);
-  //digitalWrite(PIN_CSN, HIGH);
+  digitalWrite(PIN_CSN, HIGH);
   master.endTransaction();
 }
 
@@ -310,8 +310,8 @@ uint8_t adxl355_rdfifo16(void)
 void spi_init(void)
 {
     // to use DMA buffer, use these methods to allocate buffer
-    //spi_master_tx_buf = master.allocDMABuffer(BUFFER_SIZE);
-    //spi_master_rx_buf = master.allocDMABuffer(BUFFER_SIZE);
+    spi_master_tx_buf = (uint8_t *)malloc(BUFFER_SIZE);
+    spi_master_rx_buf = (uint8_t *)malloc(BUFFER_SIZE);
 
     // adxl355   needs SPI_MODE1 (all lines directly connected)
     // spi_slave needs SPI_MODE3
@@ -381,8 +381,8 @@ uint8_t spi_btn_read(void)
   spi_master_tx_buf[3] = 0; // addr [15: 8]
   spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
   spi_master_tx_buf[5] = 0; // dummy
-  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 6+1); // read srvz binary
-  return spi_master_rx_buf[6];
+  master_txrx(spi_master_tx_buf, 6+1); // read srvz binary
+  return spi_master_tx_buf[6];
 }
 
 void spi_rds_write(void)
