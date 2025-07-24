@@ -394,8 +394,8 @@ void spi_rds_write(void)
   spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
   rds.ta(0);
   rds.ps((char *)"RESTART ");
-  //               1         2         3         4         5         6
-  //      1234567890123456789012345678901234567890123456789012345678901234
+  //                       1         2         3         4         5         6
+  //              1234567890123456789012345678901234567890123456789012345678901234
   rds.rt((char *)"Restart breaks normal functioning. Firmware needs maintenance.  ");
   rds.ct(2000,0,1,0,0,0);
   master_txrx(spi_master_tx_buf, 5+(4+16+1)*13); // write RDS binary
@@ -690,6 +690,7 @@ void write_rds(uint8_t *a, int n)
     spi_master_tx_buf[i+5] = *a; // write RDS byte
   master_txrx(spi_master_tx_buf, n+5); // write tag string
 }
+
 void spi_direct_test(void)
 {
   // begin debug reading ID and printing
