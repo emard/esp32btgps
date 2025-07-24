@@ -260,7 +260,7 @@ void setup() {
   clr_lcd();
   lcd_print(14,0,0,(char *)"MHz");
 
-  int web = ((~spi_btn_read()) & 1); // hold BTN0 and plug power to enable web server
+  int web = (spi_btn_read() & 2); // hold BTN1 and plug power to enable web server
   if(web)
   {
     loop_pointer = &loop_web;
