@@ -1228,9 +1228,11 @@ void loop_run(void)
         handle_obd_line_complete();
       line_tprev = t_ms; // record time, used to detect silence
       line_i = 0; // line consumed, start new
+      #ifdef PIN_LED
       // BT LED ON
       pinMode(PIN_LED, OUTPUT);
       digitalWrite(PIN_LED, LED_ON);
+      #endif
     }
   }
   if(mode_obd_gps == 0)
@@ -1244,9 +1246,11 @@ void loop_run(void)
 
   if (line_tdelta > 10000) // 10 seconds of serial silence? then reconnect
   {
+      #ifdef PIN_LED
       // BT LED OFF
       pinMode(PIN_LED, INPUT);
       digitalWrite(PIN_LED, LED_OFF);
+      #endif
       //Serial.println("reconnect");
       handle_reconnect();
       // reconnect has waited too much, we must reload t_ms
@@ -1295,16 +1299,20 @@ void loop_web(void)
   rds_report_ip(&tm);
   if(is_connected)
   {
+    #ifdef PIN_LED
     // WiFi LED ON
     pinMode(PIN_LED, OUTPUT);
     digitalWrite(PIN_LED, LED_ON);
+    #endif
     speak_report_ip(&tm);
   }
   else
   {
+    #ifdef PIN_LED
     // WiFi LED OFF
     pinMode(PIN_LED, INPUT);
     digitalWrite(PIN_LED, LED_OFF);
+    #endif
   }
   btn_handler();
   speech();
