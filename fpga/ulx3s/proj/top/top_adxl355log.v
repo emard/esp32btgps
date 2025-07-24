@@ -39,6 +39,12 @@ Pin 11      Digital Ground       DGND
 Pin 12      Digital Power        VDD
 */
 
+// makefile constraints/ulx3s_v20.lpf
+//`define ULX3S_v30x
+
+// makefile constraints/ulx3s_v316.lpf
+`define ULX3S_v31x
+
 `default_nettype none
 module top_adxl355log
 #(
@@ -81,14 +87,18 @@ module top_adxl355log
   output        wifi_rxd,
   input         wifi_txd,
   inout         wifi_gpio0,
-  input         wifi_gpio5,
   inout         wifi_gpio12, wifi_gpio2,
   input         wifi_gpio13, wifi_gpio4,
   input         wifi_gpio15, wifi_gpio14,
-  input         wifi_gpio16, wifi_gpio17,
-  input         wifi_gpio25, // gn11 ESP32 wifi_gpio25 PPS to FPGA
-  output        wifi_gpio26, // gp11 ESP32 wifi_gpio26 IRQ PPS feedback
-  output        wifi_gpio35, // gp13 ESP32 wifi_gpio35 MISO
+  `ifdef ULX3S_v30x
+  input         wifi_gpio16, wifi_gpio17, // ULX3S v2.x.x - v3.0.x
+  `endif
+  `ifdef ULX3S_v31x
+  input         wifi_gpio26, wifi_gpio27, // ULX3S v3.1.x
+  `endif
+  input         wifi_gpio25, // PPS to FPGA
+  output        wifi_gpio32, // IRQ PPS feedback
+  output        wifi_gpio33, // MISO
   //inout   [3:0] sd_d, // wifi_gpio 13,12,4,2
   //input         sd_cmd, sd_clk, // wifi_gpio 15,14
   output        sd_wp, // BGA pin exists but not connected on PCB
@@ -323,11 +333,17 @@ module top_adxl355log
   endgenerate
 
   // ESP32 connections direct to ADXL355 (FPGA is slave for ESP32)
+  `ifdef ULX3S_v30x
   assign csn  = wifi_gpio17;
   assign mosi = wifi_gpio16;
-  assign wifi_gpio35 = miso; // wifi_gpio35 v2.1.2
-  //assign wifi_gpio35 = 0; // debug, should print 00
-  //assign wifi_gpio35 = 1; // debug, should print FF
+  `endif
+  `ifdef ULX3S_v31x
+  assign csn  = wifi_gpio27;
+  assign mosi = wifi_gpio26;
+  `endif
+  assign wifi_gpio33 = miso;
+  //assign wifi_gpio33 = 0; // debug, should print 00
+  //assign wifi_gpio33 = 1; // debug, should print FF
   assign sclk = wifi_gpio0;
 
   // generate PPS signal (1 Hz, 100 ms duty cycle)
@@ -359,7 +375,7 @@ module top_adxl355log
   wire pps_btn = wifi_gpio25; // normal
   //wire pps_btn = ftdi_nrts & ~btn[1];
   wire pps_feedback;
-  assign wifi_gpio26 = pps_feedback;
+  assign wifi_gpio32 = pps_feedback;
   assign pps_feedback = pps_btn; // ESP32 needs its own PPS feedback
 
   wire [7:0] phase;
@@ -833,7 +849,7 @@ module top_adxl355log
   #(
     .c_clk_spi_mhz(clk_out2_hz/1000000),
     .c_vga_sync(lcd_txt),
-    .c_reset_us(1000),
+    .c_reset_us(2000), // adjust for reliable start of LCD, wrong value = blank screen
     .c_init_file(lcd_txt ? "st7789_linit.mem" : "st7789_linit_xflip.mem"), // flip for HEX display
     //.c_init_size(75), // long init
     //.c_init_size(35), // standard init (not long)
