@@ -24,6 +24,8 @@
 // #define IDF4 1
 
 // Arduino 2.3.6
+// Tools -> Boards Manager -> esp32 by Espressif Systems
+// Board: "ESP32 Dev Module"
 // CPU Frequency: "240 MHz (WiFi/BT)"
 // Core Debug Level: "None"
 // Erase All Flash Before Sketch Upload: "Enabled"
