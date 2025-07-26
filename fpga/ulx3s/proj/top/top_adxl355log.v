@@ -276,7 +276,7 @@ module top_adxl355log
     (
         .clk(clk),
         .csn(csn),
-        .sclk(sclk),
+        .sclk(~sclk),
         .mosi(mosi),
         .miso(spi_ram_miso), // muxed for direct
         .rd(ram_rd),
@@ -832,7 +832,7 @@ module top_adxl355log
     .i_vsync(vga_vsync),
     .i_blank(vga_blank),
     .i_csn(csn),
-    .i_sclk(sclk),
+    .i_sclk(~sclk),
     .i_mosi(mosi),
     .o_r(osd_vga_r),
     .o_g(osd_vga_g),
