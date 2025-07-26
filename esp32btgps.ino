@@ -24,17 +24,17 @@
 // #define IDF4 1
 
 // Arduino 2.3.6
-// CPU Frequency: 240 MHz
-// Core Debug Level: None
-// Erase all flash before sketch upload: Enabled
-// Events run on Core: 1
-// Flash Frequency: 80 MHz
-// Arduino runs on Core: 1
-// Flash mode: QIO
-// Flash size: 4MB
-// JTAG adapter: Disabled
-// Partition Scheme: No OTA (2MB APP/2MB SPIFFS)
-// PSRAM: Enabled (for snap_point_max 1000 in geostat.h)
+// CPU Frequency: "240 MHz (WiFi/BT)"
+// Core Debug Level: "None"
+// Erase All Flash Before Sketch Upload: "Enabled"
+// Events Run On: "Core 1"
+// Flash Frequency: "80 MHz"
+// Arduino Runs On: "Core 1"
+// Flash Mode: "QIO"
+// Flash Size: "4MB (32Mb)"
+// JTAG Adapter: "Disabled"
+// Partition Scheme: "No OTA (2MB APP/2MB SPIFFS)"
+// PSRAM: "Enabled" (for snap_point_max 1000 in geostat.h)
 // #define IDF3 0
 // #define IDF4 1
 
