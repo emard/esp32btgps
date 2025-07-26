@@ -126,6 +126,8 @@ esp32
     [x] if left sensor is missing, right can be detected
     [ ] report identical GPS positions in wav and kml
     [ ] snap length config parameter
+    [ ] latlon float->double for last digit precision
+        lat,lon 45,16 quantizes approx as 46.000003,16.000002
 
 core
 
