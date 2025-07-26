@@ -154,10 +154,10 @@ void nmea2latlon(char *a, struct int_latlon *latlon)
 
 void latlon2float(struct int_latlon *latlon, float *lat, float *lon)
 {
-  *lat = latlon->lat_deg + abs(latlon->lat_umin)*1.66666666e-8;
+  *lat = latlon->lat_deg + abs(latlon->lat_umin)*(double)1.6666666666e-8;
   if(latlon->lat_umin < 0)
     *lat = -*lat;
-  *lon = latlon->lon_deg + abs(latlon->lon_umin)*1.66666666e-8;
+  *lon = latlon->lon_deg + abs(latlon->lon_umin)*(double)1.6666666666e-8;
   if(latlon->lon_umin < 0)
     *lon = -*lon;
 }
