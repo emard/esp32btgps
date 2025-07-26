@@ -14,6 +14,7 @@ extern uint8_t* spi_master_tx_buf;
 extern uint8_t* spi_master_rx_buf;
 static const uint32_t BUFFER_SIZE = (SPI_READER_BUF_SIZE+6+4) & 0xFFFFFFFC; // multiply of 4
 extern uint8_t  last_sensor_reading[12];
+extern uint8_t  adxl_devid_detected;
 
 void spi_init(void);
 void master_txrx(uint8_t *buf, int len);
