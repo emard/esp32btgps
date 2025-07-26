@@ -34,7 +34,9 @@
 // Flash Size: "4MB (32Mb)"
 // JTAG Adapter: "Disabled"
 // Partition Scheme: "No OTA (2MB APP/2MB SPIFFS)"
-// PSRAM: "Enabled" (for snap_point_max 1000 in geostat.h)
+// PSRAM: "Enabled" (geostat.h snap_point_max 1000 up to 100km)
+// PSRAM: "Disabled" (geostat.h snap_point_max 50 up to 5km)
+// ESP32 without PSRAM is useless and may reboot often
 // #define IDF3 0
 // #define IDF4 1
 
