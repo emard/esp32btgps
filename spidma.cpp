@@ -16,7 +16,7 @@ uint8_t adxl_devid_detected = 0; // 0xED for ADXL355, 0x92 for ADXRS290
 
 SPIClass master = SPIClass(VSPI);
 int master_CLK_Hz = 4000000;
-SPISettings master_spi_settings = SPISettings(4000000/*HZ*/, MSBFIRST, SPI_MODE3);
+SPISettings master_spi_settings = SPISettings(4000000/*HZ*/, MSBFIRST, SPI_MODE2);
 
 // buf tx will be transmitted and
 // buf overwritten with rx
@@ -46,20 +46,16 @@ void adxl355_write_reg(uint8_t a, uint8_t v)
   else
     spi_master_tx_buf[0] = a; // adxrs290 write reg addr a
   spi_master_tx_buf[1] = v;
-  //digitalWrite(PIN_CSN, 0);
   master_txrx(spi_master_tx_buf, 2);
-  //digitalWrite(PIN_CSN, 1);
 }
 
 uint8_t adxl355_read_reg(uint8_t a)
 {
   if(adxl355_regio)
-    spi_master_tx_buf[0] = a*2+1; // adxl355 read reg addr a
+    spi_master_rx_buf[0] = a*2+1; // adxl355 read reg addr a
   else
-    spi_master_tx_buf[0] = a|0x80; // adxrs290 read reg addr a
-  //digitalWrite(PIN_CSN, 0);
-  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 2);
-  //digitalWrite(PIN_CSN, 1);
+    spi_master_rx_buf[0] = a|0x80; // adxrs290 read reg addr a
+  master_txrx(spi_master_rx_buf, 2);
   return spi_master_rx_buf[1];
 }
 
@@ -75,8 +71,8 @@ void adxl355_ctrl(uint8_t x)
   master_txrx(spi_master_tx_buf, 6);
 }
 
-//                   sensor type         sclk polarity         sclk phase
-#define CTRL_SELECT (adxl355_regio<<2)|((!adxl355_regio)<<3)|((!adxl355_regio)<<4)
+//                    sensor type          sclk polarity        sclk phase
+#define CTRL_SELECT ((adxl355_regio)<<2)|((adxl355_regio)<<3)|((adxl355_regio)<<4)
 
 // turn sensor power on, set range, filtering, sync mode
 void init_sensors(void)
@@ -195,6 +191,7 @@ void cold_init_sensors(void)
   // 2<<4 clock phase
   adxl355_ctrl(2|CTRL_SELECT);
   delay(2); // wait for request direct mode to be accepted
+  #if 0
   if(adxl_devid_detected == 0)
   {
     master_CLK_Hz = 4000000; // 5 MHz max ADXRS290
@@ -211,6 +208,7 @@ void cold_init_sensors(void)
       }
     }
   }
+  #endif
   read_chip_id:;
   // now read full 4 bytes of chip id
   for(uint8_t i = 0; i < 4; i++)
@@ -248,23 +246,21 @@ void cold_init_sensors(void)
 uint8_t adxl355_available(void)
 {
   // read number of entries in the fifo
-  spi_master_tx_buf[0] = ADXL355_FIFO_ENTRIES*2+1; // FIFO_ENTRIES read request
-  //digitalWrite(PIN_CSN, 0);
-  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 2);
-  //digitalWrite(PIN_CSN, 1);
+  spi_master_rx_buf[0] = ADXL355_FIFO_ENTRIES*2+1; // FIFO_ENTRIES read request
+  master_txrx(spi_master_rx_buf, 2);
   return spi_master_rx_buf[1]/3;
 }
 
 // read current write pointer of the spi slave
 uint16_t spi_slave_ptr(void)
 {
-  spi_master_tx_buf[0] = 1; // 1: read ram
-  spi_master_tx_buf[1] = 1; // addr [31:24] msb
-  spi_master_tx_buf[2] = 0; // addr [23:16]
-  spi_master_tx_buf[3] = 0; // addr [15: 8]
-  spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
-  spi_master_tx_buf[5] = 0; // dummy
-  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 8); // read, last 2 bytes are ptr value
+  spi_master_rx_buf[0] = 1; // 1: read ram
+  spi_master_rx_buf[1] = 1; // addr [31:24] msb
+  spi_master_rx_buf[2] = 0; // addr [23:16]
+  spi_master_rx_buf[3] = 0; // addr [15: 8]
+  spi_master_rx_buf[4] = 0; // addr [ 7: 0] lsb
+  spi_master_rx_buf[5] = 0; // dummy
+  master_txrx(spi_master_rx_buf, 8); // read, last 2 bytes are ptr value
   return spi_master_rx_buf[6]+(spi_master_rx_buf[7]<<8);
 }
 
@@ -272,13 +268,13 @@ uint16_t spi_slave_ptr(void)
 // result will appear at spi_master_rx_buf at offset 6
 void spi_slave_read(uint16_t a, uint16_t n)
 {
-  spi_master_tx_buf[0] = 1; // 1: read ram
-  spi_master_tx_buf[1] = 0; // addr [31:24] msb
-  spi_master_tx_buf[2] = 0; // addr [23:16]
-  spi_master_tx_buf[3] = a >> 8; // addr [15: 8]
-  spi_master_tx_buf[4] = a; // addr [ 7: 0] lsb
-  spi_master_tx_buf[5] = 0; // dummy
-  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 6+n); // read, last 2 bytes are ptr value
+  spi_master_rx_buf[0] = 1; // 1: read ram
+  spi_master_rx_buf[1] = 0; // addr [31:24] msb
+  spi_master_rx_buf[2] = 0; // addr [23:16]
+  spi_master_rx_buf[3] = a >> 8; // addr [15: 8]
+  spi_master_rx_buf[4] = a; // addr [ 7: 0] lsb
+  spi_master_rx_buf[5] = 0; // dummy
+  master_txrx(spi_master_rx_buf, 6+n); // read, last 2 bytes are ptr value
 }
 
 // read fifo to 16-buffer
@@ -288,10 +284,10 @@ uint8_t adxl355_rdfifo16(void)
   //n = 1; // debug
   for(uint8_t i = 0; i != n; i++)
   {
-    spi_master_tx_buf[0] = ADXL355_FIFO_DATA*2+1; // FIFO_DATA read request
+    spi_master_rx_buf[0] = ADXL355_FIFO_DATA*2+1; // FIFO_DATA read request
     //spi_master_tx_buf[0] = ADXL355_XDATA3*2+1; // current data
     //digitalWrite(PIN_CSN, 0);
-    master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 10);
+    master_txrx(spi_master_rx_buf, 10);
     //digitalWrite(PIN_CSN, 1);
     //spi_master_rx_buf[1] = 10; // debug
     //spi_master_rx_buf[2] = 12; // debug
@@ -360,13 +356,13 @@ void spi_speed_write(int spd)
 // [um/m] sum abs(vz) over  20m/0.05m =  400 points integer sum
 void spi_srvz_read(uint32_t *srvz)
 {
-  spi_master_tx_buf[0] = 1; // 1: read ram
-  spi_master_tx_buf[1] = 0x2; // addr [31:24] msb
-  spi_master_tx_buf[2] = 0; // addr [23:16]
-  spi_master_tx_buf[3] = 0; // addr [15: 8]
-  spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
-  spi_master_tx_buf[5] = 0; // dummy
-  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 6+4*4); // read srvz binary
+  spi_master_rx_buf[0] = 1; // 1: read ram
+  spi_master_rx_buf[1] = 0x2; // addr [31:24] msb
+  spi_master_rx_buf[2] = 0; // addr [23:16]
+  spi_master_rx_buf[3] = 0; // addr [15: 8]
+  spi_master_rx_buf[4] = 0; // addr [ 7: 0] lsb
+  spi_master_rx_buf[5] = 0; // dummy
+  master_txrx(spi_master_rx_buf, 6+4*4); // read srvz binary
   srvz[0] = (spi_master_rx_buf[ 6]<<24)|(spi_master_rx_buf[ 7]<<16)|(spi_master_rx_buf[ 8]<<8)|(spi_master_rx_buf[ 9]);
   srvz[1] = (spi_master_rx_buf[10]<<24)|(spi_master_rx_buf[11]<<16)|(spi_master_rx_buf[12]<<8)|(spi_master_rx_buf[13]);
   srvz[2] = (spi_master_rx_buf[14]<<24)|(spi_master_rx_buf[15]<<16)|(spi_master_rx_buf[16]<<8)|(spi_master_rx_buf[17]);
@@ -375,14 +371,14 @@ void spi_srvz_read(uint32_t *srvz)
 
 uint8_t spi_btn_read(void)
 {
-  spi_master_tx_buf[0] = 1; // 1: read ram
-  spi_master_tx_buf[1] = 0xB; // addr [31:24] msb
-  spi_master_tx_buf[2] = 0; // addr [23:16]
-  spi_master_tx_buf[3] = 0; // addr [15: 8]
-  spi_master_tx_buf[4] = 0; // addr [ 7: 0] lsb
-  spi_master_tx_buf[5] = 0; // dummy
-  master_txrx(spi_master_tx_buf, 6+1); // read srvz binary
-  return spi_master_tx_buf[6];
+  spi_master_rx_buf[0] = 1; // 1: read ram
+  spi_master_rx_buf[1] = 0xB; // addr [31:24] msb
+  spi_master_rx_buf[2] = 0; // addr [23:16]
+  spi_master_rx_buf[3] = 0; // addr [15: 8]
+  spi_master_rx_buf[4] = 0; // addr [ 7: 0] lsb
+  spi_master_rx_buf[5] = 0; // dummy
+  master_txrx(spi_master_rx_buf, 6+1); // read BTN state
+  return spi_master_rx_buf[6];
 }
 
 void spi_rds_write(void)
@@ -398,7 +394,6 @@ void spi_rds_write(void)
   //              1234567890123456789012345678901234567890123456789012345678901234
   rds.rt((char *)"Restart breaks normal functioning. Firmware needs maintenance.  ");
   rds.ct(2000,0,1,0,0,0);
-  master_txrx(spi_master_tx_buf, 5+(4+16+1)*13); // write RDS binary
   if(0)
   {
     for(int i = 0; i < 5+(4+16+1)*13; i++)
@@ -408,6 +403,7 @@ void spi_rds_write(void)
     }
     Serial.println("RDS set");
   }
+  master_txrx(spi_master_tx_buf, 5+(4+16+1)*13); // write RDS binary
 }
 
 // integer log2 for MB free
@@ -694,10 +690,8 @@ void write_rds(uint8_t *a, int n)
 void spi_direct_test(void)
 {
   // begin debug reading ID and printing
-  spi_master_tx_buf[0] = ADXL355_DEVID_AD*2+1; // read ID (4 bytes expected)
-  //digitalWrite(PIN_CSN, 0);
-  master_tx_rx(spi_master_tx_buf, spi_master_rx_buf, 5);
-  //digitalWrite(PIN_CSN, 1);
+  spi_master_rx_buf[0] = ADXL355_DEVID_AD*2+1; // read ID (4 bytes expected)
+  master_txrx(spi_master_rx_buf, 5);
   for(int i = 1; i <= 4; i++)
   {
     Serial.print(spi_master_rx_buf[i], HEX);
