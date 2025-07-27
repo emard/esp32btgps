@@ -4,6 +4,7 @@
 #include <stdlib.h> // abs
 #include "kml.h"
 #include "nmea.h"
+#include "version.h"
 
 /*
 longitude -180..180 (x-direction, EW)
@@ -49,6 +50,8 @@ Color codes: \
 Click arrow to display statistics as<br/>\n\
 average ± uncertainty<br/>\n\
 where \"uncertainty\" represents 2σ = 95%% coverage.\n\
+<br/>\n\
+<font color=\"white\">Logger: %s Core: %s Hardware: %s</font>\n\
 ]]>\n\
     </description>\n\
     <visibility>1</visibility>\n\
@@ -237,7 +240,8 @@ void kml_header(char *name)
   sprintf(kmlbuf, str_kml_header,
     name,
     red_iri, 2.0/2.5*red_iri, 1.5/2.5*red_iri, 1.0/2.5*red_iri,
-    0.5/2.5*red_iri, 0.3/2.5*red_iri);
+    0.5/2.5*red_iri, 0.3/2.5*red_iri,
+    LOGGER_VERSION, CORE_VERSION, HARDWARE_VERSION);
 }
 
 // color 0-1023
