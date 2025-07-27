@@ -22,7 +22,7 @@
 // ULX3S v3.1.x
 #define PIN_PPS  25
 #define PIN_IRQ  32
-// #define PIN_LED   5 // shared with JTAG, avoid using during development
+#define PIN_LED   5 // shared with JTAG, avoid using during development
 #define LED_ON    0
 #define LED_OFF   1
 #define PIN_SCK   0
