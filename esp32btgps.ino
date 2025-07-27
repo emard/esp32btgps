@@ -47,6 +47,7 @@
 #include "web.h"
 #include "kml.h"
 #include "geostat.h"
+#include "version.h"
 #include <sys/time.h>
 #include <WiFi.h> // to speak IP
 
@@ -290,6 +291,10 @@ void setup() {
     read_last_nmea();
     finalize_data(&tm);
     lcd_print(22,0,0,(char *)"WiFi");
+    lcd_print(0,1,0,(char *)"L");
+    lcd_print(1,1,0,(char *)LOGGER_VERSION);
+    lcd_print(7,1,0,(char *)"C");
+    lcd_print(8,1,0,(char *)CORE_VERSION);
     web_setup();
     speakaction[0] = (char *)"/profilog/speak/webserver.wav"; // TODO say web server maybe IP too
     speakaction[1] = NULL;
