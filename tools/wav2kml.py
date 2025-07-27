@@ -631,7 +631,7 @@ if len(argv): # filename in kml hame
   basename=argv[1][argv[1].rfind("/")+1:argv[1].rfind(".")]
   if len(basename):
     name+=" "+basename
-print(kml.header(name=name),end="")
+print(kml.header(name=name,version="wav2kml: 2.0.0"),end="")
 
 # buffer to read wav
 b=bytearray(12)
@@ -859,6 +859,7 @@ if True:
     # in left,light are wav tag values
     # in stdev_left, std_right field are calculated values
     # FIXME: Every calculated srvz should be stored in snp.cut_list
+    # FIXME: speed_min speed_max real values not 50-60
     # BUG: srvz currently contains last value so
     # all placemarks will have the same srvz
     print(kml.arrow(

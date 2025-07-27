@@ -1,7 +1,7 @@
 # simple kml generator
 red_iri=2.5
 
-def header(name:str)->str:
+def header(name:str,version:str)->str:
   # float colors to colorize IRI values
   red      =         red_iri
   orange   = 2.0/2.5*red_iri
@@ -31,6 +31,8 @@ Color codes: \
 Click arrow to display statistics as<br/>\n\
 average ± uncertainty<br/>\n\
 where \"uncertainty\" represents 2σ = 95%% coverage.\n\
+<br/>\n\
+<font color=\"white\">%s</font>\n\
 ]]>\n\
     </description>\n\
     <visibility>1</visibility>\n\
@@ -38,7 +40,7 @@ where \"uncertainty\" represents 2σ = 95%% coverage.\n\
       <name>Lines</name>\n\
       <description>Lines with measurement details</description>\n\
       <visibility>1</visibility>\n\
-" % (name, red, orange, green, cyan, blue, violet, magenta)
+" % (name, red, orange, green, cyan, blue, violet, magenta, version)
 
 def arrow(value:float,left:float,left_stdev:float,right:float,right_stdev:float,n:int,speed_min:int,speed_max:int,lon:float,lat:float,heading:float,timestamp:str)->str:
   color_int=color32(int(1024*value/red_iri))
