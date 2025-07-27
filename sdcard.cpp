@@ -223,11 +223,15 @@ void write_wav_header(void)
 int sensor_check(void)
 {
   int retval = 0; // start with both sensors fail
-  const int checkat[4] = { // make it 12-even
-    SPI_READER_BUF_SIZE*1/8 - SPI_READER_BUF_SIZE*1/8%12,
-    SPI_READER_BUF_SIZE*2/8 - SPI_READER_BUF_SIZE*2/8%12,
-    SPI_READER_BUF_SIZE*3/8 - SPI_READER_BUF_SIZE*3/8%12,
-    SPI_READER_BUF_SIZE*4/8 - SPI_READER_BUF_SIZE*4/8%12 - 12,
+  const int checkat[] = { // make it 12-even
+    SPI_READER_BUF_SIZE*1/16 - SPI_READER_BUF_SIZE*1/16%12,
+    SPI_READER_BUF_SIZE*2/16 - SPI_READER_BUF_SIZE*2/16%12,
+    SPI_READER_BUF_SIZE*3/16 - SPI_READER_BUF_SIZE*3/16%12,
+    SPI_READER_BUF_SIZE*4/16 - SPI_READER_BUF_SIZE*4/16%12,
+    SPI_READER_BUF_SIZE*5/16 - SPI_READER_BUF_SIZE*5/16%12,
+    SPI_READER_BUF_SIZE*6/16 - SPI_READER_BUF_SIZE*6/16%12,
+    SPI_READER_BUF_SIZE*7/16 - SPI_READER_BUF_SIZE*7/16%12,
+    SPI_READER_BUF_SIZE*8/16 - SPI_READER_BUF_SIZE*8/16%12 - 12,
   }; // list of indexes to check (0 not included)
   int lr[2] = {6, 12}; // l, r index of sensors in rx buf to check
   uint8_t v0[6], v[6]; // sensor readings
@@ -240,7 +244,7 @@ int sensor_check(void)
     // remove LSB
     for(k = 0; k < 6; k += 2)
       v0[k] |= 1;
-    for(j = 0; j < 4; j++) // checkat index
+    for(j = 0; j < sizeof(checkat)/sizeof(checkat[0]); j++) // checkat index
     {
       memcpy(v, spi_master_rx_buf + lr[i] + checkat[j], 6);
       // remove LSB
