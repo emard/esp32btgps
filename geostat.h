@@ -78,13 +78,13 @@ extern struct s_stat s_stat;
 extern uint8_t round_count;
 extern uint8_t stat_speed_kmh;
 
-float haversin(float theta);
-float distance(float lat1, float lon1, float lat2, float lon2);
+double haversin(double theta);
+double distance(double lat1, double lon1, double lat2, double lon2);
 int dlon2m(int lat);
-uint32_t dlon2mm(float lat);
+uint32_t dlon2mm(double lat);
 void calculate_grid(int8_t lat);
 void clear_storage(void);
-int store_lon_lat(float lon, float lat, float heading);
+int store_lon_lat(double lon, double lat, float heading);
 void print_storage(void);
 int find_xya(int xm, int ym, uint8_t a, uint8_t ais);
 void stat_iri_proc(char *nmea, int nmea_len);

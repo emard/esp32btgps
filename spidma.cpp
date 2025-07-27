@@ -453,9 +453,9 @@ void rds_message(struct tm *tm)
       {
         sprintf(disp_short, "GO    0X"); // normal
         struct int_latlon ilatlon;
-        float lat, lon;
+        double lat, lon;
         nmea2latlon(linenmea, &ilatlon);
-        latlon2float(&ilatlon, &lat, &lon);
+        latlon2double(&ilatlon, &lat, &lon);
         snprintf(disp_long, sizeof(disp_long), "%+.6f%c %+.6f%c %.1fC %.1fC %dMB %02d:%02d",
           lat, lat >= 0 ? 'N':'S', lon, lon >= 0 ? 'E':'W', // lat, lon
           temp[0], temp[1],

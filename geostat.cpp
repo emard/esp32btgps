@@ -18,7 +18,7 @@ int lat2grid,  lon2grid;  // to grid index
 int lat2gridm, lon2gridm; // to [m] approx meters (for grid metric)
 uint32_t found_dist; // HACKish use
 
-float stat_travel_prev_latlon[2] = {46.0,16.0}; // stored previous value for travel calculation
+double stat_travel_prev_latlon[2] = {46.0,16.0}; // stored previous value for travel calculation
 int32_t stat_travel_mm = 0;
 uint8_t round_count = 1;
 uint8_t stat_speed_kmh = 80;
@@ -31,9 +31,9 @@ extern int daytime; // from main module
 float parsed_iri[2][2]; // iri parsed from wav tags
 #endif
 
-float haversin(float theta)
+double haversin(double theta)
 {
-  float s = sin(0.5*theta);
+  double s = sin(0.5*theta);
   return s*s;
 };
 
@@ -42,17 +42,17 @@ const int Rearth_m = 6378137; // [m] earth radius
 // formula to check distance
 // input lat/lon in degrees
 // return distance in meters
-float distance(float lat1, float lon1, float lat2, float lon2)
+double distance(double lat1, double lon1, double lat2, double lon2)
 {
   // convert to radians
   lat1 *= M_PI/180.0;
   lon1 *= M_PI/180.0;
   lat2 *= M_PI/180.0;
   lon2 *= M_PI/180.0;
-  float deltalat=lat2-lat1;
-  float deltalon=lon2-lon1;
-  float h=haversin(deltalat)+cosf(lat1)*cosf(lat2)*haversin(deltalon);
-  float dist=2*Rearth_m*asinf(sqrt(h));
+  double deltalat=lat2-lat1;
+  double deltalon=lon2-lon1;
+  double h=haversin(deltalat)+cos(lat1)*cos(lat2)*haversin(deltalon);
+  double dist=2*Rearth_m*asin(sqrt(h));
   return dist;
 }
 
@@ -69,7 +69,7 @@ int dlon2m(int lat)
 const uint32_t dlat2mm = Rearth_m * 1000.0 * M_PI / 180.0;
 
 // conversion dlon to millimeters depends on lat
-uint32_t dlon2mm(float lat)
+uint32_t dlon2mm(double lat)
 {
   return dlat2mm * cos(lat * M_PI / 180.0);
 }
@@ -111,7 +111,7 @@ void clear_storage(void)
 // retval
 // index of stored element
 // -1 out of memory
-int store_lon_lat(float lon, float lat, float heading)
+int store_lon_lat(double lon, double lat, float heading)
 {
   if(s_stat.wr_snap_ptr >= snap_point_max)
     return -1; // out of memory
@@ -218,7 +218,7 @@ void stat_nmea_proc(char *nmea, int nmea_len)
   static int32_t prev_stat_travel_mm = 0; // for new point
   static int32_t closest_found_dist = 999999; // [m] distance to previous found existing point
   static int32_t closest_found_stat_travel_mm = 999999;
-  static float  new_lat, new_lon;
+  static double  new_lat, new_lon;
   static uint8_t new_heading;
   static uint16_t new_daytime;
   static float new_iri[2], closest_iri[2];
@@ -240,8 +240,8 @@ void stat_nmea_proc(char *nmea, int nmea_len)
         else
           return;
       }
-      float lat, lon;
-      latlon2float(&ilatlon, &lat, &lon);
+      double lat, lon;
+      latlon2double(&ilatlon, &lat, &lon);
       uint8_t heading = (256.0/3600)*nmea2iheading(nmea); // 0-3600 -> 0-256
       uint32_t lon2mm = dlon2mm(lat);
       uint32_t   dxmm = fabs(lon-stat_travel_prev_latlon[1]) *  lon2mm;

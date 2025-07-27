@@ -885,7 +885,7 @@ void draw_kml_line(char *line)
     // strcpy(lastnmea, line); // copy line to last nmea as tmp buffer (overwritten by parser)
     // parse lastnmea -> ilatlon (parsing should not spoil nmea string)
     nmea2latlon(line, &ilatlon);
-    latlon2float(&ilatlon, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
+    latlon2double(&ilatlon, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
     if(fabs(x_kml_line->lat[0]) <= 90.0 && fabs(x_kml_line->lat[1]) <= 90.0)
     {
       x_kml_line->value     = iri20avg;
