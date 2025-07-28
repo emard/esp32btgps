@@ -268,7 +268,7 @@ module top_adxl355log
 
     spirw_slave_v
     #(
-        .c_read_cycle(0), // 0:45F, 1:12F, adjust if SPI master reads rotated byte
+        .c_read_cycle(0), // 0-7 adjust if SPI master reads rotated byte
         .c_addr_bits(32),
         .c_sclk_capable_pin(1'b0)
     )

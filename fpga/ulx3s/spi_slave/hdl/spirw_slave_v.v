@@ -10,7 +10,7 @@
 
 module spirw_slave_v
 #(
-  parameter c_read_cycle = 0, // 0:45F, 1:12F, adjust if SPI master reads rotated byte
+  parameter c_read_cycle = 0, // 0-7 adjust if SPI master reads rotated byte
   parameter c_addr_bits = 16,
   parameter c_sclk_capable_pin = 0 //, // 0-sclk is generic pin, 1-sclk is clock capable pin
 )
