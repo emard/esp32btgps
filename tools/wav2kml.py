@@ -5,8 +5,6 @@
 
 # TODO option to colorize with calc values
 
-#from fastkml import kml, styles
-#from shapely.geometry import Point, LineString, Polygon
 from sys import argv
 from colorsys import hsv_to_rgb
 from math import pi,ceil,sqrt,sin,cos,tan,asin,atan2
