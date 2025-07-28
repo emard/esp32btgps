@@ -562,6 +562,7 @@ class snap:
           "length"    : self.cut_at_length,
           "iri_left"  : self.next_gps[gps_iril],
           "iri_right" : self.next_gps[gps_irir],
+          "speed_kmh" : self.next_gps[gps_speed_kmh],
           }
         # print nearest_heading,heading
         # print snapstate
@@ -592,6 +593,8 @@ class snap:
       value["sum2_right"] = 0.0
       value["avg_right"]  = 0.0
       value["std_right"]  = 0.0
+      value["speed_min"]  = pt["speed_kmh"]
+      value["speed_max"]  = pt["speed_kmh"]
       self.snap_stat[key] = value
     # statistics sums
     for pt in self.cut_list:
@@ -601,6 +604,10 @@ class snap:
       self.snap_stat[key]["sum2_left"]   += pt["iri_left"]*pt["iri_left"]
       self.snap_stat[key]["sum1_right"]  += pt["iri_right"]
       self.snap_stat[key]["sum2_right"]  += pt["iri_right"]*pt["iri_right"]
+      if pt["speed_kmh"] < self.snap_stat[key]["speed_min"]:
+        self.snap_stat[key]["speed_min"] = pt["speed_kmh"]
+      if pt["speed_kmh"] > self.snap_stat[key]["speed_max"]:
+        self.snap_stat[key]["speed_max"] = pt["speed_kmh"]
     # average and standard dev
     for key,value in self.snap_stat.items():
       n = self.snap_stat[key]["n"]
@@ -629,7 +636,7 @@ if len(argv): # filename in kml hame
   basename=argv[1][argv[1].rfind("/")+1:argv[1].rfind(".")]
   if len(basename):
     name+=" "+basename
-print(kml.header(name=name,version="wav2kml: 2.0.0"),end="")
+print(kml.header(name=name,version="wav2kml: 2.0.1"),end="")
 
 # buffer to read wav
 b=bytearray(12)
@@ -857,14 +864,13 @@ if True:
     # in left,light are wav tag values
     # in stdev_left, std_right field are calculated values
     # FIXME: Every calculated srvz should be stored in snp.cut_list
-    # FIXME: speed_min speed_max real values not 50-60
     # BUG: srvz currently contains last value so
     # all placemarks will have the same srvz
     print(kml.arrow(
       value=iri_avg,
       left=pt["iri_left"],left_stdev=srvz[0]/(n_buf_points*1000),
       right=pt["iri_right"],right_stdev=srvz[1]/(n_buf_points*1000),
-      n=pt["n"],speed_min=50,speed_max=60,
+      n=pt["n"],speed_min=pt["speed_min"],speed_max=pt["speed_max"],
       lon=pt["lonlat"][0],lat=pt["lonlat"][1],
       heading=(180+pt["heading"]+flip_heading)%360,
       timestamp=pt["timestamp"].decode("utf-8")
@@ -885,7 +891,7 @@ if True:
       value=iri_avg,
       left=pt["avg_left"],left_stdev=2*pt["std_left"],
       right=pt["avg_right"],right_stdev=2*pt["std_right"],
-      n=pt["n"],speed_min=50,speed_max=60,
+      n=pt["n"],speed_min=pt["speed_min"],speed_max=pt["speed_max"],
       lon=pt["lonlat"][0],lat=pt["lonlat"][1],
       heading=(pt["heading"]+flip_heading)%360,
       timestamp=pt["timestamp"].decode("utf-8")
