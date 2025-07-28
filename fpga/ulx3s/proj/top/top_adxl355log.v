@@ -689,7 +689,7 @@ module top_adxl355log
 
   localparam a_default = 16384; // default sensor reading 1g acceleration
 
-  reg [ 7:0] vx_ram[0:7]; // 8-byte: 2-byte=16-bit speed [um/s], 4-byte=32-bit const/speed^2, 2-byte unused
+  reg [ 7:0] vx_ram[0:7]; // 8-byte: 2-byte=16-bit speed [um/s], 4-byte=32-bit const/speed, 2-byte unused
   reg [15:0] vx   = 0;
   reg [31:0] cvx  = 0;
   reg slope_reset = 0;
