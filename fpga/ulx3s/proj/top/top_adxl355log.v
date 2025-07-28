@@ -51,7 +51,7 @@ module top_adxl355log
   ram_len      = 9*1024,     // buffer size 3,6,9,12,15
   wav_addr_bits= 12,         // 2**n, default 2**12 = 4096 bytes = 4 KB audio PCM FIFO buffer
   C_prog_release_timeout = 26, // esp32 programming default n=26, 2^n / 25MHz = 2.6s
-  spi_direct   = 0,          // 0: spi slave (SPI_MODE3), 1: direct to adxl (SPI_MODE1 or SPI_MODE3)
+  spi_direct   = 0,          // 0: spi slave (SPI_MODE2), 1: direct to adxl (SPI_MODE0 or SPI_MODE2)
   autospi_clkdiv = 5,        // SPI CLK = 40/2/(2**(autospi_clkdiv-1)+1) MHz, 1:10, 2:6.6, 3:4, 4:2.2, 5:1.1 MHz
   clk_out0_hz  =  40*1000000,// Hz,  40 MHz, PLL generated internal clock
   clk_out1_hz  = 240*1000000,// Hz, 240 MHz, PLL generated clock for FM transmitter
@@ -248,7 +248,7 @@ module top_adxl355log
     assign gn17 = csn;
     assign gn16 = mosi;
     assign miso = gn15;
-    assign gn14 = (sclk ^ ctrl_sclk_inv); // invert sclk to use SPI_MODE3 instead of SPI_MODE1
+    assign gn14 = (sclk ^ ctrl_sclk_inv); // invert sclk to use SPI_MODE0 instead of SPI_MODE2
   end
   else
   begin
