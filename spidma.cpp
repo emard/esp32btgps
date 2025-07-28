@@ -335,6 +335,14 @@ void rds_init(void)
 // speed in mm/s
 void spi_speed_write(int spd)
 {
+  // for adxl355 (accelerometer)
+  // icvx is speed-dependent value for slope integration, see slope.vhd
+  // icvx is easily calculated at ESP32 but difficult at slope.vhd
+  // slope.vhd needs a constant divided by speed
+  // to integrate adxl355 binary readings.
+  // constant is 65536*1.0e6*1e-3*9.81/16000*1000 = 40181760
+  // for adxrs290 (gyro)
+  // icvx is speed-independent constant 5719
   uint32_t icvx  = spd > 0 ? (adxl355_regio ? 40181760/spd : 5719) : 0; // spd is in mm/s
   uint16_t vx    = spd > 0 ? spd : 0;
   spi_master_tx_buf[0] = 0; // 0: write ram
