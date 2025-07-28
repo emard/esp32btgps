@@ -76,7 +76,7 @@ port (
   enter            : in  std_logic; -- '1' pulse to enter acceleration and speed, 1kHz rate
   hold             : in  std_logic; -- hold adjustment correction
   vx               : in  std_logic_vector(15 downto 0); -- mm/s, actually um travel for each 1kHz pulse, unsigned
-  cvx              : in  std_logic_vector(31 downto 0); -- scaled constat to multply azl,azr for slope integration (accel=const/vx, gyro=const)
+  cvx              : in  std_logic_vector(31 downto 0); -- scaled constant to multply azl,azr for slope integration (accel=const/vx, gyro=const)
   axl, axr, ayl, ayr, azl, azr : in  std_logic_vector(15 downto 0); -- acceleration signed 16000 = 1g at +-2g range
   slope_l, slope_r : out std_logic_vector(31 downto 0); -- um/m slope signed
   ready            : out std_logic; -- '1' pulse when result is ready
