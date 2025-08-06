@@ -34,6 +34,20 @@ def fpath_sympy(x):
 # first wobbles around 11.111 m wavelength and second wobbles around 0.222222 m wavelength
 # along pathlen_m IRI varies around 1.00+-0.05 with period 90 m
 
+# inertial disturbance adds to fpath Y-reading
+# (laser goes up'n'down)
+# needs compensation using accelerometer
+def fpath_disturb_sympy(x):
+  return \
+    +0.0
+
+# no disturbance
+#    +0.0
+
+# disturbance 10 mm amplitude 14.285 m wavelength
+# if uncomensated then IRI=4.23 instead of IRI=0.99
+#    +10.0e-3*sin(2*pi*0.07*x)
+
 d1fpath_sympy = diff(  fpath_sympy(x),x) # 1st derivative
 d2fpath_sympy = diff(d1fpath_sympy   ,x) # 2nd derivative
 
@@ -43,6 +57,8 @@ fpath   = lambdify(x,   fpath_sympy(x))
 d1fpath = lambdify(x, d1fpath_sympy)
 # 2nd derivative, done symbolic and converted similar as above
 d2fpath = lambdify(x, d2fpath_sympy)
+# disturbance
+fpath_disturb   = lambdify(x,   fpath_disturb_sympy(x))
 # global function that calculates angle of the line perpendicular to fpath:
 def phi_fpath(x):
   return math.atan(d1fpath(x))+numpy.pi/2
@@ -130,7 +146,7 @@ for i in range(nsamples):
   # z channel: accelerometer reading
   iaz = int(iscale*accel.z())
   # y channel: fpath(x) in int units 100 = 1 [mm]
-  iay = int(fpath(accel.x)*100000)
+  iay = int((fpath(accel.x)+fpath_disturb(accel.x))*100000)
   # x channel: small signal related to iaz
   iax = iaz//4
   sample = bytearray(struct.pack("<hhhhhh", 
