@@ -127,12 +127,12 @@ alt_100_20 = False # alternate 100/20 m tags
 tag_interval = 100 # [samples]
 tag = "" # tag queue string starts as empty
 for i in range(nsamples):
+  # z channel: accelerometer reading
   iaz = int(iscale*accel.z())
-  # iaz//4: x and y channels are not used
+  # y channel: fpath(x) in int units 100 = 1 [mm]
+  iay = int(fpath(accel.x)*100000)
   # x channel: small signal related to iaz
   iax = iaz//4
-  # y channel: fpath(x) as int units 100 = 1 [mm]
-  iay = int(fpath(accel.x)*100000)
   sample = bytearray(struct.pack("<hhhhhh", 
     iax, iay, iaz,
     iax, iay, iaz
