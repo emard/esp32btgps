@@ -123,7 +123,7 @@ rp = 3000/(2*math.pi) # [m] path radius for 3 km circumference
 w = vx / rp # [rad/s] angular speed
 nturns = 10 # use 2 to shorten calc time
 nsamples = int(nturns*2*rp*math.pi/vx/dt) # num of samples for N turns
-tag_interval = 150 # [samples]
+tag_interval = 100 # [samples]
 tag = "" # tag queue string starts as empty
 for i in range(nsamples):
   iaz = int(iscale*accel.z())
@@ -133,7 +133,7 @@ for i in range(nsamples):
     iaz//4, iaz//4, iaz,
     iaz//4, iaz//4, iaz
   ))
-  if i % tag_interval == 0: # NMEA+IRI tag every 100 samples = 0.1 seconds if queue is ready
+  if len(tag) == 0 and i % tag_interval == 0: # NMEA+IRI tag every 100 samples = 0.1 seconds if queue is ready
     isec = i//1000 # [s] integer seconds
     angle = i*w*dt*180.0/math.pi # [deg]
     angle_bidirectional = abs(angle-180*nturns) # [deg] after half of turns reverse direction
