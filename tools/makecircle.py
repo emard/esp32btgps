@@ -129,10 +129,13 @@ tag = "" # tag queue string starts as empty
 for i in range(nsamples):
   iaz = int(iscale*accel.z())
   # iaz//4: x and y channels are not used
-  # in x and y sensors pick small signal related to iaz
+  # x channel: small signal related to iaz
+  iax = iaz//4
+  # y channel: fpath(x) as int units 100 = 1 [mm]
+  iay = int(fpath(accel.x)*100000)
   sample = bytearray(struct.pack("<hhhhhh", 
-    iaz//4, iaz//4, iaz,
-    iaz//4, iaz//4, iaz
+    iax, iay, iaz,
+    iax, iay, iaz
   ))
   if len(tag) == 0 and i % tag_interval == 0: # NMEA+IRI tag every 100 samples = 0.1 seconds if queue is ready
     isec = i//1000 # [s] integer seconds
