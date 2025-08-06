@@ -17,6 +17,7 @@ import kml # local file "kml.py"
 # 0:IRI from wav tags,
 # 1:IRI calculated from z-accel wav data (adxl355)
 # 2:IRI calculated from xyz-gyro wav data (adxrs290) angular velocity
+# 3:IRI calculated from y-height wav data (laser)
 calculate = 1
 # accel/gyro, select constant and data wav channel
 if calculate == 1: # accel adxl355
@@ -38,6 +39,11 @@ if calculate == 2: # gyro adxrs290
   wav_ch_r = 3 # angular rate around Z (down) 2nd sensor
   # slope DC remove by inc/dec of angular velocity offset at each sampling length
   dc_remove_step = 1.0e-4
+if calculate == 3: # laser vertical distance
+  aint2float = 1.0e-5 # int -> h [m] int 1 = 0.01 mm = 1E-5 [m]
+  # Y-channel with distance reading
+  wav_ch_l = 1
+  wav_ch_r = 4
 
 # kml.red_iri = 2.5 # colorization default 2.5
 
@@ -77,6 +83,9 @@ psi        = 0.0
 prev_phi   = 0.0
 prev_theta = 0.0
 prev_psi   = 0.0
+
+# enter_height() needs inverse sampling length
+inv_sampling_length = 1/sampling_length
 
 # raw values reading (accelerometer or gyro)
 ac = np.zeros(6).astype(np.int16) # current integer accelerations vector
@@ -217,6 +226,7 @@ def gyro_dc_remove():
 def reset_iri():
   global ZL, ZR, rvz_buf, rvz_buf_ptr, srvz, srvz20, slope, slope_prev, azl0, azr0
   global phi, theta, psi, prev_phi, prev_theta, prev_psi, dc_p, dc_q, dc_r
+  global prev_hyl, prev_hyr
   # multiply all matrix elements with 0 resets them to 0
   ZL *= 0
   ZR *= 0
@@ -236,6 +246,8 @@ def reset_iri():
     # reset gyro angles
     phi = theta = psi = prev_phi = prev_theta = prev_psi = 0.0
     dc_p = dc_q = dc_r = 0.0
+  if calculate == 3:
+    prev_hyl = prev_hyr = 0.0
 
 # enter slope, calculate running average
 # slope = dz/dx (tangent)
@@ -267,7 +279,7 @@ def az2slope(azl:float, azr:float, c:float):
 # (vx = vehicle speed at the time when azl,azr accel are measured)
 # for small vx model is inaccurate. at vx=0 division by zero
 # returns 1 when slope is ready (each sampling_interval), otherwise 0
-def enter_accel(azl:float, azr:float, vx:float):
+def enter_accel(azl:float, azr:float, vx:float)->int:
   global travel_sampling
   az2slope(azl, azr, a_sample_dt / vx)
   travel_sampling += vx * a_sample_dt
@@ -276,10 +288,36 @@ def enter_accel(azl:float, azr:float, vx:float):
     return 1
   return 0
 
+# hyl, hyr: Y-distance [m]
+# c = 1/dx [1/m] inverse sampling_length
+def hy2slope(hyl:float, hyr:float, c:float):
+  global prev_hyl, prev_hyr
+  slope[0] = (hyl-prev_hyl)*c
+  slope[1] = (hyr-prev_hyr)*c
+  prev_hyl = hyl
+  prev_hyr = hyr
+
+# enter direct profile Z-height in time domain
+# Z-height reading comes from Y channel (laser)
+# updates slope in z/x space domain
+# needs x-speed as input 
+# (vx = vehicle speed at the time when hyl,hyr distances are measured)
+# returns 1 when slope is ready (each sampling_interval), otherwise 0
+# for small vx model is inaccurate. at vx=0 division by zero
+def enter_height(hyl:float, hyr:float, vx:float)->int:
+  global travel_sampling
+  dx = vx * a_sample_dt
+  travel_sampling += dx
+  if travel_sampling > sampling_length:
+    travel_sampling -= sampling_length
+    hy2slope(hyl, hyr, inv_sampling_length)
+    return 1
+  return 0
+
 # integrate gyro angular rates to get Euler angles phi, theta, psi
 # slope is approx theta in z/x space domain: slope = tan(theta)
 # (p,q,r) are angular velocities around (x,y,z) in [rad/s])
-def enter_gyro(p:float, q:float, r:float, vx:float):
+def enter_gyro(p:float, q:float, r:float, vx:float)->int:
   global travel_sampling
   global phi, theta, psi
   # common terms to shorten expression:
@@ -713,6 +751,13 @@ for wavfile in argv[1:]:
                         speed_kmh/3.6):
             enter_slope(tan(theta),tan(theta))
             gyro_dc_remove()
+        if calculate == 3: # laser height measurement
+          # direct height doesn't need DC removal
+          # generates slope with already removed DC
+          if enter_height(ac[wav_ch_l]*aint2float,
+                          ac[wav_ch_r]*aint2float,
+                          speed_kmh/3.6):
+            enter_slope(slope[0],slope[1])
 
     if a != 32:
       c = a
@@ -828,7 +873,7 @@ for wavfile in argv[1:]:
               iri20_avg=(iri20_left+iri20_right)/2
           except:
             pass
-          if calculate==1:
+          if calculate:
             # if calculation is on, replace
             # wav tag values with calculated values
             iri_left=srvz[0]/(n_buf_points*1000)
