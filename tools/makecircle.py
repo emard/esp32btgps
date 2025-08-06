@@ -62,8 +62,8 @@ class accel_sim:
   def z(self):
     "each invocation returns accelerometer z-axis reading after next dt time"
     self.x += self.dt * self.vx
-    return 9.81 + d2fpath(self.x) * self.vx * self.vx # FIXME wav2kml calculates iri=1.2-1.5 not ok
-    #return d2fpath(self.x) * self.vx * self.vx # wav2kml calculates iri=1.05-1.10 maybe ok
+    return 9.81 + d2fpath(self.x) * self.vx * self.vx
+    # NOTE check with or without 9.81 IRI should be the same
 
 def checksum(x):
   s = 0
