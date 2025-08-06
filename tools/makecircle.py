@@ -123,6 +123,7 @@ rp = 3000/(2*math.pi) # [m] path radius for 3 km circumference
 w = vx / rp # [rad/s] angular speed
 nturns = 10 # use 2 to shorten calc time
 nsamples = int(nturns*2*rp*math.pi/vx/dt) # num of samples for N turns
+alt_100_20 = False # alternate 100/20 m tags
 tag_interval = 100 # [samples]
 tag = "" # tag queue string starts as empty
 for i in range(nsamples):
@@ -163,10 +164,11 @@ for i in range(nsamples):
     )
     tag += " $%s*%02X " % (gps_data, checksum(gps_data))
     # alternate iri 100/20
-    if (i // tag_interval) & 1:
+    if alt_100_20:
       iri_data = ("L%05.2fR%05.2f" % (1.0, 1.0)) # iri100
     else:
       iri_data = ("L%05.2fS%05.2f" % (1.0, 1.0)) # iri20 has "S" instead of "R"
+    alt_100_20 = not alt_100_20
     tag += " %s*%02X " % (iri_data, checksum(iri_data[1:]))
   c = 32 # space is default if queue is empty
   if len(tag): # queue has data
