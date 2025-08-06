@@ -166,7 +166,7 @@ for i in range(nsamples):
       day,month,year # dmy
     )
     tag += " $%s*%02X " % (gps_data, checksum(gps_data))
-    # alternate iri 100/20
+    # alternate IRI100/IRI20
     if alt_100_20:
       iri_data = ("L%05.2fR%05.2f" % (1.0, 1.0)) # iri100
     else:
