@@ -37,7 +37,7 @@ def fpath_sympy(x):
 # inertial disturbance adds to fpath Y-reading
 # (laser goes up'n'down)
 # needs compensation using accelerometer
-def fpath_disturb_sympy(x):
+def fpath_laser_sympy(x):
   return \
     +0.0
 
@@ -61,11 +61,11 @@ d2fpath = lambdify(x, d2fpath_sympy)
 # *** disturbance (laser up'n'down) ***
 
 # 1st and 2nd derivative
-d1fpath_disturb_sympy = diff(  fpath_disturb_sympy(x),x) # 1st derivative
-d2fpath_disturb_sympy = diff(d1fpath_disturb_sympy   ,x) # 2nd derivative
-fpath_disturb   = lambdify(x,   fpath_disturb_sympy(x))
-d1fpath_disturb = lambdify(x, d1fpath_disturb_sympy)
-d2fpath_disturb = lambdify(x, d2fpath_disturb_sympy)
+d1fpath_laser_sympy = diff(  fpath_laser_sympy(x),x) # 1st derivative
+d2fpath_laser_sympy = diff(d1fpath_laser_sympy   ,x) # 2nd derivative
+fpath_laser   = lambdify(x,   fpath_laser_sympy(x))
+d1fpath_laser = lambdify(x, d1fpath_laser_sympy)
+d2fpath_laser = lambdify(x, d2fpath_laser_sympy)
 
 # global function that calculates angle of the line perpendicular to fpath:
 def phi_fpath(x):
@@ -130,7 +130,7 @@ f.write(hdr)
 dt = 1.0e-3 # [s] sampling interval
 vx = 80/3.6 # [m/s] vehicle speed [km/h] -> [m/s]
 accel = accel_sim(dt, vx, d2fpath) # accelerometer z-axis simulator
-accel_disturb = accel_sim(dt, vx, d2fpath_disturb) # laser disturbance z-axis simulator
+accel_laser = accel_sim(dt, vx, d2fpath_laser) # laser disturbance z-axis simulator
 g_scale = 8 # accelerometer digital scale setting 2/4/8 g full scale 32000
 iscale = 32000/g_scale/9.81 # factor conversion from [m/s**2] to sensor binary reading
 r_earth = 6366.0E3 # [m] earth radius to convert [m] to lat/lon degrees
@@ -154,12 +154,12 @@ alt_100_20 = False # alternate 100/20 m tags
 tag_interval = 100 # [samples]
 tag = "" # tag queue string starts as empty
 for i in range(nsamples):
-  # z channel: accelerometer reading
+  # z channel: wheel accelerometer reading
   iaz = int(iscale*accel.z())
-  # y channel: fpath(x) in int units 100 = 1 [mm]
-  iay = int((fpath(accel.x)+fpath_disturb(accel.x))*100000)
-  # x channel: small signal related to iaz
-  iax = iaz//4
+  # y channel: fpath(x)+fpath_laser(x) in int units 100 = 1 [mm]
+  iay = int((fpath(accel.x)+fpath_laser(accel.x))*100000)
+  # x channel: laser accelerometer reading
+  iax = int(iscale*accel_laser.z())
   sample = bytearray(struct.pack("<hhhhhh", 
     iax, iay, iaz,
     iax, iay, iaz
