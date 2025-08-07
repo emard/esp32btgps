@@ -39,12 +39,13 @@ def fpath_sympy(x):
 # needs compensation using accelerometer
 def fpath_laser_sympy(x):
   return \
-    +0.0
+    +10.0e-3*sin(2*pi*0.07*x)
 
 # no disturbance
 #    +0.0
 
 # disturbance 10 mm amplitude 14.285 m wavelength
+# can be compensated
 # if uncomensated then IRI=4.23 instead of IRI=1.00
 #    +10.0e-3*sin(2*pi*0.07*x)
 
