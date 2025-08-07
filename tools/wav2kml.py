@@ -73,6 +73,8 @@ srvz20 = np.zeros(2).astype(np.uint32)
 slope = np.zeros(2).astype(np.float32)
 # for slope DC remove
 slope_prev = np.zeros(2).astype(np.float32)
+# slope calculated from laser height
+slope_h = np.zeros(2).astype(np.float32)
 # (phi, theta, psi) Euler angles, rotations around (x,y,z)
 # slope = tan(theta)
 # slope = theta approx for theta < 15 deg with 2.4% error
@@ -227,6 +229,7 @@ def reset_iri():
   global ZL, ZR, rvz_buf, rvz_buf_ptr, srvz, srvz20, slope, slope_prev, azl0, azr0
   global phi, theta, psi, prev_phi, prev_theta, prev_psi, dc_p, dc_q, dc_r
   global prev_hyl, prev_hyr
+  global slope_h
   # multiply all matrix elements with 0 resets them to 0
   ZL *= 0
   ZR *= 0
@@ -236,6 +239,7 @@ def reset_iri():
   rvz_buf_ptr = 0
   slope *= 0
   slope_prev *= 0
+  slope_h *= 0
   if calculate == 1:
     # reset DC compensation to current accelerometer reading
     azl0 = ac[wav_ch_l]*aint2float
@@ -292,8 +296,8 @@ def enter_accel(azl:float, azr:float, vx:float)->int:
 # c = 1/dx [1/m] inverse sampling_length
 def hy2slope(hyl:float, hyr:float, c:float):
   global prev_hyl, prev_hyr
-  slope[0] = (hyl-prev_hyl)*c
-  slope[1] = (hyr-prev_hyr)*c
+  slope_h[0] = (hyl-prev_hyl)*c
+  slope_h[1] = (hyr-prev_hyr)*c
   prev_hyl = hyl
   prev_hyr = hyr
 
@@ -757,7 +761,7 @@ for wavfile in argv[1:]:
           if enter_height(ac[wav_ch_l]*aint2float,
                           ac[wav_ch_r]*aint2float,
                           speed_kmh/3.6):
-            enter_slope(slope[0],slope[1])
+            enter_slope(slope_h[0],slope_h[1])
 
     if a != 32:
       c = a
