@@ -156,8 +156,8 @@ tag = "" # tag queue string starts as empty
 for i in range(nsamples):
   # z channel: wheel accelerometer reading
   iaz = int(iscale*accel.z())
-  # y channel: fpath(x)+fpath_laser(x) in int units 100 = 1 [mm]
-  iay = int((fpath(accel.x)+fpath_laser(accel.x))*100000)
+  # y channel: fpath_laser(x)-fpath(x) in int units 100 = 1 [mm]
+  iay = int((fpath_laser(accel.x)-fpath(accel.x))*100000)
   # x channel: laser accelerometer reading
   iax = int(iscale*accel_laser.z())
   sample = bytearray(struct.pack("<hhhhhh", 
