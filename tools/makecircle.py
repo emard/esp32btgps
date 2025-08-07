@@ -57,12 +57,21 @@ fpath   = lambdify(x,   fpath_sympy(x))
 d1fpath = lambdify(x, d1fpath_sympy)
 # 2nd derivative, done symbolic and converted similar as above
 d2fpath = lambdify(x, d2fpath_sympy)
-# disturbance
+
+# *** disturbance (laser up'n'down) ***
+
+# 1st and 2nd derivative
+d1fpath_disturb_sympy = diff(  fpath_disturb_sympy(x),x) # 1st derivative
+d2fpath_disturb_sympy = diff(d1fpath_disturb_sympy   ,x) # 2nd derivative
 fpath_disturb   = lambdify(x,   fpath_disturb_sympy(x))
+d1fpath_disturb = lambdify(x, d1fpath_disturb_sympy)
+d2fpath_disturb = lambdify(x, d2fpath_disturb_sympy)
+
 # global function that calculates angle of the line perpendicular to fpath:
 def phi_fpath(x):
   return math.atan(d1fpath(x))+numpy.pi/2
-# accelerometer reading in time domain (FIXME is this correct)
+
+# accelerometer reading in time domain
 # x = t * vx
 # x += vx * dt # integrate x with vx
 # vz =  dz/dt =  dz/dx(x)  * dx/dt      = d1fpath(x) * vx
@@ -70,15 +79,16 @@ def phi_fpath(x):
 
 class accel_sim:
   "accelerometer response simulator"
-  def __init__(self,dt,vx):
+  def __init__(self,dt,vx,d2fx):
     self.dt = dt
     self.vx = vx
     self.x  = 0.0
+    self.d2fx = d2fx # d2fx() = lambdified diff(diff(f(x),x),x)
 
   def z(self):
     "each invocation returns accelerometer z-axis reading after next dt time"
     self.x += self.dt * self.vx
-    return 9.81 + d2fpath(self.x) * self.vx * self.vx
+    return 9.81 + self.d2fx(self.x) * self.vx * self.vx
     # NOTE check with or without 9.81 IRI should be the same
 
 def checksum(x):
@@ -119,7 +129,8 @@ if len(hdr) != 44:
 f.write(hdr)
 dt = 1.0e-3 # [s] sampling interval
 vx = 80/3.6 # [m/s] vehicle speed [km/h] -> [m/s]
-accel = accel_sim(dt, vx) # accelerometer z-axis simulator
+accel = accel_sim(dt, vx, d2fpath) # accelerometer z-axis simulator
+accel_disturb = accel_sim(dt, vx, d2fpath_disturb) # laser disturbance z-axis simulator
 g_scale = 8 # accelerometer digital scale setting 2/4/8 g full scale 32000
 iscale = 32000/g_scale/9.81 # factor conversion from [m/s**2] to sensor binary reading
 r_earth = 6366.0E3 # [m] earth radius to convert [m] to lat/lon degrees
