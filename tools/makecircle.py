@@ -45,7 +45,7 @@ def fpath_laser_sympy(x):
 #    +0.0
 
 # disturbance 10 mm amplitude 14.285 m wavelength
-# if uncomensated then IRI=4.23 instead of IRI=0.99
+# if uncomensated then IRI=4.23 instead of IRI=1.00
 #    +10.0e-3*sin(2*pi*0.07*x)
 
 d1fpath_sympy = diff(  fpath_sympy(x),x) # 1st derivative
