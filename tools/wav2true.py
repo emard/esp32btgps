@@ -142,6 +142,14 @@ class integra:
       return 1
     return 0
 
+  def enter_sum(self, azl:float, azr:float, c:float, vx:float)->int:
+    self.az2slope(azl, azr, c)
+    self.travel_sampling += vx * a_sample_dt
+    if self.travel_sampling > sampling_length:
+      self.travel_sampling -= sampling_length
+      return 1
+    return 0
+
 aci = integra() # accel->slope integrator
 hci = integra() # slope->height integrator
 
@@ -312,11 +320,11 @@ for wavfile in argv[1:]:
             aci.slope_dc_remove()
           # TODO check is ok to multiply with speed_kmh/3.6
           # TODO currently no DC remove, should we subtract hci.acl0
-          if hci.enter_accel(aci.slope[0]*speed_kmh/3.6,
-                             aci.slope[1]*speed_kmh/3.6,
-                             speed_kmh/3.6):
-            #print(hci.slope)
-            hci.slope_dc_remove()
+          hci.az2slope(aci.slope[0],
+                       aci.slope[1],
+                       a_sample_dt*speed_kmh/3.6
+                       )
+          #print(hci.slope)
         if calculate == 3: # laser height measurement
           # accelerometer still needs slope DC removal
           # use accelerometer to calculate slope compensation
@@ -370,9 +378,9 @@ for wavfile in argv[1:]:
     # replace with true profile
     # left  Y: ac[1] 
     # right Y: ac[4]
-    ac[out_wav_ch_hl]=int(float2hint*hci.slope[0]/sampling_length)
-    ac[out_wav_ch_hr]=int(float2hint*hci.slope[1]/sampling_length)
-    # reset to 0 (laser accel up-down)
+    ac[out_wav_ch_hl]=int(float2hint*hci.slope[0])
+    ac[out_wav_ch_hr]=int(float2hint*hci.slope[1])
+    # reset to 0 (fictional "laser" fixed to sea level)
     # left  X: ac[0]
     # right Y: ac[3]
     ac[out_wav_ch_l]=0
