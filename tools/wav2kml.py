@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-# apt install python3-fastkml python3-shapely python3-lxml
 # ./wav2kml.py 20210701.wav > 20210701.kml
-
-# TODO option to colorize with calc values
 
 from sys import argv
 from colorsys import hsv_to_rgb
@@ -699,7 +696,7 @@ if len(argv): # filename in kml hame
   basename=argv[1][argv[1].rfind("/")+1:argv[1].rfind(".")]
   if len(basename):
     name+=" "+basename
-print(kml.header(name=name,version="wav2kml: 2.0.1"),end="")
+print(kml.header(name=name,version="wav2kml: 2.0.2"),end="")
 
 # buffer to read wav
 b=bytearray(12)
