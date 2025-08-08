@@ -239,6 +239,26 @@ gps_irir      = 6
 
 aci.reset(9.81,9.81)
 
+outfile = "/tmp/true.wav"
+print("output", outfile)
+o = open(outfile, "wb")
+hdr  = b"RIFF" + bytearray([0x00, 0x00, 0x00, 0x00]) # chunk size bytes (len, including hdr), file growing, not yet known
+hdr += b"WAVE"
+# subchunk1: fmt
+hdr += b"fmt " + bytearray([
+    0x10, 0x00, 0x00, 0x00, # subchunk 1 size 16 bytes
+    0x01, 0x00, # audio format = 1 (PCM)
+    0x06, 0x00, # num channels = 6
+    0xE8, 0x03, 0x00, 0x00, # sample rate = 1000 Hz
+    0xE0, 0x2E, 0x00, 0x00, # byte rate = 12*1000 = 12000 byte/s
+    0x0C, 0x00, # block align = 12 bytes
+    0x10, 0x00]) # bits per sample = 16 bits
+# subchunk2: data
+hdr += b"data" + bytearray([0x00, 0x00, 0x00, 0x00]) # chunk size bytes (len), file growing, not yet known
+if len(hdr) != 44:
+  print("wrong wav header length=%d, should be 44" % len(hdr))
+o.write(hdr)
+
 for wavfile in argv[1:]:
   i = 0
   f = open(wavfile, "rb")
@@ -265,12 +285,12 @@ for wavfile in argv[1:]:
           if enter_accel(ac[wav_ch_l]*aint2float - azl0,
                          ac[wav_ch_r]*aint2float - azr0,
                          speed_kmh/3.6):
-            print(slope,end=" = ")
+            #print(slope,end=" = ")
             slope_dc_remove()
           if aci.enter_accel(ac[wav_ch_l]*aint2float - aci.azl0,
                              ac[wav_ch_r]*aint2float - aci.azr0,
                              speed_kmh/3.6):
-            print(aci.slope)
+            #print(aci.slope)
             aci.slope_dc_remove()
         if calculate == 3: # laser height measurement
           # accelerometer still needs slope DC removal
@@ -309,7 +329,7 @@ for wavfile in argv[1:]:
          crc = reduce(xor, map(int, nmea[1:-3]))
          hexcrc = bytearray(b"%02X" % crc)
          if nmea[-2:] == hexcrc:
-          print(nmea.decode("utf-8"))
+          #print(nmea.decode("utf-8"))
           if len(nmea)==79: # normal mode with signal
             tunel = 0
           elif len(nmea)==68: # tunnel mode without signal, keep heading
@@ -318,8 +338,9 @@ for wavfile in argv[1:]:
             heading=float(nmea[54:59])
             speed_kt=float(nmea[47:53])
           speed_kmh=speed_kt*1.852
-          print(speed_kmh,"kmh")
+          #print(speed_kmh,"kmh")
       # delete, consumed
       nmea=bytearray(0)
+    o.write(mvb)
     i += 1
   f.close()
