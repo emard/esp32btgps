@@ -77,6 +77,67 @@ if calculate == 3:
   dc_azr = int(9.81/aint2float)
 slope_dc_remove_count = 0
 
+class integra:
+  def __init__(self):
+    # slope reconstructed from z-accel and x-speed
+    self.slope = np.zeros(2).astype(np.float32)
+    # for slope DC remove
+    self.slope_prev = np.zeros(2).astype(np.float32)
+    self.dc_remove_step = 1.0e-4
+    self.travel_sampling = 0.0 # [m] for sampling_interval triggering
+    self.reset()
+    print("initial")
+    print(self.azl0)
+
+  def reset(self):
+    self.slope *= 0
+    self.slope_prev *= 0
+    self.azl0 = 9.81 # average azl (to remove slope DC offset)
+    self.azr0 = 9.81 # average azr (to remove slope DC offset)
+    self.dc_azl = int(9.81/aint2float)
+    self.dc_azr = int(9.81/aint2float)
+    self.slope_dc_remove_count = 0
+
+  def slope_dc_remove():
+    #global azl0, azr0, slope_prev, slope_dc_remove_count
+    #global dc_azl, dc_azr
+    if self.slope[0] > 0 and self.slope[0] > self.slope_prev[0]:
+      self.azl0 += self.dc_remove_step
+      self.dc_azl += 1
+    if self.slope[0] < 0 and self.slope[0] < self.slope_prev[0]:
+      self.azl0 -= self.dc_remove_step
+      self.dc_azl -= 1
+    if self.slope[1] > 0 and self.slope[1] > self.slope_prev[1]:
+      self.azr0 += self.dc_remove_step
+      self.dc_azr += 1
+    if self.slope[1] < 0 and self.slope[1] < self.slope_prev[1]:
+      self.azr0 -= self.dc_remove_step
+      self.dc_azr -= 1
+    self.slope_prev[0] = self.slope[0]
+    self.slope_prev[1] = self.slope[1]
+
+  # slope reconstruction from equal-time sampled z-accel and vehicle x-speed
+  # updates slope[0] = left, slope[1] = right
+  def az2slope(azl:float, azr:float, c:float):
+    self.slope[0] += self.azl * c
+    self.slope[1] += self.azr * c
+
+  # integrate z-acceleration in time domain 
+  # updates slope in z/x space domain
+  # needs x-speed as input 
+  # (vx = vehicle speed at the time when azl,azr accel are measured)
+  # for small vx model is inaccurate. at vx=0 division by zero
+  # returns 1 when slope is ready (each sampling_interval), otherwise 0
+  def enter_accel(azl:float, azr:float, vx:float)->int:
+    self.az2slope(self.azl, self.azr, a_sample_dt / vx)
+    self.travel_sampling += vx * a_sample_dt
+    if self.travel_sampling > sampling_length:
+      self.travel_sampling -= sampling_length
+      return 1
+    return 0
+
+# a = integra()
+
 def slope_dc_remove():
   global azl0, azr0, slope_prev, slope_dc_remove_count
   global dc_azl, dc_azr
