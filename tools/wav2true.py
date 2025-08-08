@@ -85,42 +85,34 @@ class integra:
     self.slope_prev = np.zeros(2).astype(np.float32)
     self.dc_remove_step = 1.0e-4
     self.travel_sampling = 0.0 # [m] for sampling_interval triggering
-    self.reset()
-    print("initial")
-    print(self.azl0)
+    self.reset(9.81,9.81)
 
-  def reset(self):
+  def reset(self, azl0:float, azr0:float):
     self.slope *= 0
     self.slope_prev *= 0
-    self.azl0 = 9.81 # average azl (to remove slope DC offset)
-    self.azr0 = 9.81 # average azr (to remove slope DC offset)
-    self.dc_azl = int(9.81/aint2float)
-    self.dc_azr = int(9.81/aint2float)
-    self.slope_dc_remove_count = 0
+    #self.azl0 = 9.81 # average azl (to remove slope DC offset)
+    #self.azr0 = 9.81 # average azr (to remove slope DC offset)
+    # overwrite with input
+    self.azl0 = azl0
+    self.azr0 = azr0
 
-  def slope_dc_remove():
-    #global azl0, azr0, slope_prev, slope_dc_remove_count
-    #global dc_azl, dc_azr
+  def slope_dc_remove(self):
     if self.slope[0] > 0 and self.slope[0] > self.slope_prev[0]:
       self.azl0 += self.dc_remove_step
-      self.dc_azl += 1
     if self.slope[0] < 0 and self.slope[0] < self.slope_prev[0]:
       self.azl0 -= self.dc_remove_step
-      self.dc_azl -= 1
     if self.slope[1] > 0 and self.slope[1] > self.slope_prev[1]:
       self.azr0 += self.dc_remove_step
-      self.dc_azr += 1
     if self.slope[1] < 0 and self.slope[1] < self.slope_prev[1]:
       self.azr0 -= self.dc_remove_step
-      self.dc_azr -= 1
     self.slope_prev[0] = self.slope[0]
     self.slope_prev[1] = self.slope[1]
 
   # slope reconstruction from equal-time sampled z-accel and vehicle x-speed
   # updates slope[0] = left, slope[1] = right
-  def az2slope(azl:float, azr:float, c:float):
-    self.slope[0] += self.azl * c
-    self.slope[1] += self.azr * c
+  def az2slope(self, azl:float, azr:float, c:float):
+    self.slope[0] += azl * c
+    self.slope[1] += azr * c
 
   # integrate z-acceleration in time domain 
   # updates slope in z/x space domain
@@ -128,15 +120,15 @@ class integra:
   # (vx = vehicle speed at the time when azl,azr accel are measured)
   # for small vx model is inaccurate. at vx=0 division by zero
   # returns 1 when slope is ready (each sampling_interval), otherwise 0
-  def enter_accel(azl:float, azr:float, vx:float)->int:
-    self.az2slope(self.azl, self.azr, a_sample_dt / vx)
+  def enter_accel(self, azl:float, azr:float, vx:float)->int:
+    self.az2slope(azl, azr, a_sample_dt / vx)
     self.travel_sampling += vx * a_sample_dt
     if self.travel_sampling > sampling_length:
       self.travel_sampling -= sampling_length
       return 1
     return 0
 
-# a = integra()
+aci = integra()
 
 def slope_dc_remove():
   global azl0, azr0, slope_prev, slope_dc_remove_count
@@ -245,6 +237,8 @@ gps_heading   = 4
 gps_iril      = 5
 gps_irir      = 6
 
+aci.reset(9.81,9.81)
+
 for wavfile in argv[1:]:
   i = 0
   f = open(wavfile, "rb")
@@ -263,14 +257,21 @@ for wavfile in argv[1:]:
         ac[j] = int.from_bytes(b[j*2:j*2+2],byteorder="little",signed=True)//2*2 # //2*2 removes LSB bit (nmea tag)
       if should_reset_iri:
         reset_iri()
+        aci.reset(ac[wav_ch_l]*aint2float, ac[wav_ch_r]*aint2float)
         should_reset_iri = 0 # consumed
       if speed_kmh > 1: # TODO unhardcode
         if calculate == 1: # accelerometer
+          #print(ac[wav_ch_l],ac[wav_ch_r])
           if enter_accel(ac[wav_ch_l]*aint2float - azl0,
                          ac[wav_ch_r]*aint2float - azr0,
                          speed_kmh/3.6):
-          #  enter_slope(slope[0],slope[1])
+            print(slope,end=" = ")
             slope_dc_remove()
+          if aci.enter_accel(ac[wav_ch_l]*aint2float - aci.azl0,
+                             ac[wav_ch_r]*aint2float - aci.azr0,
+                             speed_kmh/3.6):
+            print(aci.slope)
+            aci.slope_dc_remove()
         if calculate == 3: # laser height measurement
           # accelerometer still needs slope DC removal
           # use accelerometer to calculate slope compensation
