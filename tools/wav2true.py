@@ -191,6 +191,7 @@ for wavfile in argv[1:]:
   f.seek(seek)
   speed_kt    = 0.0
   speed_kmh   = 0.0
+  travel_sampling = 0.0 # m for sampling_interval triggering
   should_reset_iri = 1
   nmea=bytearray(0)
   while f.readinto(mvb):
@@ -246,7 +247,16 @@ for wavfile in argv[1:]:
          crc = reduce(xor, map(int, nmea[1:-3]))
          hexcrc = bytearray(b"%02X" % crc)
          if nmea[-2:] == hexcrc:
-           print(nmea.decode("utf-8"))
+          print(nmea.decode("utf-8"))
+          if len(nmea)==79: # normal mode with signal
+            tunel = 0
+          elif len(nmea)==68: # tunnel mode without signal, keep heading
+            tunel = 11 # number of less chars in shorter nmea sentence for tunnel mode
+          if tunel == 0:
+            heading=float(nmea[54:59])
+            speed_kt=float(nmea[47:53])
+          speed_kmh=speed_kt*1.852
+          print(speed_kmh,"kmh")
       # delete, consumed
       nmea=bytearray(0)
     i += 1
