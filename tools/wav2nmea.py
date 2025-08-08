@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-# apt install python3-fastkml python3-shapely python3-lxml
-# ./wav2kml.py 20210701.wav > 20210701.kml
+# ./wav2nmea.py 20210701.wav > 20210701.nmea
 
 from sys import argv
 from functools import reduce
