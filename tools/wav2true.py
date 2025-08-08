@@ -152,6 +152,7 @@ class integra:
 
 aci = integra() # accel->slope integrator
 hci = integra() # slope->height integrator
+hci.dc_remove_step=1.0E-6 # smaller step for height DC remove
 
 def slope_dc_remove():
   global azl0, azr0, slope_prev, slope_dc_remove_count
@@ -318,12 +319,12 @@ for wavfile in argv[1:]:
                              speed_kmh/3.6):
             #print(aci.slope)
             aci.slope_dc_remove()
-          # TODO check is ok to multiply with speed_kmh/3.6
-          # TODO currently no DC remove, should we subtract hci.acl0
-          hci.az2slope(aci.slope[0],
-                       aci.slope[1],
-                       a_sample_dt*speed_kmh/3.6
-                       )
+          # with DC remove, should we subtract hci.acl0
+          if hci.enter_sum(aci.slope[0]-hci.azl0,
+                           aci.slope[1]-hci.azr0,
+                           a_sample_dt*speed_kmh/3.6,
+                           speed_kmh/3.6):
+            hci.slope_dc_remove()
           #print(hci.slope)
         if calculate == 3: # laser height measurement
           # accelerometer still needs slope DC removal
