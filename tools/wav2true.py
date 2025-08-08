@@ -6,6 +6,7 @@ from sys import argv
 from functools import reduce
 from operator import xor
 import numpy as np
+import struct
 
 # calculate
 # 0:IRI from wav tags,
@@ -47,6 +48,9 @@ slope_h = np.zeros(2).astype(np.float32)
 # buffer to read wav
 b=bytearray(12)
 mvb=memoryview(b)
+
+# buffer to write wav
+sample=bytearray(12)
 
 # equal-distance slope sampling length (m)
 sampling_length = 0.05
@@ -341,6 +345,15 @@ for wavfile in argv[1:]:
           #print(speed_kmh,"kmh")
       # delete, consumed
       nmea=bytearray(0)
-    o.write(mvb)
+    # generate new sample and write to output
+    # copy text tags from old sample to new
+    sample = bytearray(struct.pack("<hhhhhh", 
+      ac[0], ac[1], ac[2],
+      ac[3], ac[4], ac[5],
+    ))
+    # mix old text tags into new sample
+    for j in range(6):
+      sample[2*j]=(sample[2*j]&0xFE)|(mvb[2*j]&1)
+    o.write(sample)
     i += 1
   f.close()
