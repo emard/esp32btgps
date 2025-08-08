@@ -3,8 +3,6 @@
 # apt install python3-fastkml python3-shapely python3-lxml
 # ./wav2kml.py 20210701.wav > 20210701.kml
 
-# TODO option to colorize with calc values
-
 from sys import argv
 from functools import reduce
 from operator import xor
@@ -31,7 +29,10 @@ for wavfile in argv[1:]:
         nmea.append(c)
     else: # a == 32
       if(len(nmea)):
-        print(nmea.decode("utf-8"))
+        crc = reduce(xor, map(int, nmea[1:-3]))
+        hexcrc = bytearray(b"%02X" % crc)
+        if nmea[-2:] == hexcrc:
+          print(nmea.decode("utf-8"))
       # delete, consumed
       nmea=bytearray(0)
     i += 1
