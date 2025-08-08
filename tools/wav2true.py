@@ -23,6 +23,15 @@ if calculate == 1: # accel adxl355
   wav_ch_r = 5
   # slope DC remove by inc/dec of accel offset at each sampling length
   dc_remove_step = 1.0e-4
+  # output
+  # Y-channel true profile
+  out_wav_ch_hl = 1
+  out_wav_ch_hr = 4
+  float2hint = 1.0E5 # convert float to integer in wav 1 = 0.01 mm = 1E-5 m
+  # X-channel of accelerometer is zero
+  out_wav_ch_l = 0
+  out_wav_ch_r = 3
+  
 if calculate == 3: # laser vertical distance
   # laser height int->float conversion factor
   hint2float = 1.0e-5 # int -> h [m] int 1 = 0.01 mm = 1E-5 [m]
@@ -81,6 +90,7 @@ if calculate == 3:
   dc_azr = int(9.81/aint2float)
 slope_dc_remove_count = 0
 
+# TODO rename slope->sum
 class integra:
   def __init__(self):
     # slope reconstructed from z-accel and x-speed
@@ -132,7 +142,8 @@ class integra:
       return 1
     return 0
 
-aci = integra()
+aci = integra() # accel->slope integrator
+hci = integra() # slope->height integrator
 
 def slope_dc_remove():
   global azl0, azr0, slope_prev, slope_dc_remove_count
@@ -242,6 +253,7 @@ gps_iril      = 5
 gps_irir      = 6
 
 aci.reset(9.81,9.81)
+hci.reset(0.00,0.00)
 
 outfile = "/tmp/true.wav"
 print("output", outfile)
@@ -282,10 +294,12 @@ for wavfile in argv[1:]:
       if should_reset_iri:
         reset_iri()
         aci.reset(ac[wav_ch_l]*aint2float, ac[wav_ch_r]*aint2float)
+        # FIXME hci.reset(0,0)
         should_reset_iri = 0 # consumed
       if speed_kmh > 1: # TODO unhardcode
         if calculate == 1: # accelerometer
           #print(ac[wav_ch_l],ac[wav_ch_r])
+          # old code to check if new aci.slope works correct
           if enter_accel(ac[wav_ch_l]*aint2float - azl0,
                          ac[wav_ch_r]*aint2float - azr0,
                          speed_kmh/3.6):
@@ -296,6 +310,13 @@ for wavfile in argv[1:]:
                              speed_kmh/3.6):
             #print(aci.slope)
             aci.slope_dc_remove()
+          # TODO check is ok to multiply with speed_kmh/3.6
+          # TODO currently no DC remove, should we subtract hci.acl0
+          if hci.enter_accel(aci.slope[0]*speed_kmh/3.6,
+                             aci.slope[1]*speed_kmh/3.6,
+                             speed_kmh/3.6):
+            #print(hci.slope)
+            hci.slope_dc_remove()
         if calculate == 3: # laser height measurement
           # accelerometer still needs slope DC removal
           # use accelerometer to calculate slope compensation
@@ -346,6 +367,16 @@ for wavfile in argv[1:]:
       # delete, consumed
       nmea=bytearray(0)
     # generate new sample and write to output
+    # replace with true profile
+    # left  Y: ac[1] 
+    # right Y: ac[4]
+    ac[out_wav_ch_hl]=int(float2hint*hci.slope[0]/sampling_length)
+    ac[out_wav_ch_hr]=int(float2hint*hci.slope[1]/sampling_length)
+    # reset to 0 (laser accel up-down)
+    # left  X: ac[0]
+    # right Y: ac[3]
+    ac[out_wav_ch_l]=0
+    ac[out_wav_ch_r]=0
     # copy text tags from old sample to new
     sample = bytearray(struct.pack("<hhhhhh", 
       ac[0], ac[1], ac[2],
