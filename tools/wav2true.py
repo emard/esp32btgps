@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 
-# ./wav2true.py 20210701.wav > 20210701-true.wav
+# ./wav2true.py /tmp/circle.wav
+# output /tmp/true.wav
+
+# TODO output file cmdline option
+# TODO better DC removal, smart/smooth
+# TODO csv output x/z values
 
 from sys import argv
 from functools import reduce
@@ -9,9 +14,9 @@ import numpy as np
 import struct
 
 # calculate
-# 0:IRI from wav tags,
-# 1:IRI calculated from z-accel wav data (adxl355)
-# 3:IRI calculated from y-height wav data (laser) FIXME
+# 0:just a copy to check I/O
+# 1:integrate z-accel wav data (adxl355)
+# 3:y-height with intgrared compensation TODO
 calculate = 1
 # accel/gyro, select constant and data wav channel
 # to remap channels change wav_ch_*
@@ -163,15 +168,14 @@ for wavfile in argv[1:]:
   f.seek(seek)
   speed_kt    = 0.0
   speed_kmh   = 0.0
-  travel_sampling = 0.0 # m for sampling_interval triggering
   should_reset_sum = 1
   nmea=bytearray(0)
   while f.readinto(mvb):
     seek += 12 # bytes per sample
     a=(b[0]&1) | ((b[2]&1)<<1) | ((b[4]&1)<<2) | ((b[6]&1)<<3) | ((b[8]&1)<<4) | ((b[10]&1)<<5)
+    for j in range(0,6):
+      ac[j] = int.from_bytes(b[j*2:j*2+2],byteorder="little",signed=True)//2*2 # //2*2 removes LSB bit (nmea tag)
     if calculate:
-      for j in range(0,6):
-        ac[j] = int.from_bytes(b[j*2:j*2+2],byteorder="little",signed=True)//2*2 # //2*2 removes LSB bit (nmea tag)
       if should_reset_sum:
         aci.reset(ac[wav_ch_l]*aint2float, ac[wav_ch_r]*aint2float)
         hci.reset(aci.sum[0],aci.sum[1])
@@ -179,10 +183,11 @@ for wavfile in argv[1:]:
       if speed_kmh > 1: # TODO unhardcode
         if calculate == 1: # accelerometer
           #print(ac[wav_ch_l],ac[wav_ch_r])
-          # NOTE *3.6/speed_kmh and *speed_kmh/3.6 may cancel out
+          # NOTE *3.6/speed_kmh and *speed_kmh/3.6 may
+          # cancel out as approximation
           # but if canceled, math is not exactly the same
-          # because speed may vary. Before cancel
-          # do testing with real measurements
+          # because speed slowly changes. Before canceling
+          # speed_kmh/3.6 do testing with real measurements
           if aci.enter_sum(ac[wav_ch_l]*aint2float-aci.azl0,
                            ac[wav_ch_r]*aint2float-aci.azr0,
                            a_sample_dt*3.6/speed_kmh,
@@ -196,8 +201,9 @@ for wavfile in argv[1:]:
             hci.sum_dc_remove()
           #print("aci",aci.sum,"hci",hci.sum)
         if calculate == 3: # laser height measurement
-          # accelerometer still needs slope DC removal
-          # use accelerometer to calculate slope compensation
+          # FIXME write new code for height with complensation
+          # use slope from wav2kml, integrate, make DC removal
+          # laser accelerometer is for slope compensation
           if aci.enter_sum(ac[wav_ch_l]*aint2float - aci.azl0,
                            ac[wav_ch_r]*aint2float - aci.azr0,
                            a_sample_dt*3.6/speed_kmh,
@@ -209,7 +215,7 @@ for wavfile in argv[1:]:
           if enter_height(ac[wav_ch_hl]*hint2float,
                           ac[wav_ch_hr]*hint2float,
                           speed_kmh/3.6):
-            xyz = 0
+            pass
             # enter compensated slope (difference)
             #enter_slope(slope_h[0]-slope[0],slope_h[1]-slope[1])
 
@@ -244,17 +250,21 @@ for wavfile in argv[1:]:
           #print(speed_kmh,"kmh")
       # delete, consumed
       nmea=bytearray(0)
-    # generate new sample and write to output
-    # replace with true profile
-    # left  Y: ac[1] 
-    # right Y: ac[4]
-    ac[out_wav_ch_hl]=int(float2hint*hci.sum[0])
-    ac[out_wav_ch_hr]=int(float2hint*hci.sum[1])
-    # reset to 0 (fictional "laser" fixed to sea level)
-    # left  X: ac[0]
-    # right Y: ac[3]
-    ac[out_wav_ch_l]=0
-    ac[out_wav_ch_r]=0
+    if calculate:
+      # generate new sample and write to output
+      # replace Y with true profile
+      # left  Y: ac[1]
+      # right Y: ac[4]
+      ac[out_wav_ch_hl]=int(float2hint*hci.sum[0])
+      ac[out_wav_ch_hr]=int(float2hint*hci.sum[1])
+      # reset X to 0
+      # fictional "laser" has 0 acceleration
+      # with accel 0 it will be "fixed" to some
+      # point relative to sea level
+      # left  X: ac[0]
+      # right Y: ac[3]
+      ac[out_wav_ch_l]=0
+      ac[out_wav_ch_r]=0
     # copy text tags from old sample to new
     sample = bytearray(struct.pack("<hhhhhh", 
       ac[0], ac[1], ac[2],
