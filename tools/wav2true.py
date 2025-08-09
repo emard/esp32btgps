@@ -73,60 +73,43 @@ inv_sampling_length = 1/sampling_length
 # raw values reading (accelerometer or gyro) ac =
 ac = np.zeros(6).astype(np.int16) # current integer accelerations vector
 
-# accelerometer DC remove
-azl0 = 0.0
-azr0 = 0.0
-dc_azl = 0
-dc_azr = 0
-if calculate == 1:
-  azl0 = 9.81 # average azl (to remove slope DC offset)
-  azr0 = 9.81 # average azr (to remove slope DC offset)
-  dc_azl = int(9.81/aint2float)
-  dc_azr = int(9.81/aint2float)
-if calculate == 3:
-  azl0 = 9.81 # average azl (to remove slope DC offset)
-  azr0 = 9.81 # average azr (to remove slope DC offset)
-  dc_azl = int(9.81/aint2float)
-  dc_azr = int(9.81/aint2float)
-slope_dc_remove_count = 0
-
 # TODO rename slope->sum
 class integrator:
   def __init__(self):
     # slope reconstructed from z-accel and x-speed
-    self.slope = np.zeros(2).astype(np.float64)
+    self.sum = np.zeros(2).astype(np.float64)
     # for slope DC remove
-    self.slope_prev = np.zeros(2).astype(np.float64)
+    self.sum_prev = np.zeros(2).astype(np.float64)
     self.dc_remove_step = 1.0e-4
     self.travel_sampling = 0.0 # [m] for sampling_interval triggering
     self.reset(9.81,9.81)
 
   def reset(self, azl0:float, azr0:float):
-    self.slope *= 0
-    self.slope_prev *= 0
+    self.sum *= 0
+    self.sum_prev *= 0
     #self.azl0 = 9.81 # average azl (to remove slope DC offset)
     #self.azr0 = 9.81 # average azr (to remove slope DC offset)
     # overwrite with input
     self.azl0 = azl0
     self.azr0 = azr0
 
-  def slope_dc_remove(self):
-    if self.slope[0] > 0 and self.slope[0] > self.slope_prev[0]:
+  def sum_dc_remove(self):
+    if self.sum[0] > 0 and self.sum[0] > self.sum_prev[0]:
       self.azl0 += self.dc_remove_step
-    if self.slope[0] < 0 and self.slope[0] < self.slope_prev[0]:
+    if self.sum[0] < 0 and self.sum[0] < self.sum_prev[0]:
       self.azl0 -= self.dc_remove_step
-    if self.slope[1] > 0 and self.slope[1] > self.slope_prev[1]:
+    if self.sum[1] > 0 and self.sum[1] > self.sum_prev[1]:
       self.azr0 += self.dc_remove_step
-    if self.slope[1] < 0 and self.slope[1] < self.slope_prev[1]:
+    if self.sum[1] < 0 and self.sum[1] < self.sum_prev[1]:
       self.azr0 -= self.dc_remove_step
-    self.slope_prev[0] = self.slope[0]
-    self.slope_prev[1] = self.slope[1]
+    self.sum_prev[0] = self.sum[0]
+    self.sum_prev[1] = self.sum[1]
 
   # slope reconstruction from equal-time sampled z-accel and vehicle x-speed
   # updates slope[0] = left, slope[1] = right
-  def az2slope(self, azl:float, azr:float, c:float):
-    self.slope[0] += azl * c
-    self.slope[1] += azr * c
+  def az2sum(self, azl:float, azr:float, c:float):
+    self.sum[0] += azl * c
+    self.sum[1] += azr * c
 
   # integrate z-acceleration in time domain 
   # updates slope in z/x space domain
@@ -137,7 +120,7 @@ class integrator:
   # for small vx model is inaccurate. at vx=0 division by zero
   # returns 1 when slope is ready (each sampling_interval), otherwise 0
   def enter_sum(self, azl:float, azr:float, c:float, vx:float)->int:
-    self.az2slope(azl, azr, c)
+    self.az2sum(azl, azr, c)
     self.travel_sampling += vx * a_sample_dt
     if self.travel_sampling > sampling_length:
       self.travel_sampling -= sampling_length
@@ -151,102 +134,6 @@ aci.dc_remove_step=1E-4
 hci = integrator() # slope->height
 hci.reset(0,0)
 hci.dc_remove_step=1E-6 # step to remove DC from height values (output)
-
-def slope_dc_remove():
-  global azl0, azr0, slope_prev, slope_dc_remove_count
-  global dc_azl, dc_azr
-  #slope_dc_remove_count += 1
-  #if slope_dc_remove_count < 129:
-  #  return
-  #slope_dc_remove_count = 0
-  if slope[0] > 0 and slope[0] > slope_prev[0]:
-    azl0 += dc_remove_step
-    dc_azl += 1
-  if slope[0] < 0 and slope[0] < slope_prev[0]:
-    azl0 -= dc_remove_step
-    dc_azl -= 1
-  if slope[1] > 0 and slope[1] > slope_prev[1]:
-    azr0 += dc_remove_step
-    dc_azr += 1
-  if slope[1] < 0 and slope[1] < slope_prev[1]:
-    azr0 -= dc_remove_step
-    dc_azr -= 1
-  slope_prev[0] = slope[0]
-  slope_prev[1] = slope[1]
-
-# initialization before first data entry
-# usually called at stops because slope is difficult to keep after the stop
-# TODO rename reset_iri -> reset_stop
-def reset_iri():
-  global slope, slope_prev, azl0, azr0, dc_azl, dc_azr
-  global prev_hyl, prev_hyr
-  global slope_h
-  # multiply all matrix elements with 0 resets them to 0
-  slope *= 0
-  slope_prev *= 0
-  slope_h *= 0
-  if calculate == 1:
-    # reset DC compensation to current accelerometer reading
-    azl0 = ac[wav_ch_l]*aint2float
-    azr0 = ac[wav_ch_r]*aint2float
-    dc_azl = ac[wav_ch_l]
-    dc_azr = ac[wav_ch_r]
-  if calculate == 3:
-    # reset DC compensation to current accelerometer reading
-    azl0 = ac[wav_ch_l]*aint2float
-    azr0 = ac[wav_ch_r]*aint2float
-    dc_azl = ac[wav_ch_l]
-    dc_azr = ac[wav_ch_r]
-    # reset laser height
-    prev_hyl = prev_hyr = 0.0
-
-# slope reconstruction from equal-time sampled z-accel and vehicle x-speed
-# updates global slope[0] = left, slope[1] = right
-def az2slope(azl:float, azr:float, c:float):
-  global slope
-  slope[0] += azl * c
-  slope[1] += azr * c
-
-# integrate z-acceleration in time domain 
-# updates slope in z/x space domain
-# needs x-speed as input 
-# (vx = vehicle speed at the time when azl,azr accel are measured)
-# for small vx model is inaccurate. at vx=0 division by zero
-# returns 1 when slope is ready (each sampling_interval), otherwise 0
-def enter_accel(azl:float, azr:float, vx:float)->int:
-  global travel_sampling
-  az2slope(azl, azr, a_sample_dt / vx)
-  travel_sampling += vx * a_sample_dt
-  if travel_sampling > sampling_length:
-    travel_sampling -= sampling_length
-    return 1
-  return 0
-
-# hyl, hyr: Y-distance [m]
-# c = 1/dx [1/m] inverse sampling_length
-def hy2slope(hyl:float, hyr:float, c:float):
-  global prev_hyl, prev_hyr
-  slope_h[0] = (hyl-prev_hyl)*c
-  slope_h[1] = (hyr-prev_hyr)*c
-  prev_hyl = hyl
-  prev_hyr = hyr
-
-# enter direct profile Z-height in time domain
-# Z-height reading comes from Y channel (laser)
-# updates slope in z/x space domain
-# needs x-speed as input 
-# (vx = vehicle speed at the time when hyl,hyr distances are measured)
-# returns 1 when slope is ready (each sampling_interval), otherwise 0
-# for small vx model is inaccurate. at vx=0 division by zero
-def enter_height(hyl:float, hyr:float, vx:float)->int:
-  global travel_sampling
-  dx = vx * a_sample_dt
-  travel_sampling += dx
-  if travel_sampling > sampling_length:
-    travel_sampling -= sampling_length
-    hy2slope(hyl, hyr, inv_sampling_length)
-    return 1
-  return 0
 
 gps_list = list()
 # ((1234, "2021T15Z", (16,44), 80.0, 90.0), ...)
@@ -287,7 +174,7 @@ for wavfile in argv[1:]:
   speed_kt    = 0.0
   speed_kmh   = 0.0
   travel_sampling = 0.0 # m for sampling_interval triggering
-  should_reset_iri = 1
+  should_reset_sum = 1
   nmea=bytearray(0)
   while f.readinto(mvb):
     seek += 12 # bytes per sample
@@ -295,33 +182,25 @@ for wavfile in argv[1:]:
     if calculate:
       for j in range(0,6):
         ac[j] = int.from_bytes(b[j*2:j*2+2],byteorder="little",signed=True)//2*2 # //2*2 removes LSB bit (nmea tag)
-      if should_reset_iri:
-        reset_iri()
+      if should_reset_sum:
         aci.reset(ac[wav_ch_l]*aint2float, ac[wav_ch_r]*aint2float)
-        hci.reset(aci.slope[0],aci.slope[1])
-        should_reset_iri = 0 # consumed
+        hci.reset(aci.sum[0],aci.sum[1])
+        should_reset_sum = 0 # consumed
       if speed_kmh > 1: # TODO unhardcode
         if calculate == 1: # accelerometer
           #print(ac[wav_ch_l],ac[wav_ch_r])
-          # old code to check if new aci.slope works correct
-          if False:
-            if enter_accel(ac[wav_ch_l]*aint2float - azl0,
-                           ac[wav_ch_r]*aint2float - azr0,
-                           speed_kmh/3.6):
-              #print(slope,end=" = ")
-              slope_dc_remove()
           if aci.enter_sum(ac[wav_ch_l]*aint2float-aci.azl0,
                            ac[wav_ch_r]*aint2float-aci.azr0,
                            a_sample_dt*3.6/speed_kmh,
                            speed_kmh/3.6):
-            aci.slope_dc_remove()
+            aci.sum_dc_remove()
           # with DC remove, should we subtract hci.acl0
-          if hci.enter_sum(aci.slope[0]-hci.azl0,
-                           aci.slope[1]-hci.azr0,
+          if hci.enter_sum(aci.sum[0]-hci.azl0,
+                           aci.sum[1]-hci.azr0,
                            a_sample_dt*speed_kmh/3.6,
                            speed_kmh/3.6):
-            hci.slope_dc_remove()
-          #print("aci",aci.slope,"hci",hci.slope)
+            hci.sum_dc_remove()
+          #print("aci",aci.sum,"hci",hci.sum)
         if calculate == 3: # laser height measurement
           # accelerometer still needs slope DC removal
           # use accelerometer to calculate slope compensation
@@ -353,7 +232,7 @@ for wavfile in argv[1:]:
           speed_kt = 0.0
           speed_kmh = 0.0
           if calculate:
-            should_reset_iri = 1
+            should_reset_sum = 1
         elif (len(nmea)==79 or len(nmea)==68) and nmea[0:6]==b"$GPRMC" and nmea[-3]==42: # 68 is lost signal, tunnel mode
          # nmea[-3]="*" checks for asterisk on the right place, simple 8-bit crc follows
          crc = reduce(xor, map(int, nmea[1:-3]))
@@ -375,8 +254,8 @@ for wavfile in argv[1:]:
     # replace with true profile
     # left  Y: ac[1] 
     # right Y: ac[4]
-    ac[out_wav_ch_hl]=int(float2hint*hci.slope[0])
-    ac[out_wav_ch_hr]=int(float2hint*hci.slope[1])
+    ac[out_wav_ch_hl]=int(float2hint*hci.sum[0])
+    ac[out_wav_ch_hr]=int(float2hint*hci.sum[1])
     # reset to 0 (fictional "laser" fixed to sea level)
     # left  X: ac[0]
     # right Y: ac[3]
