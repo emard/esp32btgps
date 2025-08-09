@@ -11,7 +11,7 @@ import struct
 # calculate
 # 0:IRI from wav tags,
 # 1:IRI calculated from z-accel wav data (adxl355)
-# 3:IRI calculated from y-height wav data (laser)
+# 3:IRI calculated from y-height wav data (laser) FIXME
 calculate = 1
 # accel/gyro, select constant and data wav channel
 # to remap channels change wav_ch_*
@@ -33,6 +33,7 @@ if calculate == 1: # accel adxl355
   out_wav_ch_r = 3
   
 if calculate == 3: # laser vertical distance
+  # FIXME this option is currently not supported
   # laser height int->float conversion factor
   hint2float = 1.0e-5 # int -> h [m] int 1 = 0.01 mm = 1E-5 [m]
   # Y-channel contains laser distance reading
@@ -47,13 +48,6 @@ if calculate == 3: # laser vertical distance
   # slope DC remove by inc/dec of accel offset at each sampling length
   dc_remove_step = 1.0e-4
 
-# slope reconstructed from z-accel and x-speed
-slope = np.zeros(2).astype(np.float64)
-# for slope DC remove
-slope_prev = np.zeros(2).astype(np.float64)
-# slope calculated from laser height
-slope_h = np.zeros(2).astype(np.float64)
-
 # buffer to read wav
 b=bytearray(12)
 mvb=memoryview(b)
@@ -67,22 +61,18 @@ sampling_length = 0.05
 # equal-time accelerometer sample time
 a_sample_dt = 1/1000 # s (1kHz accelerometer sample rate)    
 
-# enter_height() needs inverse sampling length
-inv_sampling_length = 1/sampling_length
-
 # raw values reading (accelerometer or gyro) ac =
 ac = np.zeros(6).astype(np.int16) # current integer accelerations vector
 
-# TODO rename slope->sum
 class integrator:
   def __init__(self):
     # slope reconstructed from z-accel and x-speed
     self.sum = np.zeros(2).astype(np.float64)
     # for slope DC remove
     self.sum_prev = np.zeros(2).astype(np.float64)
-    self.dc_remove_step = 1.0e-4
+    self.dc_remove_step = 0.0 # 0 disables DC remove
     self.travel_sampling = 0.0 # [m] for sampling_interval triggering
-    self.reset(9.81,9.81)
+    self.reset(0,0)
 
   def reset(self, azl0:float, azr0:float):
     self.sum *= 0
@@ -133,7 +123,7 @@ aci.dc_remove_step=1E-4
 
 hci = integrator() # slope->height
 hci.reset(0,0)
-hci.dc_remove_step=1E-6 # step to remove DC from height values (output)
+hci.dc_remove_step=1E-6
 
 gps_list = list()
 # ((1234, "2021T15Z", (16,44), 80.0, 90.0), ...)
@@ -189,6 +179,10 @@ for wavfile in argv[1:]:
       if speed_kmh > 1: # TODO unhardcode
         if calculate == 1: # accelerometer
           #print(ac[wav_ch_l],ac[wav_ch_r])
+          # NOTE *3.6/speed_kmh and *speed_kmh/3.6 may cancel out
+          # but if canceled, math is not exactly the same
+          # because speed may vary. Before cancel
+          # do testing with real measurements
           if aci.enter_sum(ac[wav_ch_l]*aint2float-aci.azl0,
                            ac[wav_ch_r]*aint2float-aci.azr0,
                            a_sample_dt*3.6/speed_kmh,
@@ -204,20 +198,20 @@ for wavfile in argv[1:]:
         if calculate == 3: # laser height measurement
           # accelerometer still needs slope DC removal
           # use accelerometer to calculate slope compensation
-          flag_dc_remove = enter_accel(ac[wav_ch_l]*aint2float - azl0,
-                                       ac[wav_ch_r]*aint2float - azr0,
-                                       speed_kmh/3.6)
+          if aci.enter_sum(ac[wav_ch_l]*aint2float - aci.azl0,
+                           ac[wav_ch_r]*aint2float - aci.azr0,
+                           a_sample_dt*3.6/speed_kmh,
+                           speed_kmh/3.6):
+            aci.sum_dc_remove()
           # direct height doesn't need DC removal
           # generates slope with already removed DC
+          # see usage of this code in wav2kml.py
           if enter_height(ac[wav_ch_hl]*hint2float,
                           ac[wav_ch_hr]*hint2float,
                           speed_kmh/3.6):
             xyz = 0
             # enter compensated slope (difference)
             #enter_slope(slope_h[0]-slope[0],slope_h[1]-slope[1])
-          # after slope is entered, apply DC removal
-          if flag_dc_remove:
-            slope_dc_remove()
 
     if a != 32:
       c = a
