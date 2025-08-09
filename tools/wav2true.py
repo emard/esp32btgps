@@ -48,11 +48,11 @@ if calculate == 3: # laser vertical distance
   dc_remove_step = 1.0e-4
 
 # slope reconstructed from z-accel and x-speed
-slope = np.zeros(2).astype(np.float32)
+slope = np.zeros(2).astype(np.float64)
 # for slope DC remove
-slope_prev = np.zeros(2).astype(np.float32)
+slope_prev = np.zeros(2).astype(np.float64)
 # slope calculated from laser height
-slope_h = np.zeros(2).astype(np.float32)
+slope_h = np.zeros(2).astype(np.float64)
 
 # buffer to read wav
 b=bytearray(12)
@@ -91,12 +91,12 @@ if calculate == 3:
 slope_dc_remove_count = 0
 
 # TODO rename slope->sum
-class integra:
+class integrator:
   def __init__(self):
     # slope reconstructed from z-accel and x-speed
-    self.slope = np.zeros(2).astype(np.float32)
+    self.slope = np.zeros(2).astype(np.float64)
     # for slope DC remove
-    self.slope_prev = np.zeros(2).astype(np.float32)
+    self.slope_prev = np.zeros(2).astype(np.float64)
     self.dc_remove_step = 1.0e-4
     self.travel_sampling = 0.0 # [m] for sampling_interval triggering
     self.reset(9.81,9.81)
@@ -130,18 +130,12 @@ class integra:
 
   # integrate z-acceleration in time domain 
   # updates slope in z/x space domain
+  # for slope : c = a_sample_dt/vx
+  # for height: c = vx/a_sample_dt
   # needs x-speed as input 
   # (vx = vehicle speed at the time when azl,azr accel are measured)
   # for small vx model is inaccurate. at vx=0 division by zero
   # returns 1 when slope is ready (each sampling_interval), otherwise 0
-  def enter_accel(self, azl:float, azr:float, vx:float)->int:
-    self.az2slope(azl, azr, a_sample_dt / vx)
-    self.travel_sampling += vx * a_sample_dt
-    if self.travel_sampling > sampling_length:
-      self.travel_sampling -= sampling_length
-      return 1
-    return 0
-
   def enter_sum(self, azl:float, azr:float, c:float, vx:float)->int:
     self.az2slope(azl, azr, c)
     self.travel_sampling += vx * a_sample_dt
@@ -150,9 +144,13 @@ class integra:
       return 1
     return 0
 
-aci = integra() # accel->slope integrator
-hci = integra() # slope->height integrator
-hci.dc_remove_step=1.0E-6 # smaller step for height DC remove
+aci = integrator() # accel->slope
+aci.reset(9.81,9.81)
+aci.dc_remove_step=1E-4
+
+hci = integrator() # slope->height
+hci.reset(0,0)
+hci.dc_remove_step=1E-6 # step to remove DC from height values (output)
 
 def slope_dc_remove():
   global azl0, azr0, slope_prev, slope_dc_remove_count
@@ -261,9 +259,6 @@ gps_heading   = 4
 gps_iril      = 5
 gps_irir      = 6
 
-aci.reset(9.81,9.81)
-hci.reset(0.00,0.00)
-
 outfile = "/tmp/true.wav"
 print("output", outfile)
 o = open(outfile, "wb")
@@ -303,21 +298,22 @@ for wavfile in argv[1:]:
       if should_reset_iri:
         reset_iri()
         aci.reset(ac[wav_ch_l]*aint2float, ac[wav_ch_r]*aint2float)
-        # FIXME hci.reset(0,0)
+        hci.reset(aci.slope[0],aci.slope[1])
         should_reset_iri = 0 # consumed
       if speed_kmh > 1: # TODO unhardcode
         if calculate == 1: # accelerometer
           #print(ac[wav_ch_l],ac[wav_ch_r])
           # old code to check if new aci.slope works correct
-          if enter_accel(ac[wav_ch_l]*aint2float - azl0,
-                         ac[wav_ch_r]*aint2float - azr0,
-                         speed_kmh/3.6):
-            #print(slope,end=" = ")
-            slope_dc_remove()
-          if aci.enter_accel(ac[wav_ch_l]*aint2float - aci.azl0,
-                             ac[wav_ch_r]*aint2float - aci.azr0,
-                             speed_kmh/3.6):
-            #print(aci.slope)
+          if False:
+            if enter_accel(ac[wav_ch_l]*aint2float - azl0,
+                           ac[wav_ch_r]*aint2float - azr0,
+                           speed_kmh/3.6):
+              #print(slope,end=" = ")
+              slope_dc_remove()
+          if aci.enter_sum(ac[wav_ch_l]*aint2float-aci.azl0,
+                           ac[wav_ch_r]*aint2float-aci.azr0,
+                           a_sample_dt*3.6/speed_kmh,
+                           speed_kmh/3.6):
             aci.slope_dc_remove()
           # with DC remove, should we subtract hci.acl0
           if hci.enter_sum(aci.slope[0]-hci.azl0,
@@ -325,7 +321,7 @@ for wavfile in argv[1:]:
                            a_sample_dt*speed_kmh/3.6,
                            speed_kmh/3.6):
             hci.slope_dc_remove()
-          #print(hci.slope)
+          #print("aci",aci.slope,"hci",hci.slope)
         if calculate == 3: # laser height measurement
           # accelerometer still needs slope DC removal
           # use accelerometer to calculate slope compensation
