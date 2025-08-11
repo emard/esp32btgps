@@ -2,6 +2,8 @@
 
 # ./wav2true.py /tmp/circle.wav
 # output /tmp/true.wav
+# then wav2kml.py with calculate = 3
+# ./wav2kml.py /tmp/true.wav > /tmp/true.kml
 
 # TODO output file cmdline option
 # TODO better DC removal, smart/smooth
@@ -75,30 +77,26 @@ class integrator:
     self.sum = np.zeros(2).astype(np.float64)
     # for slope DC remove
     self.sum_prev = np.zeros(2).astype(np.float64)
+    # DC removal
+    self.dc = np.zeros(2).astype(np.float64)
     self.dc_remove_step = 0.0 # 0 disables DC remove
+    self.dc_remove_factor = 0.0 # 0 disables proportional sum steps
     self.travel_sampling = 0.0 # [m] for sampling_interval triggering
     self.reset(0,0)
 
   def reset(self, azl0:float, azr0:float):
     self.sum *= 0
     self.sum_prev *= 0
-    #self.azl0 = 9.81 # average azl (to remove slope DC offset)
-    #self.azr0 = 9.81 # average azr (to remove slope DC offset)
-    # overwrite with input
-    self.azl0 = azl0
-    self.azr0 = azr0
+    self.dc[0] = azl0
+    self.dc[1] = azr0
 
   def sum_dc_remove(self):
-    if self.sum[0] > 0 and self.sum[0] > self.sum_prev[0]:
-      self.azl0 += self.dc_remove_step
-    if self.sum[0] < 0 and self.sum[0] < self.sum_prev[0]:
-      self.azl0 -= self.dc_remove_step
-    if self.sum[1] > 0 and self.sum[1] > self.sum_prev[1]:
-      self.azr0 += self.dc_remove_step
-    if self.sum[1] < 0 and self.sum[1] < self.sum_prev[1]:
-      self.azr0 -= self.dc_remove_step
-    self.sum_prev[0] = self.sum[0]
-    self.sum_prev[1] = self.sum[1]
+    for i in range(0,2):
+      if self.sum[i] > 0 and self.sum[i] > self.sum_prev[i]:
+        self.dc[i] += self.dc_remove_step # + self.dc_remove_factor*(self.sum[i]-self.dc[i])
+      if self.sum[i] < 0 and self.sum[i] < self.sum_prev[i]:
+        self.dc[i] -= self.dc_remove_step # - self.dc_remove_factor*(self.sum[i]-self.dc[i])
+      self.sum_prev[i] = self.sum[i]
 
   # slope reconstruction from equal-time sampled z-accel and vehicle x-speed
   # updates slope[0] = left, slope[1] = right
@@ -122,6 +120,10 @@ class integrator:
       return 1
     return 0
 
+# adjust aci and hci dc_remove_step
+# for waveform to "look better" and have
+# insignificant contribution to result
+# from wav2kml
 aci = integrator() # accel->slope
 aci.reset(9.81,9.81)
 aci.dc_remove_step=1E-4
@@ -129,6 +131,7 @@ aci.dc_remove_step=1E-4
 hci = integrator() # slope->height
 hci.reset(0,0)
 hci.dc_remove_step=1E-6
+# 1E-5 looks better but contributes +5% to makecircle
 
 gps_list = list()
 # ((1234, "2021T15Z", (16,44), 80.0, 90.0), ...)
@@ -188,14 +191,14 @@ for wavfile in argv[1:]:
           # but if canceled, math is not exactly the same
           # because speed slowly changes. Before canceling
           # speed_kmh/3.6 do testing with real measurements
-          if aci.enter_sum(ac[wav_ch_l]*aint2float-aci.azl0,
-                           ac[wav_ch_r]*aint2float-aci.azr0,
+          if aci.enter_sum(ac[wav_ch_l]*aint2float-aci.dc[0],
+                           ac[wav_ch_r]*aint2float-aci.dc[1],
                            a_sample_dt*3.6/speed_kmh,
                            speed_kmh/3.6):
             aci.sum_dc_remove()
           # with DC remove, should we subtract hci.acl0
-          if hci.enter_sum(aci.sum[0]-hci.azl0,
-                           aci.sum[1]-hci.azr0,
+          if hci.enter_sum(aci.sum[0]-hci.dc[0],
+                           aci.sum[1]-hci.dc[1],
                            a_sample_dt*speed_kmh/3.6,
                            speed_kmh/3.6):
             hci.sum_dc_remove()
@@ -204,8 +207,8 @@ for wavfile in argv[1:]:
           # FIXME write new code for height with complensation
           # use slope from wav2kml, integrate, make DC removal
           # laser accelerometer is for slope compensation
-          if aci.enter_sum(ac[wav_ch_l]*aint2float - aci.azl0,
-                           ac[wav_ch_r]*aint2float - aci.azr0,
+          if aci.enter_sum(ac[wav_ch_l]*aint2float - aci.dc[0],
+                           ac[wav_ch_r]*aint2float - aci.dc[1],
                            a_sample_dt*3.6/speed_kmh,
                            speed_kmh/3.6):
             aci.sum_dc_remove()
@@ -271,6 +274,7 @@ for wavfile in argv[1:]:
       ac[3], ac[4], ac[5],
     ))
     # mix old text tags into new sample
+    # print(ac)
     for j in range(6):
       sample[2*j]=(sample[2*j]&0xFE)|(mvb[2*j]&1)
     o.write(sample)
