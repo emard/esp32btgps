@@ -109,7 +109,7 @@ char *nthchar(char *a, int n, char c)
 }
 
 // parsing this will write null-delimiters into a
-// so "a" will be broken afterwards
+// so "a" will be temporarily broken and restored afterwards
 // negative microminutes mean S or W
 void nmea2latlon(char *a, struct int_latlon *latlon)
 {
