@@ -100,21 +100,13 @@ inv_sampling_length = 1/sampling_length
 ac = np.zeros(6).astype(np.int16) # current integer accelerations vector
 
 # accelerometer DC remove
-azl0 = 0.0
-azr0 = 0.0
-dc_azl = 0
-dc_azr = 0
+ac_dc = np.zeros(2).astype(np.float32) # acceleration DC offset
 if calculate == 1:
-  azl0 = 9.81 # average azl (to remove slope DC offset)
-  azr0 = 9.81 # average azr (to remove slope DC offset)
-  dc_azl = int(9.81/aint2float)
-  dc_azr = int(9.81/aint2float)
+  ac_dc[0] = 9.81 # (initialize to g to remove slope DC offset)
+  ac_dc[1] = 9.81 # (initialize to g to remove slope DC offset)
 if calculate == 3:
-  azl0 = 9.81 # average azl (to remove slope DC offset)
-  azr0 = 9.81 # average azr (to remove slope DC offset)
-  dc_azl = int(9.81/aint2float)
-  dc_azr = int(9.81/aint2float)
-slope_dc_remove_count = 0
+  ac_dc[0] = 9.81 # (initialize to g to remove slope DC offset)
+  ac_dc[1] = 9.81 # (initialize to g to remove slope DC offset)
 
 # gyro DC remove
 dc_p = 0.0
@@ -192,27 +184,13 @@ def slope2model(slope_l:float, slope_r:float):
   ZR = np.matmul(ST, ZR) + PR * slope_r
   # return (ZL[0] - ZL[2], ZR[0] - ZR[2]) # shock absorber speed
 
-def slope_dc_remove():
-  global azl0, azr0, slope_prev, slope_dc_remove_count
-  global dc_azl, dc_azr
-  #slope_dc_remove_count += 1
-  #if slope_dc_remove_count < 129:
-  #  return
-  #slope_dc_remove_count = 0
-  if slope[0] > 0 and slope[0] > slope_prev[0]:
-    azl0 += dc_remove_step
-    dc_azl += 1
-  if slope[0] < 0 and slope[0] < slope_prev[0]:
-    azl0 -= dc_remove_step
-    dc_azl -= 1
-  if slope[1] > 0 and slope[1] > slope_prev[1]:
-    azr0 += dc_remove_step
-    dc_azr += 1
-  if slope[1] < 0 and slope[1] < slope_prev[1]:
-    azr0 -= dc_remove_step
-    dc_azr -= 1
-  slope_prev[0] = slope[0]
-  slope_prev[1] = slope[1]
+def ac_dc_remove():
+  for i in range(0,2):
+    if slope[i] > 0 and slope[i] > slope_prev[i]:
+      ac_dc[i] += dc_remove_step
+    if slope[i] < 0 and slope[i] < slope_prev[i]:
+      ac_dc[i] -= dc_remove_step
+    slope_prev[i] = slope[i]
 
 def gyro_dc_remove():
   global dc_p, dc_q, dc_r, prev_phi, prev_theta, prev_psi
@@ -254,20 +232,16 @@ def reset_iri():
   slope_h *= 0
   if calculate == 1:
     # reset DC compensation to current accelerometer reading
-    azl0 = ac[wav_ch_l]*aint2float
-    azr0 = ac[wav_ch_r]*aint2float
-    dc_azl = ac[wav_ch_l]
-    dc_azr = ac[wav_ch_r]
+    ac_dc[0] = ac[wav_ch_l]*aint2float
+    ac_dc[1] = ac[wav_ch_r]*aint2float
   if calculate == 2:
     # reset gyro angles
     phi = theta = psi = prev_phi = prev_theta = prev_psi = 0.0
     dc_p = dc_q = dc_r = 0.0
   if calculate == 3:
     # reset DC compensation to current accelerometer reading
-    azl0 = ac[wav_ch_l]*aint2float
-    azr0 = ac[wav_ch_r]*aint2float
-    dc_azl = ac[wav_ch_l]
-    dc_azr = ac[wav_ch_r]
+    ac_dc[0] = ac[wav_ch_l]*aint2float
+    ac_dc[1] = ac[wav_ch_r]*aint2float
     # reset laser height
     prev_hyl = prev_hyr = 0.0
 
@@ -758,14 +732,14 @@ for wavfile in argv[1:]:
         should_reset_iri = 0 # consumed
       if speed_kmh > 1: # TODO unhardcode
         if calculate == 1: # accelerometer
-          if enter_accel(ac[wav_ch_l]*aint2float - azl0,
-                         ac[wav_ch_r]*aint2float - azr0,
+          if enter_accel(ac[wav_ch_l]*aint2float - ac_dc[0],
+                         ac[wav_ch_r]*aint2float - ac_dc[1],
                          speed_kmh/3.6):
           #if enter_accel((ac[wav_ch_l] - dc_azl)*aint2float,
           #               (ac[wav_ch_r] - dc_azr)*aint2float,
           #               speed_kmh/3.6):
             enter_slope(slope[0],slope[1])
-            slope_dc_remove()
+            ac_dc_remove()
         if calculate == 2: # gyroscope
           if enter_gyro(ac[wav_ch_p]*aint2float - dc_p,
                         ac[wav_ch_q]*aint2float - dc_q,
@@ -776,8 +750,8 @@ for wavfile in argv[1:]:
         if calculate == 3: # laser height measurement
           # accelerometer still needs slope DC removal
           # use accelerometer to calculate slope compensation
-          flag_dc_remove = enter_accel(ac[wav_ch_l]*aint2float - azl0,
-                                       ac[wav_ch_r]*aint2float - azr0,
+          flag_dc_remove = enter_accel(ac[wav_ch_l]*aint2float - ac_dc[0],
+                                       ac[wav_ch_r]*aint2float - ac_dc[1],
                                        speed_kmh/3.6)
           # direct height doesn't need DC removal
           # generates slope with already removed DC
@@ -788,7 +762,7 @@ for wavfile in argv[1:]:
             enter_slope(slope_h[0]-slope[0],slope_h[1]-slope[1])
           # after slope is entered, apply DC removal
           if flag_dc_remove:
-            slope_dc_remove()
+            ac_dc_remove()
 
     if a != 32:
       c = a
