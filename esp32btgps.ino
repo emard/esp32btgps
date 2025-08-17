@@ -370,7 +370,7 @@ void setup() {
   cold_init_sensors();
   init_srvz_iri(); // depends on sensor type detected
 
-  SerialBT.begin("ESP32", true);
+  SerialBT.begin("PROFILOG", true);
   SerialBT.setPin((const char *)GPS_PIN.c_str(), GPS_PIN.length());
   Serial.println("Bluetooth master started");
   Serial.println(esp_get_idf_version()); // v4.4-beta1-189-ga79dc75f0a
@@ -1025,12 +1025,12 @@ void btn_handler(void)
 void handle_gps_line_complete(void)
 {
   line[line_i-1] = 0; // replace \n termination with 0
+  //Serial.println(line);
   //if(nmea[1]=='P' && nmea[3]=='R') // print only $PGRMT, we need Version 3.00
   if ((line_i > 50 && line_i < 90) // accept lines of expected length
           && (line[1] == 'G' // accept 1st letter is G
               && ((line[3] == 'R' && line[4] == 'M' && line[5] == 'C') /*|| nmea[4]=='G'*/))) // accept 3,4,5th letters are RMC or 4th is G, accept $GPRMC and $GPGGA
   {
-    // Serial.println(line);
     if (check_nmea_crc(line)) // filter out NMEA sentences with bad CRC
     {
       // there's bandwidth for only one NMEA sentence at 10Hz (not two sentences)
