@@ -2,6 +2,7 @@
 #include "nmea.h"
 #include <string.h> // only for NULL pointer
 #include <stdlib.h> // strtol
+#include <stdio.h> // snprintf
 
 // NMEA timestamp string (day time) from conversion factors to 10x seconds
 uint32_t nmea2sx[8] = { 360000,36000,6000,600,100,10,0,1 };
@@ -111,7 +112,8 @@ char *nthchar(char *a, int n, char c)
 // parsing this will write null-delimiters into a
 // so "a" will be temporarily broken and restored afterwards
 // negative microminutes mean S or W
-void nmea2latlon(char *a, struct int_latlon *latlon)
+#if 0
+void nmea2latlon_defunct(char *a, struct int_latlon *latlon)
 {
   int umin;
   char a0,a1,a2; // preserve original values
@@ -151,6 +153,40 @@ void nmea2latlon(char *a, struct int_latlon *latlon)
   a[37] = a1;
   a[35] = a0;
 }
+#endif
+
+void nmea2latlon(char *a, struct int_latlon *latlon)
+{
+  char *blat = nthchar(a, 3, ','); // position lat
+  char *bns  = nthchar(a, 4, ','); // position n/s
+  char *blon = nthchar(a, 5, ','); // position lon
+  char *bew  = nthchar(a, 6, ','); // position e/w
+  double l;
+  int deg, umin;
+
+  if(blat[1] != ',')
+  {
+    l = atof(blat+1);
+    deg = 1E-2 * l;
+    umin = 1E6 * (l-deg*100);
+    if(bns[1]!=',')
+      if(bns[1]=='S')
+        umin = -umin;
+    latlon->lat_deg = deg;
+    latlon->lat_umin = umin;
+  }
+  if(blon[1] != ',')
+  {
+    l = atof(blon+1);
+    deg = 1E-2 * l;
+    umin = 1E6 * (l-deg*100);
+    if(bew[1]!=',')
+      if(bew[1]=='W')
+        umin = -umin;
+    latlon->lon_deg = deg;
+    latlon->lon_umin = umin;
+  }
+}
 
 void latlon2double(struct int_latlon *latlon, double *lat, double *lon)
 {
@@ -165,6 +201,8 @@ void latlon2double(struct int_latlon *latlon, double *lat, double *lon)
 uint16_t nmea2iheading(char *nmea)
 {
   char *b = nthchar(nmea, 8, ','); // position to heading
+  #if 0
+  // simplified parsing
   char str_heading[5] = "0000"; // storage for parsing
   str_heading[0] = b[1];
   str_heading[1] = b[2];
@@ -172,5 +210,42 @@ uint16_t nmea2iheading(char *nmea)
   str_heading[3] = b[5]; // skip b[4]=='.'
   //str_heading[4] = 0;
   uint16_t iheading = strtol(str_heading, NULL, 10); // parse as integer 0-360 -> 0-3600
+  #else
+  uint16_t iheading = 10*atof(b+1);
+  #endif
   return iheading;
+}
+
+// parse NMEA ascii string -> return mph x100 speed (negative -1 if no fix)
+int nmea2spd(char *a)
+{
+  //char *b = a+46; // simplified locating 7th ","
+  char *b = nthchar(a, 7, ',');
+  // simplified parsing, string has form ",000.00,"
+  #if 0
+  if (b[4] != '.' || b[7] != ',')
+    return -1;
+  return (b[1] - '0') * 10000 + (b[2] - '0') * 1000 + (b[3] - '0') * 100 + (b[5] - '0') * 10 + (b[6] - '0');
+  #else
+  // if no fix then string has form ",," field is empty
+  // then return -1
+  if (b[1] == ',')
+    return -1;
+  // string has general form e.g. ",0.0," or ",000.00,"
+  float speed = atof(b+1);
+  return (int)(speed*100+0.5);
+  #endif
+}
+
+// write centiknots speed to nmea
+// remember to fix crc after this
+void spd2nmea(char *a, int ckt)
+{
+  char *b = nthchar(a, 7, ',');
+  if(b[0] != ',' || b[1] == ',' || b[7] != ',') // ,000.00, check validity
+    return;
+  char buf[20];
+  // FIXME include snprintf() missing
+  snprintf(buf, 20, "%03d.%02d", ckt/100, ckt%100);
+  memcpy(b+1, buf, 6);
 }

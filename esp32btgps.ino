@@ -151,7 +151,7 @@ int stopcount = 0;
 int daytime = 0;
 int daytime_prev = 0; // seconds x10 (0.1s resolution) for dt
 
-char prompt_obd = '>'; // after promot send obd_request_kmh
+char prompt_obd = '>'; // after prompt send obd_request_kmh
 char *obd_request_kmh = (char *)"010D\r";
 uint8_t obd_retry = 3; // bit pattern for OBD retry in case of silence
 
@@ -414,29 +414,6 @@ void set_date_time(int year, int month, int day, int h, int m, int s)
 }
 #endif
 
-
-// parse NMEA ascii string -> return mph x100 speed (negative -1 if no fix)
-int nmea2spd(char *a)
-{
-  //char *b = a+46; // simplified locating 7th ","
-  char *b = nthchar(a, 7, ',');
-  // simplified parsing, string has form ,000.00,
-  if (b[4] != '.' || b[7] != ',')
-    return -1;
-  return (b[1] - '0') * 10000 + (b[2] - '0') * 1000 + (b[3] - '0') * 100 + (b[5] - '0') * 10 + (b[6] - '0');
-}
-
-// write centiknots speed to nmea
-// remember to fix crc after this
-void spd2nmea(char *a, int ckt)
-{
-  char *b = nthchar(a, 7, ',');
-  if(b[0] != ',' || b[1] == ',' || b[7] != ',') // ,000.00, check validity
-    return;
-  char buf[20];
-  snprintf(buf, 20, "%03d.%02d", ckt/100, ckt%100);
-  memcpy(b+1, buf, 6);
-}
 
 #if 0
 // debug tagger: constant test string
@@ -1051,8 +1028,9 @@ void handle_gps_line_complete(void)
   //if(nmea[1]=='P' && nmea[3]=='R') // print only $PGRMT, we need Version 3.00
   if ((line_i > 50 && line_i < 90) // accept lines of expected length
           && (line[1] == 'G' // accept 1st letter is G
-              && (line[4] == 'M' /*|| nmea[4]=='G'*/))) // accept 4th letter is M or G, accept $GPRMC and $GPGGA
+              && ((line[3] == 'R' && line[4] == 'M' && line[5] == 'C') /*|| nmea[4]=='G'*/))) // accept 3,4,5th letters are RMC or 4th is G, accept $GPRMC and $GPGGA
   {
+    // Serial.println(line);
     if (check_nmea_crc(line)) // filter out NMEA sentences with bad CRC
     {
       // there's bandwidth for only one NMEA sentence at 10Hz (not two sentences)
@@ -1241,7 +1219,8 @@ void loop_run(void)
       // read returns char or -1 if unavailable
       c = SerialBT.read();
       if (line_i < sizeof(line) - 3)
-        line[line_i++] = c;
+        // if (line_i != 0 || c != '\n' || c != '\r') // line can't start with line terminator
+          line[line_i++] = c;
     }
     if(c == line_terminator || c == prompt_obd ) // line complete
     { // GPS has '\n', OBD has '\r' line terminator and '>' prompt
