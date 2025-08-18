@@ -1027,12 +1027,13 @@ void handle_gps_line_complete(void)
   line[line_i-1] = 0; // replace \n termination with 0
   //Serial.println(line);
   //if(nmea[1]=='P' && nmea[3]=='R') // print only $PGRMT, we need Version 3.00
-  if ((line_i > 50 && line_i < 90) // accept lines of expected length
-          && (line[1] == 'G' // accept 1st letter is G
-              && ((line[3] == 'R' && line[4] == 'M' && line[5] == 'C') /*|| nmea[4]=='G'*/))) // accept 3,4,5th letters are RMC or 4th is G, accept $GPRMC and $GPGGA
+  if (line_i > 38 && line_i < 90 // accept lines of expected length
+  &&  line[1] == 'G' // accept 1st letter is G
+  &&  line[3] == 'R' && line[4] == 'M' && line[5] == 'C') // accept 3,4,5th letters are RMC or 4th is G, accept $GPRMC and $GPGGA
   {
     if (check_nmea_crc(line)) // filter out NMEA sentences with bad CRC
     {
+      // Serial.println(line);
       // there's bandwidth for only one NMEA sentence at 10Hz (not two sentences)
       // time calculation here should receive no more than one NMEA sentence for one timestamp
       write_tag(line); // write as early as possible, but BTN debug can't change speed
@@ -1102,6 +1103,29 @@ void handle_gps_line_complete(void)
       }
     }
   }
+  #if 0
+  else
+  {
+    // Android 15 Samsung A25 will be silent if no GPS signal.
+    // without signal it doesn't send GPRMC.
+    // on BT connect it just sends one
+    // $PSAMAID,tPe*2E
+    // after that it is silent.
+    // with very weak signal it sends
+    // $GPRMC,,V,,,,,,,,,,N*53
+    // currently in such condition no sentences from A25 contain time
+    // with some signal but without FIX it sends like
+    // $GPRMC,082703.000,V,,,,,,,180825,,,N*45
+    if (line_i > 30 && line_i < 90 // accept lines of expected length
+    && line[1] == 'P' // accept 1st letter is P
+    && line[2] == 'S' && line[3] == 'A' && line[4] == 'M' && line[5] == 'C')
+    // accept 2,3,4,5th letters are SAMC for PSAMCLK
+    {
+      // Serial.println(line);
+      // TODO nmea.cpp parser for different NMEA sentence
+    }
+  }
+  #endif
 }
 
 // convert OBD reading to a fake NMEA line
