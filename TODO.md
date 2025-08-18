@@ -124,12 +124,14 @@ esp32
     [x] kml date in the document description
     [x] sensor range +-2-4-8 g configurable
     [x] if left sensor is missing, right can be detected
-    [ ] report identical GPS positions in wav and kml
+    [x] report identical GPS positions in wav and kml
     [ ] snap length config parameter
-    [ ] latlon float->double for last digit precision
+    [x] latlon float->double for last digit precision
         lat,lon 45,16 quantizes approx as 46.000003,16.000002
-    [ ] for first minute reports sensors NONE, delay initial
+    [x] for first minute reports sensors NONE, delay initial
         report print for sensors to be detected
+    [ ] for 1Hz GPS update, make more dense lines
+        split line to segments of configurable length
 
 core
 
@@ -161,6 +163,7 @@ core
     [x] FM frequency set
     [x] SPI slave for speed and iri
     [x] random inbalance in L/R calc results (slope ready not used)
+    [ ] math to calculate IRI from sensors inside the car
 
 tools (wav2kml etc)
 
