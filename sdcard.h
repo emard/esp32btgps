@@ -28,6 +28,7 @@ extern RDS rds;
 extern uint8_t GPS_MAC[6], OBD_MAC[6];
 #define AP_MAX 16 /* max number of APs */
 extern String  GPS_NAME, GPS_PIN, OBD_NAME, OBD_PIN, AP_PASS[], DNS_HOST;
+extern uint32_t MS_SILENCE_RECONNECT;
 extern uint8_t datetime_is_set;
 extern struct tm tm, tm_session; // tm_session gives new filename when reconnected
 extern uint64_t free_bytes;

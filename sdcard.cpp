@@ -38,6 +38,7 @@ uint8_t KMH_START = 12, KMH_STOP = 6; // km/h start/stop speed hystereis
 uint8_t KMH_BTN = 0; // debug btn2 for fake km/h
 int mode_obd_gps = 0; // alternates 0:OBD and 1:GPS
 uint8_t gps_obd_configured = 0; // existence of (1<<0):OBD config, (1<<1):GPS config
+uint32_t MS_SILENCE_RECONNECT = 0; // [ms] milliseconds of silence to reconnect
 float srvz_iri100, iri[2], iriavg, srvz2_iri20, iri20[2], iri20avg;
 float temp[2]; // sensor temperature
 char iri2digit[4] = "0.0";
@@ -783,6 +784,7 @@ void read_cfg(void)
     else if(varname.equalsIgnoreCase("obd_name")) OBD_NAME = varvalue;
     else if(varname.equalsIgnoreCase("obd_mac" )) parse_mac(OBD_MAC, varvalue);
     else if(varname.equalsIgnoreCase("obd_pin" )) OBD_PIN  = varvalue;
+    else if(varname.equalsIgnoreCase("silence_reconnect" )) MS_SILENCE_RECONNECT  = 1000*strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("log_mode")) log_wav_kml = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("red_iri" )) red_iri = strtof(varvalue.c_str(), NULL);
     else if(varname.equalsIgnoreCase("g_range" )) G_RANGE = strtol(varvalue.c_str(), NULL,10);
@@ -820,6 +822,7 @@ void read_cfg(void)
     OBD_MAC[0], OBD_MAC[1], OBD_MAC[2], OBD_MAC[3], OBD_MAC[4], OBD_MAC[5]);
   Serial.println(macstr);
   Serial.print("OBD_PIN  : "); Serial.println(OBD_PIN);
+  Serial.print("SILENCE_RECONNECT  : "); Serial.println(MS_SILENCE_RECONNECT/1000);
   for(int i = 0; i < ap_n; i++)
   { Serial.print("AP_PASS  : "); Serial.println(AP_PASS[i]); }
   Serial.print("DNS_HOST : "); Serial.println(DNS_HOST);
