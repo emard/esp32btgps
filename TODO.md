@@ -128,6 +128,8 @@ esp32
     [ ] snap length config parameter
     [ ] latlon float->double for last digit precision
         lat,lon 45,16 quantizes approx as 46.000003,16.000002
+    [ ] for first minute reports sensors NONE, delay initial
+        report print for sensors to be detected
 
 core
 
