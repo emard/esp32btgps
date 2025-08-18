@@ -344,7 +344,7 @@ void setup() {
 
   t_ms = ms();
   line_tprev = t_ms-5000;
-  // line_tprev sets 5s silence in the past. reconnect comes at 10s silance.
+  // line_tprev sets 5s silence in the past. reconnect comes at 10s silence.
   // speech starts at 7s silence. Before speech, 2s must be allowed
   // for sensors to start reading data, otherwise it will false report
   // "no sensors".
@@ -1278,7 +1278,7 @@ void loop_run(void)
   // for practical debugging we wait for less here
 
   if( (MS_SILENCE_RECONNECT > 0 && line_tdelta > MS_SILENCE_RECONNECT) // 10 seconds of serial silence? then reconnect
-  ||  (MS_SILENCE_RECONNECT == 0 && SerialBT.connected() == false) // after bluetooth disconnect, immediately reconnect
+  ||  (MS_SILENCE_RECONNECT == 0 && SerialBT.connected() == false && line_tdelta > 7000) // after bluetooth disconnect, immediately reconnect
   )
   {
       #ifdef PIN_LED
