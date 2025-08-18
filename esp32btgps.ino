@@ -383,6 +383,7 @@ void setup() {
   spi_speed_write(0); // normal
 }
 
+#if 0
 void reconnect()
 {
   // connect(address) is fast (upto 10 secs max), connect(name) is slow (upto 30 secs max) as it needs
@@ -390,12 +391,17 @@ void reconnect()
   // Set CoreDebugLevel to Info to view devices bluetooth address and device names
 
   //connected = SerialBT.connect(name); // slow with String name
-  connected = SerialBT.connect(GPS_MAC); // fast with uint8_t GPS_MAC[6]
+  //connected = SerialBT.connect(GPS_MAC); // fast with uint8_t GPS_MAC[6]
+
+  if(bt_name.length())
+    connected = SerialBT.connect(bt_name); // 30s connect with String name
+  else
+    connected = SerialBT.connect(mac_address); // 15s connect with uint8_t GPS_MAC[6] but some devices reboot esp32
 
   // return value "connected" doesn't mean much
   // it is sometimes true even if not connected.
 }
-
+#endif
 
 #if 0
 void set_date_time(int year, int month, int day, int h, int m, int s)
@@ -1271,7 +1277,9 @@ void loop_run(void)
   // reported 15s silence is possible http://4river.a.la9.jp/gps/report/GLO.htm
   // for practical debugging we wait for less here
 
-  if (line_tdelta > 10000) // 10 seconds of serial silence? then reconnect
+  if( (MS_SILENCE_RECONNECT > 0 && line_tdelta > MS_SILENCE_RECONNECT) // 10 seconds of serial silence? then reconnect
+  ||  (MS_SILENCE_RECONNECT == 0 && SerialBT.connected() == false) // after bluetooth disconnect, immediately reconnect
+  )
   {
       #ifdef PIN_LED
       // BT LED OFF
