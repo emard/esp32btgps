@@ -27,7 +27,7 @@ for wavfile in argv[1:]:
       if a != 33:
         nmea.append(c)
     else: # a == 32
-      if(len(nmea)):
+      if(len(nmea)>3):
         crc = reduce(xor, map(int, nmea[1:-3]))
         hexcrc = bytearray(b"%02X" % crc)
         if nmea[-2:] == hexcrc:
