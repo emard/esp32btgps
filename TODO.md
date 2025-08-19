@@ -185,6 +185,7 @@ tools (wav2kml etc)
     [x] colorized description
         https://developers.google.com/kml/documentation/kml_tut
     [ ] improve snap
+    [ ] unbreak for android gps
 
 makecircle
 
