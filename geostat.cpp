@@ -226,22 +226,21 @@ void stat_nmea_proc(char *nmea, int nmea_len)
   static int have_new = 0;
   // printf("%s\n", nmea);
   char *nf;
-  struct int_latlon ilatlon;
+  // struct int_latlon ilatlon;
   nf = nthchar(nmea, 2, ',');
   if(nf)
     if(nf[1]=='A') // A means valid signal (not in tunnel)
     {
       //printf("%s\n", nmea);
-      nmea2latlon(nmea, &ilatlon);
+      double lat, lon;
+      nmea2dlatlon(nmea, &lat, &lon);
       if(s_stat.lat > 90)
       {
-        if(ilatlon.lat_deg < 90)
-          calculate_grid(ilatlon.lat_deg);
+        if(lat < 90)
+          calculate_grid(lat);
         else
           return;
       }
-      double lat, lon;
-      latlon2double(&ilatlon, &lat, &lon);
       uint8_t heading = (256.0/3600)*nmea2iheading(nmea); // 0-3600 -> 0-256
       uint32_t lon2mm = dlon2mm(lat);
       uint32_t   dxmm = fabs(lon-stat_travel_prev_latlon[1]) *  lon2mm;

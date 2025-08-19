@@ -44,7 +44,8 @@ float temp[2]; // sensor temperature
 char iri2digit[4] = "0.0";
 char iri99avg2digit[4] = "0.0";
 uint32_t iri99sum = 0, iri99count = 0, iri99avg = 0; // collect session average
-struct int_latlon last_latlon; // degrees and microminutes
+// struct int_latlon last_latlon; // degrees and microminutes
+double last_dlatlon[2];
 struct tm tm, tm_session; // tm_session gives new filename_data when reconnected
 uint8_t log_wav_kml = 3; // 1-wav 2-kml 3-both
 uint8_t G_RANGE = 8; // +-2/4/8 g sensor range (at digital reading +-32000)
@@ -453,16 +454,14 @@ void read_last_nmea(void)
   {
     if (nmea2tm(lastnmea, &tm))
       set_date_from_tm(&tm);
-    nmea2latlon(lastnmea, &last_latlon); // parsing should not spoil lastnmea content
+    // nmea2latlon(lastnmea, &last_latlon); // parsing should not spoil lastnmea content
+    nmea2dlatlon(lastnmea, &last_dlatlon[0], &last_dlatlon[1]);
   }
   else
     Serial.println("read last nmea bad crc");
   #if 0
   char latlon_spr[120];
-  sprintf(latlon_spr, "parsed: %02d%02d.%06d %03d%02d.%06d",
-    last_latlon.lat_deg, last_latlon.lat_umin / 1000000, last_latlon.lat_umin % 1000000,
-    last_latlon.lon_deg, last_latlon.lon_umin / 1000000, last_latlon.lon_umin % 1000000
-  );
+  sprintf(latlon_spr, "parsed: %10.6f %10.6f", last_dlatlon[0], last_dlatlon[1]);
   Serial.println(latlon_spr);
   #endif
   // lastnmea[0] = 0; // prevent immediate next write, not needed as parsing does similar

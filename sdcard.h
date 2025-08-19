@@ -22,7 +22,8 @@ extern uint32_t iri99sum, iri99count, iri99avg; // collect session average
 extern char lastnmea[256];
 extern char *linenmea;
 extern uint8_t last_sensor_reading[12];
-extern struct int_latlon last_latlon;
+// extern struct int_latlon last_latlon;
+extern double last_dlatlon[2];
 extern RDS rds;
 // config file parsing
 extern uint8_t GPS_MAC[6], OBD_MAC[6];

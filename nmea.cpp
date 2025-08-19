@@ -155,6 +155,7 @@ void nmea2latlon_defunct(char *a, struct int_latlon *latlon)
 }
 #endif
 
+#if 0
 void nmea2latlon(char *a, struct int_latlon *latlon)
 {
   char *blat = nthchar(a, 3, ','); // position lat
@@ -185,6 +186,38 @@ void nmea2latlon(char *a, struct int_latlon *latlon)
         umin = -umin;
     latlon->lon_deg = deg;
     latlon->lon_umin = umin;
+  }
+}
+#endif
+
+void nmea2dlatlon(char *a, double *lat, double *lon)
+{
+  char *blat = nthchar(a, 3, ','); // position lat
+  char *bns  = nthchar(a, 4, ','); // position n/s
+  char *blon = nthchar(a, 5, ','); // position lon
+  char *bew  = nthchar(a, 6, ','); // position e/w
+  double l, dl;
+  int deg;
+
+  if(blat[1] != ',')
+  {
+    l = atof(blat+1);
+    deg = 1E-2 * l;
+    dl = deg + 0.016666666666666666*(l-100*deg); // deg+min/60
+    if(bns[1]!=',')
+      if(bns[1]=='S')
+        dl = -dl;
+    *lat = dl;
+  }
+  if(blon[1] != ',')
+  {
+    l = atof(blon+1);
+    deg = 1E-2 * l;
+    dl = deg + 0.016666666666666666*(l-100*deg); // deg+min/60
+    if(bew[1]!=',')
+      if(bew[1]=='W')
+        dl = -dl;
+    *lon = dl;
   }
 }
 

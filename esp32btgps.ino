@@ -865,15 +865,15 @@ void nmea_time_log(void)
 // remembers last point, keeps alternating 2-points
 void draw_kml_line(char *line)
 {
-  struct int_latlon ilatlon;
   static int ipt = 0; // current point index, alternates 0/1
   static char timestamp[23] = "2000-01-01T00:00:00.0Z";
   if(log_wav_kml&2)
   { // only if kml mode is enabled, save CPU if when not enabled
     // strcpy(lastnmea, line); // copy line to last nmea as tmp buffer (overwritten by parser)
     // parse lastnmea -> ilatlon (parsing should not spoil nmea string)
-    nmea2latlon(line, &ilatlon);
-    latlon2double(&ilatlon, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
+    // nmea2latlon(line, &ilatlon);
+    // latlon2double(&ilatlon, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
+    nmea2dlatlon(line, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
     if(fabs(x_kml_line->lat[0]) <= 90.0 && fabs(x_kml_line->lat[1]) <= 90.0)
     {
       x_kml_line->value     = iri20avg;
@@ -1169,10 +1169,16 @@ void handle_obd_line_complete(void)
   if(speed_kmh > 0)
   {
     char iri_tag[120]; // fake time and location
+    // TODO calculate travel coefficient for any part of globe NSEW
     int travel_lat = (travel_mm * 138)>>8; // coarse approximate mm to microminutes
     int travel_lon = stopcount << 16; // microminutes position next line using stopcount
-    struct int_latlon fake_latlon;
+    struct int_latlon last_latlon, fake_latlon;
     get_iri();
+    // TODO support negative umin (lat S, lon W)
+    last_latlon.lat_deg  =  last_dlatlon[0]; // converts to integer
+    last_latlon.lat_umin = (last_dlatlon[0]-last_latlon.lat_deg)*60E6; // converts to integer
+    last_latlon.lon_deg  =  last_dlatlon[1]; // converts to integer
+    last_latlon.lon_umin = (last_dlatlon[1]-last_latlon.lon_deg)*60E6; // converts to integer
     fake_latlon.lat_deg  = last_latlon.lat_deg  + (abs(last_latlon.lat_umin) + travel_lat)/60000000;
     fake_latlon.lat_umin =                        (abs(last_latlon.lat_umin) + travel_lat)%60000000;
     fake_latlon.lon_deg  = last_latlon.lon_deg  + (abs(last_latlon.lon_umin) + travel_lon)/60000000;
@@ -1297,6 +1303,10 @@ void loop_run(void)
   }
   else
     write_logs();
+  // calculated line_tdelta for current speed
+  // to trigger equal-distance event generation
+  // configurable to trigger every 2m
+  // in case NMEA report is missing or the tunnel mode
   report_search();
   btn_handler();
   speech(); // runs speech PCM
