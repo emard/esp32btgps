@@ -1239,9 +1239,14 @@ void handle_obd_silence(void)
   #endif
 }
 
+// ms increment of tdelta to trigger data acquisition at 10Hz rate
+// TODO make it configurable
+#define FINE_TDELTA_INC 200
+
 void loop_run(void)
 {
   char c;
+  static uint32_t fine_tdelta;
   t_ms = ms();
   line_tdelta = t_ms - line_tprev;
   // handle incoming data as lines and reconnect on 10s silence
@@ -1266,6 +1271,7 @@ void loop_run(void)
       else
         handle_obd_line_complete();
       line_tprev = t_ms; // record time, used to detect silence
+      fine_tdelta = FINE_TDELTA_INC;
       line_i = 0; // line consumed, start new
       #ifdef PIN_LED
       // BT LED ON
@@ -1300,6 +1306,7 @@ void loop_run(void)
       t_ms = ms();
       line_tprev = t_ms;
       line_tdelta = 0;
+      fine_tdelta = FINE_TDELTA_INC;
   }
   else
     write_logs();
@@ -1307,6 +1314,17 @@ void loop_run(void)
   // to trigger equal-distance event generation
   // configurable to trigger every 2m
   // in case NMEA report is missing or the tunnel mode
+  if(line_tdelta > fine_tdelta)
+  {
+  #if 0
+    get_iri();
+    Serial.print("tdelta ");
+    Serial.print(fine_tdelta); // uint32_t
+    Serial.print(" iri20 ");
+    Serial.println(iri20avg); // float
+    fine_tdelta += FINE_TDELTA_INC;
+  #endif
+  }
   report_search();
   btn_handler();
   speech(); // runs speech PCM
