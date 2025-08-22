@@ -132,6 +132,12 @@ esp32
         report print for sensors to be detected
     [ ] for 1Hz GPS update, make more dense lines
         split line to segments of configurable length
+    [ ] fine points
+        stat - split data to input struct with double lat/lon
+        generate series of double lat/lon in linear segment
+        call stat for each fine point and generate split line
+        call line to place the line on the generated point
+    [ ] make separate code to try this logic
 
 core
 
@@ -167,7 +173,7 @@ core
 
 tools (wav2kml etc)
 
-    [ ] csv sh script runnable from any directory
+    [x] csv sh script runnable from any directory
     [x] csv dump
     [ ] geostat in python
     [x] if nmea line checksum wrong don't process it
