@@ -788,7 +788,7 @@ for wavfile in argv[1:]:
           speed_kmh = 0.0
           if calculate:
             should_reset_iri = 1
-        elif (len(nmea)==79 or len(nmea)==68) and nmea[0:6]==b"$GPRMC" and nmea[-3]==42: # 68 is lost signal, tunnel mode
+        elif (len(nmea)==79 or len(nmea)==68) and nmea[0:2]==b"$G" and nmea[3:6]==b"RMC" and nmea[-3]==42: # 68 is lost signal, tunnel mode
          # nmea[-3]="*" checks for asterisk on the right place, simple 8-bit crc follows
          crc = reduce(xor, map(int, nmea[1:-3]))
          hexcrc = bytearray(b"%02X" % crc)
