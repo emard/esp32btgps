@@ -353,6 +353,145 @@ void stat_nmea_proc(char *nmea, int nmea_len)
     }
 }
 
+void stat_gprmc_proc(struct gprmc *gprmc)
+{
+  static int16_t closest_index = -1;
+  // static int16_t prev_index = -1; // to avoid double stat on the same point
+  static int32_t prev_stat_travel_mm = 0; // for new point
+  static int32_t closest_found_dist = 999999; // [m] distance to previous found existing point
+  static int32_t closest_found_stat_travel_mm = 999999;
+  static double  new_lat, new_lon;
+  static uint8_t new_heading;
+  static uint16_t new_daytime;
+  static float new_iri[2], closest_iri[2];
+  static uint8_t new_kmh, closest_kmh;
+  static int have_new = 0;
+  //if(true)
+    if(gprmc->fix=='A') // A means valid signal (not in tunnel)
+    {
+      //printf("%s\n", nmea);
+      double lat, lon;
+      lat = gprmc->lat;
+      lon = gprmc->lon;
+      if(s_stat.lat > 90)
+      {
+        if(lat < 90)
+          calculate_grid(lat);
+        else
+          return;
+      }
+      uint8_t heading = (256.0/360)*gprmc->heading; // 0-360 -> 0-256
+      uint32_t lon2mm = dlon2mm(lat);
+      uint32_t   dxmm = fabs(lon-stat_travel_prev_latlon[1]) *  lon2mm;
+      uint32_t   dymm = fabs(lat-stat_travel_prev_latlon[0]) * dlat2mm;
+      uint32_t   d_mm = sqrt(dxmm*dxmm + dymm*dymm);
+      if(d_mm < IGNORE_TOO_LARGE_JUMP_MM) // ignore too large jumps > 40m
+      {
+        stat_travel_mm += d_mm;
+        if(stat_travel_mm > START_SEARCH_FOR_SNAP_POINT_AFTER_TRAVEL_MM) // at >40 m travel start searching for nearest snap points
+        {
+          // memorize last lat/lon when travel <= 100m
+          // as the candidate for new snap point.
+          // we assume we have got some new point here
+          if(prev_stat_travel_mm <= SEGMENT_LENGTH_MM)
+          {
+            new_lat = lat;
+            new_lon = lon;
+            new_heading = heading;
+            new_daytime = daytime/20; // new_daytime is in 2-second ticks 0-43199
+            new_iri[0] = iri[0];
+            new_iri[1] = iri[1];
+            new_kmh = stat_speed_kmh;
+            have_new = 1; // updated until 100 m
+          }
+          prev_stat_travel_mm = stat_travel_mm;
+          // continue search until travel 120 m for existing point if found.
+          // if not found after 120 m, create new lat/lon snap point.
+          // direction insensitivty 8, means 256 is 360 deg, and to add 128 m for 180 deg reverse direction snap point
+          int16_t index = find_xya((int)floor(lon * lon2gridm), (int)floor(lat * lat2gridm), heading, ANGULAR_INSENSITIVITY_RSHIFT);
+          if(index >= 0) // found something
+          {
+            if(found_dist < closest_found_dist)
+            {
+              closest_index = index;
+              closest_found_stat_travel_mm = stat_travel_mm;
+              closest_found_dist = found_dist; // [m] metric that covers diamond shaped area x+y = const
+              closest_iri[0] = iri[0];
+              closest_iri[1] = iri[1];
+              closest_kmh = stat_speed_kmh;
+            }
+          }
+          if(stat_travel_mm > SNAP_DECISION_MM) // at 120 m we have to decide, new or existing
+          {
+            if(closest_index >= 0 && closest_index != prev_snap_ptr && closest_found_dist < SNAP_RANGE_M) // x+y < SNAP_RANGE_M [m]
+            {
+              // TODO update statistics at existing lon/lat
+              stat_travel_mm -= closest_found_stat_travel_mm; // adjust travel to snapped point
+              s_stat.snap_point[closest_index].n++;
+              round_count = s_stat.snap_point[closest_index].n;
+              s_stat.snap_point[closest_index].sum_iri[0][0] += closest_iri[0];
+              s_stat.snap_point[closest_index].sum_iri[0][1] += closest_iri[1];
+              s_stat.snap_point[closest_index].sum_iri[1][0] += closest_iri[0]*closest_iri[0];
+              s_stat.snap_point[closest_index].sum_iri[1][1] += closest_iri[1]*closest_iri[1];
+              if(closest_kmh < s_stat.snap_point[closest_index].vmin)
+                s_stat.snap_point[closest_index].vmin = closest_kmh;
+              if(closest_kmh > s_stat.snap_point[closest_index].vmax)
+                s_stat.snap_point[closest_index].vmax = closest_kmh;
+              prev_snap_ptr = closest_index; // prevents snap again
+            }
+            else // create new point
+            {
+              if(have_new) // don't store if we don't have new point
+              {
+                int new_index = store_lon_lat(new_lon, new_lat, (float)new_heading * (360.0/256));
+                if(new_index >= 0)
+                {
+                  s_stat.snap_point[new_index].n = 1;
+                  round_count = 1;
+                  s_stat.snap_point[new_index].sum_iri[0][0] = new_iri[0];
+                  s_stat.snap_point[new_index].sum_iri[0][1] = new_iri[1];
+                  s_stat.snap_point[new_index].sum_iri[1][0] = new_iri[0]*new_iri[0];
+                  s_stat.snap_point[new_index].sum_iri[1][1] = new_iri[1]*new_iri[1];
+                  s_stat.snap_point[new_index].daytime = new_daytime;
+                  // set initial speed, informative only
+                  s_stat.snap_point[new_index].vmin = s_stat.snap_point[new_index].vmax = new_kmh;
+                  prev_snap_ptr = new_index; // prevents snap again
+                }
+                //printf("new\n");
+              }
+              if(closest_index >= 0
+              && closest_found_stat_travel_mm > ALIGN_TO_REVERSE_MIN_MM  // aligns to points in reverse direction
+              && closest_found_stat_travel_mm < ALIGN_TO_REVERSE_MAX_MM) // in range 95-105 m
+                stat_travel_mm -= closest_found_stat_travel_mm; // tries to align with reverse direction snap point
+              else
+                stat_travel_mm -= SEGMENT_LENGTH_MM;
+            }
+            // reset values for new search
+            closest_found_stat_travel_mm = 0;
+            closest_index = -1;
+            closest_found_dist = 999999;
+            have_new = 0;
+          }
+        }
+      }
+      #if 0
+      // this helps to prevent 2x stat but
+      // may introduces discontinuety to gps tracking
+      else // too large jump
+      {
+        // reset values for new search
+        closest_found_stat_travel_mm = 0;
+        closest_index = -1;
+        closest_found_dist = 999999;
+        have_new = 0;
+      }
+      #endif
+      // printf("%.6f° %.6f° travel=%d m\n", flatlon[0], flatlon[1], stat_travel_mm/1000);
+      stat_travel_prev_latlon[0] = lat;
+      stat_travel_prev_latlon[1] = lon;
+    }
+}
+
 // 0: crc bad
 // 1: crc ok
 int check_crc(char *nmea, int len)

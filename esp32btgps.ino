@@ -140,6 +140,7 @@ char line_terminator = '\n'; // '\n' for GPS, '\r' for OBD
 uint32_t line_tprev; // to determine time of latest incoming complete line
 uint32_t line_tdelta; // time between prev and now
 uint32_t fine_tdelta = 999999999, fine_tdelta_inc = 999999999;
+struct gprmc line_gprmc; // GPRMC line parsed struct
 // [mm] of fine line splitting if GPS
 // doesn't report fast enough
 #define FINE_MM 5000
@@ -924,6 +925,30 @@ void draw_kml_line(char *line)
   }
 }
 
+void draw_kml_line_gprmc(struct gprmc *gprmc)
+{
+  static int ipt = 0; // current point index, alternates 0/1
+  if(log_wav_kml&2)
+  { // only if kml mode is enabled, save CPU if when not enabled
+    x_kml_line->lat[ipt] = gprmc->lat;
+    x_kml_line->lon[ipt] = gprmc->lon;
+    if(fabs(x_kml_line->lat[0]) <= 90.0 && fabs(x_kml_line->lat[1]) <= 90.0)
+    {
+      x_kml_line->value     = iri20avg;
+      x_kml_line->left20    = iri20[0];
+      x_kml_line->right20   = iri20[1];
+      x_kml_line->left100   = iri[0];
+      x_kml_line->right100  = iri[1];
+      x_kml_line->speed_kmh = gprmc->speed_kt*1.852;
+      x_kml_line->timestamp = gprmc->kmltime;
+      kml_line(x_kml_line);
+      write_log_kml(0); // normal
+    }
+    //write_log_kml(1); // debug (for OBD)
+    ipt ^= 1; // toggle 0/1
+  }
+}
+
 #define NEAR_FM_FREQ_HZ 300000
 int is_near_frequency(void)
 {
@@ -1057,7 +1082,9 @@ void handle_gps_line_complete(void)
       // there's bandwidth for only one NMEA sentence at 10Hz (not two sentences)
       // time calculation here should receive no more than one NMEA sentence for one timestamp
       write_tag(line); // write as early as possible, but BTN debug can't change speed
-      speed_ckt = nmea2spd(line); // parse speed to centi-knots, -1 if no signal
+      nmea2gprmc(line, &line_gprmc);
+      speed_ckt = line_gprmc.speed_kt*100+0.5;
+      //speed_ckt = nmea2spd(line); // parse speed to centi-knots, -1 if no signal
       if(KMH_BTN) // debug
       {
         // int btn = spi_btn_read();    // debug
@@ -1080,7 +1107,9 @@ void handle_gps_line_complete(void)
       nmea_time_log();
       write_logs();
       handle_fast_enough();
-      if (nmea2tm(line, &tm))
+      tm = line_gprmc.tm;
+      //nmea2tm(line, &tm);
+      if(true)
       {
         static uint8_t toggle_flag = 0; // IRI-100/20 toggle flag
         get_iri();
@@ -1104,9 +1133,11 @@ void handle_gps_line_complete(void)
         // when signal inbetween was lost or cpu rebooted
         if(speed_ckt >= 0 && fast_enough > 0) // valid GPS FIX signal and moving, draw line and update statistics
         {
-          draw_kml_line(line);
+          //draw_kml_line(line);
+          draw_kml_line_gprmc(&line_gprmc);
           stat_speed_kmh = speed_mms*3.6e-3;
-          stat_nmea_proc(line, line_i-1);
+          //stat_nmea_proc(line, line_i-1);
+          stat_gprmc_proc(&line_gprmc);
         }
         #if 0
         // TODO tunnel mode

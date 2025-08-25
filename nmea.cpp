@@ -282,3 +282,36 @@ void spd2nmea(char *a, int ckt)
   snprintf(buf, 20, "%03d.%02d", ckt/100, ckt%100);
   memcpy(b+1, buf, 6);
 }
+
+void nmea2gprmc(char *line, struct gprmc *gprmc)
+{
+  char *rmcfield[12];
+  int i, n;
+
+  for(i = 0; i < 12; i++)
+    rmcfield[i] = NULL;
+  gprmc->tm_msec = 0;
+  rmcfield[0] = nthchar(line, 1, ',');
+  for(n = 1; n < 12 && rmcfield[n-1] != NULL; n++)
+    rmcfield[n] = nthchar(rmcfield[n-1], 2, ',');
+  //printf("%s\n", line);
+  //for(i = 0; i < n; i++)
+  //  printf("%s\n", rmcfield[i]);
+  if(rmcfield[1])
+    gprmc->fix = rmcfield[1][1];
+  nmea2dlatlon(line, &gprmc->lat, &gprmc->lon);
+  nmea2kmltime(line, gprmc->kmltime);
+  nmea2tm(line, &gprmc->tm);
+  if(rmcfield[0])
+  {
+    if(rmcfield[0][7] == '.')
+    {
+      double subsec = atof(rmcfield[0]+7);
+      gprmc->tm_msec = 1000 * subsec;
+    }
+  }
+  if(rmcfield[6])
+    gprmc->speed_kt = atof(rmcfield[6]+1);
+  if(rmcfield[7])
+    gprmc->heading = atof(rmcfield[7]+1);
+}

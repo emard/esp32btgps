@@ -10,6 +10,16 @@ struct double_latlon
 {
   double lat, lon;
 };
+struct gprmc
+{
+  char kmltime[23]; // 2025-08-19T14:32:47.0Z
+  char fix; // A=automatic
+  double lat, lon; // float fits up to 4 digits, GLO provides 6 digits
+  float speed_kt; // knots
+  float heading; // 0-360 deg
+  struct tm tm; // resolution 1 s
+  uint16_t tm_msec; // additional for resolution 0.001 s
+};
 int nmea2s(char *nmea);
 int nmea2tm(char *a, struct tm *t);
 int nmea2kmltime(char *nmea, char *kml);
@@ -23,4 +33,5 @@ char *nthchar(char *a, int n, char c);
 uint16_t nmea2iheading(char *nmea);
 int nmea2spd(char *a);
 void spd2nmea(char *a, int ckt);
+void nmea2gprmc(char *line, struct gprmc *gprmc);
 #endif
