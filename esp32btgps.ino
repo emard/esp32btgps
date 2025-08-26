@@ -140,6 +140,7 @@ char line_terminator = '\n'; // '\n' for GPS, '\r' for OBD
 uint32_t line_tprev; // to determine time of latest incoming complete line
 uint32_t line_tdelta; // time between prev and now
 uint32_t fine_tdelta = 999999999, fine_tdelta_inc = 999999999;
+uint8_t fine_count = 0;
 struct gprmc line_gprmc; // GPRMC line parsed struct
 // [mm] of fine line splitting if GPS
 // doesn't report fast enough
@@ -1065,6 +1066,7 @@ void reset_fine_line_split(void)
     fine_tdelta = fine_tdelta_inc = 1000*FINE_MM/speed_mms;
   else
     fine_tdelta = fine_tdelta_inc = 999999999;
+  fine_count = 0;
 }
 
 void handle_gps_line_complete(void)
@@ -1133,11 +1135,24 @@ void handle_gps_line_complete(void)
         // when signal inbetween was lost or cpu rebooted
         if(speed_ckt >= 0 && fast_enough > 0) // valid GPS FIX signal and moving, draw line and update statistics
         {
-          //draw_kml_line(line);
-          draw_kml_line_gprmc(&line_gprmc);
-          //stat_speed_kmh = speed_mms*3.6e-3;
-          //stat_nmea_proc(line, line_i-1);
-          stat_gprmc_proc(&line_gprmc);
+          if(fine_count)
+          {
+            draw_kml_line_gprmc(&line_gprmc);
+            stat_gprmc_proc(&line_gprmc);
+          }
+          else
+          {
+            // TODO fine line splitting (need to remember previous point to split)
+            for(uint8_t fp=0; fp<fine_count; fp++)
+            {
+              // TODO draw fine-split segment of a line
+            }
+            // TODO when above TODO is done remove this
+            draw_kml_line_gprmc(&line_gprmc);
+            stat_gprmc_proc(&line_gprmc);
+          }
+          //Serial.print("fine_count=");
+          //Serial.println(fine_count);
         }
         #if 0
         // TODO tunnel mode
@@ -1357,13 +1372,14 @@ void loop_run(void)
   // in case NMEA report is missing or the tunnel mode
   if(line_tdelta > fine_tdelta)
   {
-    #if 1
     get_iri();
+    #if 0
     Serial.print("tdelta ");
     Serial.print(fine_tdelta); // uint32_t
     Serial.print(" iri20 ");
     Serial.println(iri20avg); // float
     #endif
+    fine_count++;
     fine_tdelta += fine_tdelta_inc;
   }
   report_search();
