@@ -142,7 +142,12 @@ uint32_t line_tdelta; // time between prev and now
 uint32_t fine_tdelta = 999999999, fine_tdelta_inc = 999999999;
 uint8_t fine_count = 0;
 #define FINE_MAX 20 // TODO parametrize in config
-uint32_t fine_log[FINE_MAX];
+struct s_fine_log
+{
+  uint32_t ms; // [ms] timestamp of logged values relative to previous GPRMC sentence
+  float iri[2],iriavg,iri20[2],iri20avg;
+};
+struct s_fine_log fine_log[FINE_MAX];
 struct gprmc line_gprmc; // GPRMC line parsed struct
 // [mm] of fine line splitting if GPS
 // doesn't report fast enough
@@ -1140,12 +1145,15 @@ void handle_gps_line_complete(void)
           if(fine_count)
           {
             // TODO fine line splitting (need to remember previous point to split)
-            #if 0
+            #if 1
+            char printlog[256];
             Serial.println("fine_log");
             for(uint8_t fp=0; fp<fine_count; fp++)
             {
               // TODO draw fine-split segment of a line
-              Serial.println(fine_log[fp]);
+              sprintf(printlog,"%4dms L=%5.1f R=%5.1f", fine_log[fp].ms,
+                fine_log[fp].iri[0], fine_log[fp].iri[1]);
+              Serial.println(printlog);
             }
             #endif
             // TODO when above TODO is done remove this
@@ -1387,7 +1395,13 @@ void loop_run(void)
     #endif
     if(fine_count<FINE_MAX)
     {
-      fine_log[fine_count]=fine_tdelta;
+      fine_log[fine_count].ms=fine_tdelta;
+      fine_log[fine_count].iri[0]=iri[0];
+      fine_log[fine_count].iri[1]=iri[1];
+      fine_log[fine_count].iriavg=iriavg;
+      fine_log[fine_count].iri20[0]=iri20[0];
+      fine_log[fine_count].iri20[1]=iri20[1];
+      fine_log[fine_count].iriavg=iri20avg;
       fine_count++;
     }
     fine_tdelta += fine_tdelta_inc;
