@@ -1135,7 +1135,7 @@ void handle_gps_line_complete(void)
         {
           //draw_kml_line(line);
           draw_kml_line_gprmc(&line_gprmc);
-          stat_speed_kmh = speed_mms*3.6e-3;
+          //stat_speed_kmh = speed_mms*3.6e-3;
           //stat_nmea_proc(line, line_i-1);
           stat_gprmc_proc(&line_gprmc);
         }
