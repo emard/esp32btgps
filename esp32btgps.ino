@@ -1095,7 +1095,7 @@ void handle_gps_line_complete(void)
           //write_nmea_crc(line+1); // debug CRC for NMEA part
         }
         if((btn & 8)) speed_ckt = -1;   // debug BTN3 tunnel, no signal
-        if((btn & 16)) speed_ckt = 0;   // debug BTN3 stop
+        if((btn & 16)) speed_ckt = 0;   // debug BTN4 stop
       }
       //write_tag(line); // debug write after BTN2 has written speed_ckt
       if(speed_ckt >= 0) // for tunnel mode keep speed if no signal (speed_ckt < 0)
