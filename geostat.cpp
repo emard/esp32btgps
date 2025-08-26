@@ -385,6 +385,7 @@ void stat_gprmc_proc(struct gprmc *gprmc)
       uint32_t   dxmm = fabs(lon-stat_travel_prev_latlon[1]) *  lon2mm;
       uint32_t   dymm = fabs(lat-stat_travel_prev_latlon[0]) * dlat2mm;
       uint32_t   d_mm = sqrt(dxmm*dxmm + dymm*dymm);
+      uint8_t speed_kmh = gprmc->speed_kt * 1.852;
       if(d_mm < IGNORE_TOO_LARGE_JUMP_MM) // ignore too large jumps > 40m
       {
         stat_travel_mm += d_mm;
@@ -401,7 +402,7 @@ void stat_gprmc_proc(struct gprmc *gprmc)
             new_daytime = daytime/20; // new_daytime is in 2-second ticks 0-43199
             new_iri[0] = iri[0];
             new_iri[1] = iri[1];
-            new_kmh = stat_speed_kmh;
+            new_kmh = speed_kmh;
             have_new = 1; // updated until 100 m
           }
           prev_stat_travel_mm = stat_travel_mm;
@@ -418,7 +419,7 @@ void stat_gprmc_proc(struct gprmc *gprmc)
               closest_found_dist = found_dist; // [m] metric that covers diamond shaped area x+y = const
               closest_iri[0] = iri[0];
               closest_iri[1] = iri[1];
-              closest_kmh = stat_speed_kmh;
+              closest_kmh = speed_kmh;
             }
           }
           if(stat_travel_mm > SNAP_DECISION_MM) // at 120 m we have to decide, new or existing
