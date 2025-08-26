@@ -141,6 +141,8 @@ uint32_t line_tprev; // to determine time of latest incoming complete line
 uint32_t line_tdelta; // time between prev and now
 uint32_t fine_tdelta = 999999999, fine_tdelta_inc = 999999999;
 uint8_t fine_count = 0;
+#define FINE_MAX 20 // TODO parametrize in config
+uint32_t fine_log[FINE_MAX];
 struct gprmc line_gprmc; // GPRMC line parsed struct
 // [mm] of fine line splitting if GPS
 // doesn't report fast enough
@@ -1137,17 +1139,21 @@ void handle_gps_line_complete(void)
         {
           if(fine_count)
           {
-            draw_kml_line_gprmc(&line_gprmc);
-            stat_gprmc_proc(&line_gprmc);
-          }
-          else
-          {
             // TODO fine line splitting (need to remember previous point to split)
+            #if 0
+            Serial.println("fine_log");
             for(uint8_t fp=0; fp<fine_count; fp++)
             {
               // TODO draw fine-split segment of a line
+              Serial.println(fine_log[fp]);
             }
+            #endif
             // TODO when above TODO is done remove this
+            draw_kml_line_gprmc(&line_gprmc);
+            stat_gprmc_proc(&line_gprmc);
+          }
+          else // no fine point triggered, log GPS point
+          {
             draw_kml_line_gprmc(&line_gprmc);
             stat_gprmc_proc(&line_gprmc);
           }
@@ -1379,7 +1385,11 @@ void loop_run(void)
     Serial.print(" iri20 ");
     Serial.println(iri20avg); // float
     #endif
-    fine_count++;
+    if(fine_count<FINE_MAX)
+    {
+      fine_log[fine_count]=fine_tdelta;
+      fine_count++;
+    }
     fine_tdelta += fine_tdelta_inc;
   }
   report_search();
