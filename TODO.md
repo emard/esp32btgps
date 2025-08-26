@@ -135,6 +135,10 @@ esp32
     [ ] fine points
         stat - split data to input struct with double lat/lon
         generate series of double lat/lon in linear segment
+        record starting lat/lon,time
+        log time and iri values for each point of segment
+        distributed timestamped values in space - calculate lat/lon
+        for each fine point
         call stat for each fine point and generate split line
         call line to place the line on the generated point
     [ ] make separate code to try this logic
