@@ -1134,10 +1134,13 @@ void draw_fine_gprmc_line()
       // draw fine-split segment of a line
       fine_gprmc.lat = lat+lat_speed*fine_log[fp].ms;
       fine_gprmc.lon = lon+lon_speed*fine_log[fp].ms;
+      #if 0
+      // FIXME if this is enabled then .kml won't be finalized
       // FIXME update whole time string
       // currently only last digit 1/10 s is updated
       if(save_sec_10 == '0' && gprmc_tdelta >= 100)
         fine_gprmc.kmltime[20] = '0'+fine_log[fp].ms/100%10; // 1/10 s
+      #endif
       // overwrite
       iri[0]   = fine_log[fp].iri[0];
       iri[1]   = fine_log[fp].iri[1];
@@ -1161,6 +1164,7 @@ void draw_fine_gprmc_line()
     iri20[0] = save_iri20[0];
     iri20[1] = save_iri20[1];
     iri20avg = save_iri20avg;
+    line_gprmc[prev_ilgt].kmltime[20] = save_sec_10;
   }
   draw_kml_line_gprmc(&line_gprmc[ilgt]);
   stat_gprmc_proc(&line_gprmc[ilgt]);
