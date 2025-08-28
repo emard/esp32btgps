@@ -50,6 +50,7 @@
 #include "version.h"
 #include <sys/time.h>
 #include <WiFi.h> // to speak IP
+#include <string.h> // memcpy
 
 #include "BluetoothSerial.h"
 
@@ -138,6 +139,7 @@ char line[256]; // incoming line of data from bluetooth GPS/OBD
 int line_i = 0; // line index
 char line_terminator = '\n'; // '\n' for GPS, '\r' for OBD
 uint32_t line_tprev; // to determine time of latest incoming complete line
+uint32_t gprmc_tprev; // to determine reception of last gprmc (for fine line)
 uint32_t line_tdelta; // time between prev and now
 uint32_t fine_tdelta = 999999999, fine_tdelta_inc = 999999999;
 uint8_t fine_count = 0;
@@ -148,7 +150,8 @@ struct s_fine_log
   float iri[2],iriavg,iri20[2],iri20avg;
 };
 struct s_fine_log fine_log[FINE_MAX];
-struct gprmc line_gprmc; // GPRMC line parsed struct
+struct gprmc line_gprmc[2]; // GPRMC line parsed struct
+uint8_t ilgt = 0; // 0/1 toggler of line_gprmc
 // [mm] of fine line splitting if GPS
 // doesn't report fast enough
 #define FINE_MM 5000
@@ -357,6 +360,7 @@ void setup() {
 
   t_ms = ms();
   line_tprev = t_ms-5000;
+  gprmc_tprev = t_ms-5000;
   // line_tprev sets 5s silence in the past. reconnect comes at 10s silence.
   // speech starts at 7s silence. Before speech, 2s must be allowed
   // for sensors to start reading data, otherwise it will false report
@@ -393,6 +397,7 @@ void setup() {
   speakfiles = speakaction;
 
   reset_kml_line(x_kml_line);
+  reset_fine_gprmc_line();
   spi_speed_write(0); // normal
 }
 
@@ -730,6 +735,7 @@ void handle_fast_enough(void)
       if(s_stat.wr_snap_ptr != 0)
         write_stat_file(&tm_session);
       reset_kml_line(x_kml_line);
+      reset_fine_gprmc_line();
       stopcount++;
       Serial.print(speed_kmh);
       Serial.println(" km/h not fast enough - stop logging");
@@ -803,6 +809,7 @@ void handle_reconnect(void)
   // this fixes when powered on while driving with fast_enough speed,
   // it prevents long line over the globe from lat=0,lon=0 to current point
   reset_kml_line(x_kml_line);
+  reset_fine_gprmc_line();
   iri99sum = iri99count = iri99avg = 0; // reset iri99 average
 
   if(sensor_check_status)
@@ -1076,6 +1083,59 @@ void reset_fine_line_split(void)
   fine_count = 0;
 }
 
+void reset_fine_gprmc_line()
+{
+  line_gprmc[0].lat = line_gprmc[1].lat = 100.0;
+}
+
+void draw_fine_gprmc_line()
+{
+  char printlog[256];
+  uint32_t gprmc_tdelta = t_ms - gprmc_tprev;
+  uint8_t prev_ilgt = ilgt^1;
+  struct gprmc fine_gprmc;
+  // previous gprmc has to be logged
+  // use alternate method similar to [ipt]
+  // timespan to draw is line_tdelta
+  #if 0
+  if(fine_count)
+  {
+    sprintf(printlog, "fine (%10.6f,%10.6f) %dms (%10.6f,%10.6f)",
+      line_gprmc[prev_ilgt].lat, line_gprmc[prev_ilgt].lon,
+      gprmc_tdelta,
+      line_gprmc[ilgt].lat,      line_gprmc[ilgt].lon);
+    Serial.println(printlog);
+  }
+  #endif
+  if(fine_count != 0 && line_gprmc[0].lat<=90.0 && line_gprmc[1].lat<=90.0)
+  {
+    // copy
+    memcpy(&fine_gprmc, &line_gprmc[prev_ilgt], sizeof(fine_gprmc));
+    // staring lat/lon
+    double lat = line_gprmc[prev_ilgt].lat;
+    double lon = line_gprmc[prev_ilgt].lon;
+    // speed lat/lon
+    double lat_speed = (line_gprmc[ilgt].lat-lat)/gprmc_tdelta;
+    double lon_speed = (line_gprmc[ilgt].lon-lon)/gprmc_tdelta;
+    for(uint8_t fp=0; fp<fine_count && fine_log[fp].ms<gprmc_tdelta; fp++)
+    {
+      // TODO draw fine-split segment of a line
+      fine_gprmc.lat = lat+lat_speed*fine_log[fp].ms;
+      fine_gprmc.lon = lon+lon_speed*fine_log[fp].ms;
+      draw_kml_line_gprmc(&fine_gprmc);
+      stat_gprmc_proc(&fine_gprmc);
+      #if 0
+      sprintf(printlog,"%4dms L=%5.1f R=%5.1f (%10.6f,%10.6f)", fine_log[fp].ms,
+        fine_log[fp].iri[0], fine_log[fp].iri[1],
+        fine_gprmc.lat, fine_gprmc.lon);
+        Serial.println(printlog);
+      #endif
+    }
+  }
+  draw_kml_line_gprmc(&line_gprmc[ilgt]);
+  stat_gprmc_proc(&line_gprmc[ilgt]);
+}
+
 void handle_gps_line_complete(void)
 {
   line[line_i-1] = 0; // replace \n termination with 0
@@ -1091,8 +1151,9 @@ void handle_gps_line_complete(void)
       // there's bandwidth for only one NMEA sentence at 10Hz (not two sentences)
       // time calculation here should receive no more than one NMEA sentence for one timestamp
       write_tag(line); // write as early as possible, but BTN debug can't change speed
-      nmea2gprmc(line, &line_gprmc);
-      speed_ckt = line_gprmc.speed_kt*100+0.5;
+      ilgt ^= 1; // toggle index
+      nmea2gprmc(line, &line_gprmc[ilgt]);
+      speed_ckt = line_gprmc[ilgt].speed_kt*100+0.5;
       //speed_ckt = nmea2spd(line); // parse speed to centi-knots, -1 if no signal
       if(KMH_BTN) // debug
       {
@@ -1116,7 +1177,7 @@ void handle_gps_line_complete(void)
       nmea_time_log();
       write_logs();
       handle_fast_enough();
-      tm = line_gprmc.tm;
+      tm = line_gprmc[ilgt].tm;
       //nmea2tm(line, &tm);
       if(true)
       {
@@ -1141,33 +1202,7 @@ void handle_gps_line_complete(void)
         // prevent long line jumps from last stop to current position:
         // when signal inbetween was lost or cpu rebooted
         if(speed_ckt >= 0 && fast_enough > 0) // valid GPS FIX signal and moving, draw line and update statistics
-        {
-          if(fine_count)
-          {
-            // TODO fine line splitting (need to remember previous point to split)
-            #if 1
-            char printlog[256];
-            Serial.println("fine_log");
-            for(uint8_t fp=0; fp<fine_count; fp++)
-            {
-              // TODO draw fine-split segment of a line
-              sprintf(printlog,"%4dms L=%5.1f R=%5.1f", fine_log[fp].ms,
-                fine_log[fp].iri[0], fine_log[fp].iri[1]);
-              Serial.println(printlog);
-            }
-            #endif
-            // TODO when above TODO is done remove this
-            draw_kml_line_gprmc(&line_gprmc);
-            stat_gprmc_proc(&line_gprmc);
-          }
-          else // no fine point triggered, log GPS point
-          {
-            draw_kml_line_gprmc(&line_gprmc);
-            stat_gprmc_proc(&line_gprmc);
-          }
-          //Serial.print("fine_count=");
-          //Serial.println(fine_count);
-        }
+          draw_fine_gprmc_line();
         #if 0
         // TODO tunnel mode
         if(speed_ckt < 0 && fast_enough > 0) // no GPS fix but fast enough, tunnel mode
@@ -1179,6 +1214,7 @@ void handle_gps_line_complete(void)
         #endif
         report_iri();
         report_status();
+        gprmc_tprev = t_ms;
         toggle_flag ^= 1; // 0/1 alternating IRI-100 and IRI-20, no bandwidth for both
       }
       reset_fine_line_split();
@@ -1384,6 +1420,10 @@ void loop_run(void)
   // to trigger equal-distance event generation
   // configurable to trigger every 2m
   // in case NMEA report is missing or the tunnel mode
+  // TODO instead of line_tdelta use gprmc_tdelta
+  // we have to insert points into timed gprmc lines,
+  // currently line_tdelta is related any bluetooth traffic
+  // not only gprmc
   if(line_tdelta > fine_tdelta)
   {
     get_iri();
