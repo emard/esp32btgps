@@ -138,8 +138,8 @@ uint32_t ct0_prev; // for travel calculation
 char line[256]; // incoming line of data from bluetooth GPS/OBD
 int line_i = 0; // line index
 char line_terminator = '\n'; // '\n' for GPS, '\r' for OBD
+uint32_t gprmc_tprev, gprmc_tdelta; // to determine reception of last gprmc (for fine line)
 uint32_t line_tprev; // to determine time of latest incoming complete line
-uint32_t gprmc_tprev; // to determine reception of last gprmc (for fine line)
 uint32_t line_tdelta; // time between prev and now
 uint32_t fine_tdelta = 999999999, fine_tdelta_inc = 999999999;
 uint8_t fine_count = 0;
@@ -1091,13 +1091,13 @@ void reset_fine_gprmc_line()
 void draw_fine_gprmc_line()
 {
   char printlog[256];
-  uint32_t gprmc_tdelta = t_ms - gprmc_tprev;
   uint8_t prev_ilgt = ilgt^1;
   char save_sec_10; // = line_gprmc[prev_ilgt].kmltime[20];
   struct gprmc fine_gprmc;
   // previous gprmc has to be logged
   // use alternate method similar to [ipt]
   // timespan to draw is line_tdelta
+  gprmc_tdelta = t_ms - gprmc_tprev;
   #if 0
   if(fine_count)
   {
@@ -1184,7 +1184,6 @@ void handle_gps_line_complete(void)
       ilgt ^= 1; // toggle index
       nmea2gprmc(line, &line_gprmc[ilgt]);
       speed_ckt = line_gprmc[ilgt].speed_kt*100+0.5;
-      //speed_ckt = nmea2spd(line); // parse speed to centi-knots, -1 if no signal
       if(KMH_BTN) // debug
       {
         // int btn = spi_btn_read();    // debug
@@ -1454,7 +1453,8 @@ void loop_run(void)
   // we have to insert points into timed gprmc lines,
   // currently line_tdelta is related any bluetooth traffic
   // not only gprmc
-  if(line_tdelta > fine_tdelta)
+  gprmc_tdelta = t_ms - gprmc_tprev;
+  if(gprmc_tdelta > fine_tdelta)
   {
     get_iri();
     #if 0
