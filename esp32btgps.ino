@@ -1107,7 +1107,7 @@ void draw_fine_gprmc_line()
     Serial.println(printlog);
   }
   #endif
-  if(fine_count != 0 && line_gprmc[0].lat<=90.0 && line_gprmc[1].lat<=90.0)
+  if(fine_count>0 && line_gprmc[0].lat<=90.0 && line_gprmc[1].lat<=90.0)
   {
     // copy
     memcpy(&fine_gprmc, &line_gprmc[prev_ilgt], sizeof(fine_gprmc));
@@ -1117,11 +1117,28 @@ void draw_fine_gprmc_line()
     // speed lat/lon
     double lat_speed = (line_gprmc[ilgt].lat-lat)/gprmc_tdelta;
     double lon_speed = (line_gprmc[ilgt].lon-lon)/gprmc_tdelta;
+    // TODO use stuct instead of discrete floats
+    // and pass pointers to avoid save/restore
+    float save_iri[2], save_iriavg, save_iri20[2], save_iri20avg;
+    // save
+    save_iri[0]   = iri20[0];
+    save_iri[1]   = iri20[1];
+    save_iriavg   = iriavg;
+    save_iri20[0] = iri20[0];
+    save_iri20[1] = iri20[1];
+    save_iri20avg = iri20avg;
     for(uint8_t fp=0; fp<fine_count && fine_log[fp].ms<gprmc_tdelta; fp++)
     {
       // TODO draw fine-split segment of a line
       fine_gprmc.lat = lat+lat_speed*fine_log[fp].ms;
       fine_gprmc.lon = lon+lon_speed*fine_log[fp].ms;
+      // overwrite
+      iri[0]   = fine_log[fp].iri[0];
+      iri[1]   = fine_log[fp].iri[1];
+      iriavg   = fine_log[fp].iriavg;
+      iri20[0] = fine_log[fp].iri20[0];
+      iri20[1] = fine_log[fp].iri20[1];
+      iri20avg = fine_log[fp].iri20avg;
       draw_kml_line_gprmc(&fine_gprmc);
       stat_gprmc_proc(&fine_gprmc);
       #if 0
@@ -1131,6 +1148,13 @@ void draw_fine_gprmc_line()
         Serial.println(printlog);
       #endif
     }
+    // restore
+    iri[0]   = save_iri[0];
+    iri[1]   = save_iri[1];
+    iriavg   = save_iriavg;
+    iri20[0] = save_iri20[0];
+    iri20[1] = save_iri20[1];
+    iri20avg = save_iri20avg;
   }
   draw_kml_line_gprmc(&line_gprmc[ilgt]);
   stat_gprmc_proc(&line_gprmc[ilgt]);
