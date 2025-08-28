@@ -1111,7 +1111,7 @@ void draw_fine_gprmc_line()
   {
     // copy
     memcpy(&fine_gprmc, &line_gprmc[prev_ilgt], sizeof(fine_gprmc));
-    // staring lat/lon
+    // starting lat/lon
     double lat = line_gprmc[prev_ilgt].lat;
     double lon = line_gprmc[prev_ilgt].lon;
     // speed lat/lon
@@ -1121,8 +1121,8 @@ void draw_fine_gprmc_line()
     // and pass pointers to avoid save/restore
     float save_iri[2], save_iriavg, save_iri20[2], save_iri20avg;
     // save
-    save_iri[0]   = iri20[0];
-    save_iri[1]   = iri20[1];
+    save_iri[0]   = iri[0];
+    save_iri[1]   = iri[1];
     save_iriavg   = iriavg;
     save_iri20[0] = iri20[0];
     save_iri20[1] = iri20[1];
@@ -1139,14 +1139,14 @@ void draw_fine_gprmc_line()
       iri20[0] = fine_log[fp].iri20[0];
       iri20[1] = fine_log[fp].iri20[1];
       iri20avg = fine_log[fp].iri20avg;
+      #if 0
+      sprintf(printlog,"%4dms %5.1f L=%5.1f R=%5.1f (%10.6f,%10.6f)", fine_log[fp].ms,
+        iri20avg, iri20[0], iri20[1],
+        fine_gprmc.lat, fine_gprmc.lon);
+      Serial.println(printlog);
+      #endif
       draw_kml_line_gprmc(&fine_gprmc);
       stat_gprmc_proc(&fine_gprmc);
-      #if 0
-      sprintf(printlog,"%4dms L=%5.1f R=%5.1f (%10.6f,%10.6f)", fine_log[fp].ms,
-        fine_log[fp].iri[0], fine_log[fp].iri[1],
-        fine_gprmc.lat, fine_gprmc.lon);
-        Serial.println(printlog);
-      #endif
     }
     // restore
     iri[0]   = save_iri[0];
@@ -1465,7 +1465,7 @@ void loop_run(void)
       fine_log[fine_count].iriavg=iriavg;
       fine_log[fine_count].iri20[0]=iri20[0];
       fine_log[fine_count].iri20[1]=iri20[1];
-      fine_log[fine_count].iriavg=iri20avg;
+      fine_log[fine_count].iri20avg=iri20avg;
       fine_count++;
     }
     fine_tdelta += fine_tdelta_inc;
