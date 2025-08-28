@@ -154,7 +154,7 @@ struct gprmc line_gprmc[2]; // GPRMC line parsed struct
 uint8_t ilgt = 0; // 0/1 toggler of line_gprmc
 // [mm] of fine line splitting if GPS
 // doesn't report fast enough
-#define FINE_MM 2500
+#define FINE_MM 2000
 int travel_mm = 0; // travelled mm (v*dt)
 int travel_report1, travel_report1_prev = 0; // previous 100 m travel
 int travel_report2, travel_report2_prev = 0; // previous  20 m travel
