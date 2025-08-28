@@ -132,7 +132,7 @@ esp32
         report print for sensors to be detected
     [ ] for 1Hz GPS update, make more dense lines
         split line to segments of configurable length
-    [ ] fine points
+    [x] fine points
         stat - split data to input struct with double lat/lon
         generate series of double lat/lon in linear segment
         record starting lat/lon,time
@@ -141,10 +141,10 @@ esp32
         for each fine point
         call stat for each fine point and generate split line
         call line to place the line on the generated point
-    [ ] make separate code to try this logic
-    [ ] on android GPS it says ready before it gets FIX
-    [ ] last NMEA written only time on lat/lon
-        check for 'A' letter as FIX (insted of 'V')
+    [x] make separate code to try this logic
+    [x] on android GPS it says ready before it gets FIX
+    [ ] last NMEA written with only time, no lat/lon
+        check 'A'=FIX 'V'=NO_FIX
 
 core
 
