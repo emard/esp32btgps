@@ -310,8 +310,10 @@ void nmea2gprmc(char *line, struct gprmc *gprmc)
       gprmc->tm_msec = 1000 * subsec;
     }
   }
+  gprmc->speed_kt = -1.0; // no FIX
   if(rmcfield[6])
-    gprmc->speed_kt = atof(rmcfield[6]+1);
+    if(rmcfield[6][1] != ',')
+      gprmc->speed_kt = atof(rmcfield[6]+1);
   if(rmcfield[7])
     gprmc->heading = atof(rmcfield[7]+1);
 }
