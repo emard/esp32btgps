@@ -154,7 +154,7 @@ struct gprmc line_gprmc[2]; // GPRMC line parsed struct
 uint8_t ilgt = 0; // 0/1 toggler of line_gprmc
 // [mm] of fine line splitting if GPS
 // doesn't report fast enough
-#define FINE_MM 5000
+#define FINE_MM 2500
 int travel_mm = 0; // travelled mm (v*dt)
 int travel_report1, travel_report1_prev = 0; // previous 100 m travel
 int travel_report2, travel_report2_prev = 0; // previous  20 m travel
@@ -1093,6 +1093,7 @@ void draw_fine_gprmc_line()
   char printlog[256];
   uint32_t gprmc_tdelta = t_ms - gprmc_tprev;
   uint8_t prev_ilgt = ilgt^1;
+  char save_sec_10; // = line_gprmc[prev_ilgt].kmltime[20];
   struct gprmc fine_gprmc;
   // previous gprmc has to be logged
   // use alternate method similar to [ipt]
@@ -1127,11 +1128,16 @@ void draw_fine_gprmc_line()
     save_iri20[0] = iri20[0];
     save_iri20[1] = iri20[1];
     save_iri20avg = iri20avg;
+    save_sec_10   = line_gprmc[prev_ilgt].kmltime[20];
     for(uint8_t fp=0; fp<fine_count && fine_log[fp].ms<gprmc_tdelta; fp++)
     {
-      // TODO draw fine-split segment of a line
+      // draw fine-split segment of a line
       fine_gprmc.lat = lat+lat_speed*fine_log[fp].ms;
       fine_gprmc.lon = lon+lon_speed*fine_log[fp].ms;
+      // FIXME update whole time string
+      // currently only last digit 1/10 s is updated
+      if(save_sec_10 == '0' && gprmc_tdelta >= 100)
+        fine_gprmc.kmltime[20] = '0'+fine_log[fp].ms/100%10; // 1/10 s
       // overwrite
       iri[0]   = fine_log[fp].iri[0];
       iri[1]   = fine_log[fp].iri[1];

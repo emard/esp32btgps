@@ -142,6 +142,9 @@ esp32
         call stat for each fine point and generate split line
         call line to place the line on the generated point
     [ ] make separate code to try this logic
+    [ ] on android GPS it says ready before it gets FIX
+    [ ] last NMEA written only time on lat/lon
+        check for 'A' letter as FIX (insted of 'V')
 
 core
 
