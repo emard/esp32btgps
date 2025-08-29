@@ -231,6 +231,7 @@ void latlon2double(struct int_latlon *latlon, double *lat, double *lon)
     *lon = -*lon;
 }
 
+// old code
 uint16_t nmea2iheading(char *nmea)
 {
   char *b = nthchar(nmea, 8, ','); // position to heading
@@ -250,6 +251,7 @@ uint16_t nmea2iheading(char *nmea)
 }
 
 // parse NMEA ascii string -> return mph x100 speed (negative -1 if no fix)
+// old code
 int nmea2spd(char *a)
 {
   //char *b = a+46; // simplified locating 7th ","
@@ -272,6 +274,7 @@ int nmea2spd(char *a)
 
 // write centiknots speed to nmea
 // remember to fix crc after this
+// old code still used by OBD
 void spd2nmea(char *a, int ckt)
 {
   char *b = nthchar(a, 7, ',');
