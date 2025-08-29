@@ -847,7 +847,8 @@ void read_cfg(void)
   }
   Serial.print("M_REPORT1   : "); Serial.println(MM_REPORT1/1000);
   Serial.print("M_REPORT2   : "); Serial.println(MM_REPORT2/1000);
-  Serial.print("MM_FINE     : "); Serial.println(MM_FINE);
+  sprintf(macstr, "%.1f", MM_FINE*1.0E-3);
+  Serial.print("M_FINE      : "); Serial.println(macstr);
   Serial.print("KMH_REPORT1 : "); Serial.println(KMH_REPORT1);
   Serial.print("KMH_START   : "); Serial.println(KMH_START);
   Serial.print("KMH_STOP    : "); Serial.println(KMH_STOP);
