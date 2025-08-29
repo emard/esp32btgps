@@ -57,6 +57,7 @@ float   T_OFFSET_ADXRS290_CONF[2] = {0.0, 0.0}; // L,R
 float   T_SLOPE_ADXRS290_CONF[2]  = {1.0, 1.0}; // L,R
 uint8_t  KMH_REPORT1 = 30; // when speed_kmh >= KMH_REPORT1 use MM_REPORT1, else MM_REPORT2
 uint32_t MM_REPORT1  = 100000, MM_REPORT2 = 20000; // mm report every travel distance 100 m, 20 m
+uint32_t MM_FINE = 0; // [mm] insert fine points, 0 to disable
 uint32_t fm_freq[2] = {107900000, 87600000};
 uint8_t fm_freq_cursor = 0; // cursor highlighting fm freq bitmask 0,1,2
 uint8_t btn, btn_prev;
@@ -800,6 +801,7 @@ void read_cfg(void)
     else if(varname.equalsIgnoreCase("kmh_report1")) KMH_REPORT1 = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("m_report1")) MM_REPORT1 = 1000*strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("m_report2")) MM_REPORT2 = 1000*strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("m_fine")) MM_FINE = 1000*strtof(varvalue.c_str(), NULL);
     else if(varname.equalsIgnoreCase("kmh_start")) KMH_START = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("kmh_stop")) KMH_STOP = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("kmh_btn" )) KMH_BTN = strtol(varvalue.c_str(), NULL,10);
@@ -845,6 +847,7 @@ void read_cfg(void)
   }
   Serial.print("M_REPORT1   : "); Serial.println(MM_REPORT1/1000);
   Serial.print("M_REPORT2   : "); Serial.println(MM_REPORT2/1000);
+  Serial.print("MM_FINE     : "); Serial.println(MM_FINE);
   Serial.print("KMH_REPORT1 : "); Serial.println(KMH_REPORT1);
   Serial.print("KMH_START   : "); Serial.println(KMH_START);
   Serial.print("KMH_STOP    : "); Serial.println(KMH_STOP);

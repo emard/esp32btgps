@@ -47,6 +47,7 @@ extern float T_OFFSET_ADXRS290_CONF[2] ; // L,R
 extern float T_SLOPE_ADXRS290_CONF[2]  ; // L,R
 extern uint8_t KMH_REPORT1;
 extern uint32_t MM_REPORT1, MM_REPORT2; // mm report each travel distance
+extern uint32_t MM_FINE;
 extern uint32_t fm_freq[2];
 extern uint8_t fm_freq_cursor;
 extern uint8_t btn, btn_prev;
