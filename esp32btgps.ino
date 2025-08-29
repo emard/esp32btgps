@@ -154,7 +154,6 @@ struct gprmc line_gprmc[2]; // GPRMC line parsed struct
 uint8_t ilgt = 0; // 0/1 toggler of line_gprmc
 // [mm] of fine line splitting if GPS
 // doesn't report fast enough
-#define FINE_MM 5000
 int travel_mm = 0; // travelled mm (v*dt)
 int travel_report1, travel_report1_prev = 0; // previous 100 m travel
 int travel_report2, travel_report2_prev = 0; // previous  20 m travel
@@ -1076,8 +1075,8 @@ void reset_fine_line_split(void)
 {
   //Serial.print("final fine tdelta");
   //Serial.println(fine_tdelta);
-  if(speed_mms>0)
-    fine_tdelta = fine_tdelta_inc = 1000*FINE_MM/speed_mms;
+  if(speed_mms>0 && MM_FINE>0)
+    fine_tdelta = fine_tdelta_inc = 1000*MM_FINE/speed_mms;
   else
     fine_tdelta = fine_tdelta_inc = 999999999;
   fine_count = 0;
