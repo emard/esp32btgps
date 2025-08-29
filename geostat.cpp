@@ -211,6 +211,8 @@ void stat_iri_proc(char *nmea, int nmea_len)
 }
 #endif
 
+// old code, now use stat_gprmc_proc()
+// used old nmea2iheading
 void stat_nmea_proc(char *nmea, int nmea_len)
 {
   static int16_t closest_index = -1;
