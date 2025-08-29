@@ -1082,7 +1082,11 @@ void reset_slow_fast_tdelta(void)
     fast_tdelta = fast_tdelta_inc = 999999999; // never trigger
   fast_count = 0;
   if(speed_mms>0 && MM_SLOW>0)
+  {
     slow_tdelta = slow_tdelta_inc = 1000*MM_SLOW/speed_mms;
+    if(slow_tdelta > 1000) // clamp to max 1s
+      slow_tdelta = slow_tdelta_inc = 1000;
+  }
   else
     slow_tdelta = slow_tdelta_inc = 0; // always trigger
 }
@@ -1101,7 +1105,7 @@ void draw_fast_gprmc_line()
   // previous gprmc has to be logged
   // use alternate method similar to [ipt]
   // timespan to draw is line_tdelta
-  gprmc_tdelta = t_ms - gprmc_tprev;
+  // gprmc_tdelta = t_ms - gprmc_tprev;
   #if 0
   if(fast_count)
   {
