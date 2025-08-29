@@ -147,6 +147,14 @@ esp32
         check 'A'=FIX 'V'=NO_FIX
     [ ] check when .sta doesn't exist (travel not generating any arrow)
         then .kml still should be finalized.
+    [ ] cleanup remove old code
+    [ ] struct for IRI data group 100,20,avg,...
+    [ ] rename fine_tdelta -> fast_tdelta
+        introduce slow_tdelta
+    [ ] insert tag iri values faster
+        when there is bandwidth for that
+    [ ] OBD mode add slow/fast points reduction/insertion
+        set gprmc timing in OBD custom NMEA generation
 
 core
 
