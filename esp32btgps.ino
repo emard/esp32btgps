@@ -154,7 +154,7 @@ struct gprmc line_gprmc[2]; // GPRMC line parsed struct
 uint8_t ilgt = 0; // 0/1 toggler of line_gprmc
 // [mm] of fine line splitting if GPS
 // doesn't report fast enough
-#define FINE_MM 2000
+#define FINE_MM 5000
 int travel_mm = 0; // travelled mm (v*dt)
 int travel_report1, travel_report1_prev = 0; // previous 100 m travel
 int travel_report2, travel_report2_prev = 0; // previous  20 m travel
@@ -1134,8 +1134,7 @@ void draw_fine_gprmc_line()
       // draw fine-split segment of a line
       fine_gprmc.lat = lat+lat_speed*fine_log[fp].ms;
       fine_gprmc.lon = lon+lon_speed*fine_log[fp].ms;
-      #if 0
-      // FIXME if this is enabled then .kml won't be finalized
+      #if 1
       // FIXME update whole time string
       // currently only last digit 1/10 s is updated
       if(save_sec_10 == '0' && gprmc_tdelta >= 100)
