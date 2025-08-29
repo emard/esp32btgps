@@ -141,15 +141,16 @@ char line_terminator = '\n'; // '\n' for GPS, '\r' for OBD
 uint32_t gprmc_tprev, gprmc_tdelta; // to determine reception of last gprmc (for fine line)
 uint32_t line_tprev; // to determine time of latest incoming complete line
 uint32_t line_tdelta; // time between prev and now
-uint32_t fine_tdelta = 999999999, fine_tdelta_inc = 999999999;
-uint8_t fine_count = 0;
-#define FINE_MAX 20 // TODO parametrize in config
-struct s_fine_log
+uint32_t fast_tdelta = 999999999, fast_tdelta_inc = 999999999;
+uint32_t slow_tdelta = 0, slow_tdelta_inc = 0;
+uint8_t fast_count = 0;
+#define FAST_MAX 20 // TODO parametrize in config
+struct s_fast_log
 {
   uint32_t ms; // [ms] timestamp of logged values relative to previous GPRMC sentence
   float iri[2],iriavg,iri20[2],iri20avg;
 };
-struct s_fine_log fine_log[FINE_MAX];
+struct s_fast_log fast_log[FAST_MAX];
 struct gprmc line_gprmc[2]; // GPRMC line parsed struct
 uint8_t ilgt = 0; // 0/1 toggler of line_gprmc
 // [mm] of fine line splitting if GPS
@@ -359,7 +360,7 @@ void setup() {
 
   t_ms = ms();
   line_tprev = t_ms-5000;
-  gprmc_tprev = t_ms-5000;
+  gprmc_tprev = t_ms;
   // line_tprev sets 5s silence in the past. reconnect comes at 10s silence.
   // speech starts at 7s silence. Before speech, 2s must be allowed
   // for sensors to start reading data, otherwise it will false report
@@ -396,7 +397,7 @@ void setup() {
   speakfiles = speakaction;
 
   reset_kml_line(x_kml_line);
-  reset_fine_gprmc_line();
+  reset_fast_gprmc_line();
   spi_speed_write(0); // normal
 }
 
@@ -734,7 +735,7 @@ void handle_fast_enough(void)
       if(s_stat.wr_snap_ptr != 0)
         write_stat_file(&tm_session);
       reset_kml_line(x_kml_line);
-      reset_fine_gprmc_line();
+      reset_fast_gprmc_line();
       stopcount++;
       Serial.print(speed_kmh);
       Serial.println(" km/h not fast enough - stop logging");
@@ -808,7 +809,7 @@ void handle_reconnect(void)
   // this fixes when powered on while driving with fast_enough speed,
   // it prevents long line over the globe from lat=0,lon=0 to current point
   reset_kml_line(x_kml_line);
-  reset_fine_gprmc_line();
+  reset_fast_gprmc_line();
   iri99sum = iri99count = iri99avg = 0; // reset iri99 average
 
   if(sensor_check_status)
@@ -1071,34 +1072,38 @@ void btn_handler(void)
   }
 }
 
-void reset_fine_line_split(void)
+void reset_slow_fast_tdelta(void)
 {
   //Serial.print("final fine tdelta");
-  //Serial.println(fine_tdelta);
-  if(speed_mms>0 && MM_FINE>0)
-    fine_tdelta = fine_tdelta_inc = 1000*MM_FINE/speed_mms;
+  //Serial.println(fast_tdelta);
+  if(speed_mms>0 && MM_FAST>0)
+    fast_tdelta = fast_tdelta_inc = 1000*MM_FAST/speed_mms;
   else
-    fine_tdelta = fine_tdelta_inc = 999999999;
-  fine_count = 0;
+    fast_tdelta = fast_tdelta_inc = 999999999; // never trigger
+  fast_count = 0;
+  if(speed_mms>0 && MM_SLOW>0)
+    slow_tdelta = slow_tdelta_inc = 1000*MM_SLOW/speed_mms;
+  else
+    slow_tdelta = slow_tdelta_inc = 0; // always trigger
 }
 
-void reset_fine_gprmc_line()
+void reset_fast_gprmc_line()
 {
   line_gprmc[0].lat = line_gprmc[1].lat = 100.0;
 }
 
-void draw_fine_gprmc_line()
+void draw_fast_gprmc_line()
 {
   char printlog[256];
   uint8_t prev_ilgt = ilgt^1;
   char save_sec_10; // = line_gprmc[prev_ilgt].kmltime[20];
-  struct gprmc fine_gprmc;
+  struct gprmc fast_gprmc;
   // previous gprmc has to be logged
   // use alternate method similar to [ipt]
   // timespan to draw is line_tdelta
   gprmc_tdelta = t_ms - gprmc_tprev;
   #if 0
-  if(fine_count)
+  if(fast_count)
   {
     sprintf(printlog, "fine (%10.6f,%10.6f) %dms (%10.6f,%10.6f)",
       line_gprmc[prev_ilgt].lat, line_gprmc[prev_ilgt].lon,
@@ -1107,10 +1112,10 @@ void draw_fine_gprmc_line()
     Serial.println(printlog);
   }
   #endif
-  if(fine_count>0 && line_gprmc[0].lat<=90.0 && line_gprmc[1].lat<=90.0)
+  if(fast_count>0 && line_gprmc[0].lat<=90.0 && line_gprmc[1].lat<=90.0)
   {
     // copy
-    memcpy(&fine_gprmc, &line_gprmc[prev_ilgt], sizeof(fine_gprmc));
+    memcpy(&fast_gprmc, &line_gprmc[prev_ilgt], sizeof(fast_gprmc));
     // starting lat/lon
     double lat = line_gprmc[prev_ilgt].lat;
     double lon = line_gprmc[prev_ilgt].lon;
@@ -1128,32 +1133,32 @@ void draw_fine_gprmc_line()
     save_iri20[1] = iri20[1];
     save_iri20avg = iri20avg;
     save_sec_10   = line_gprmc[prev_ilgt].kmltime[20];
-    for(uint8_t fp=0; fp<fine_count && fine_log[fp].ms<gprmc_tdelta; fp++)
+    for(uint8_t fp=0; fp<fast_count && fast_log[fp].ms<gprmc_tdelta; fp++)
     {
       // draw fine-split segment of a line
-      fine_gprmc.lat = lat+lat_speed*fine_log[fp].ms;
-      fine_gprmc.lon = lon+lon_speed*fine_log[fp].ms;
+      fast_gprmc.lat = lat+lat_speed*fast_log[fp].ms;
+      fast_gprmc.lon = lon+lon_speed*fast_log[fp].ms;
       #if 1
       // FIXME update whole time string
       // currently only last digit 1/10 s is updated
       if(save_sec_10 == '0' && gprmc_tdelta >= 100)
-        fine_gprmc.kmltime[20] = '0'+fine_log[fp].ms/100%10; // 1/10 s
+        fast_gprmc.kmltime[20] = '0'+fast_log[fp].ms/100%10; // 1/10 s
       #endif
       // overwrite
-      iri[0]   = fine_log[fp].iri[0];
-      iri[1]   = fine_log[fp].iri[1];
-      iriavg   = fine_log[fp].iriavg;
-      iri20[0] = fine_log[fp].iri20[0];
-      iri20[1] = fine_log[fp].iri20[1];
-      iri20avg = fine_log[fp].iri20avg;
+      iri[0]   = fast_log[fp].iri[0];
+      iri[1]   = fast_log[fp].iri[1];
+      iriavg   = fast_log[fp].iriavg;
+      iri20[0] = fast_log[fp].iri20[0];
+      iri20[1] = fast_log[fp].iri20[1];
+      iri20avg = fast_log[fp].iri20avg;
       #if 0
-      sprintf(printlog,"%4dms %5.1f L=%5.1f R=%5.1f (%10.6f,%10.6f)", fine_log[fp].ms,
+      sprintf(printlog,"%4dms %5.1f L=%5.1f R=%5.1f (%10.6f,%10.6f)", fast_log[fp].ms,
         iri20avg, iri20[0], iri20[1],
-        fine_gprmc.lat, fine_gprmc.lon);
+        fast_gprmc.lat, fast_gprmc.lon);
       Serial.println(printlog);
       #endif
-      draw_kml_line_gprmc(&fine_gprmc);
-      stat_gprmc_proc(&fine_gprmc);
+      draw_kml_line_gprmc(&fast_gprmc);
+      stat_gprmc_proc(&fast_gprmc);
     }
     // restore
     iri[0]   = save_iri[0];
@@ -1179,7 +1184,7 @@ void handle_gps_line_complete(void)
   {
     if (check_nmea_crc(line)) // filter out NMEA sentences with bad CRC
     {
-      // Serial.println(line);
+      //Serial.println(line);
       // there's bandwidth for only one NMEA sentence at 10Hz (not two sentences)
       // time calculation here should receive no more than one NMEA sentence for one timestamp
       write_tag(line); // write as early as possible, but BTN debug can't change speed
@@ -1233,7 +1238,7 @@ void handle_gps_line_complete(void)
         // prevent long line jumps from last stop to current position:
         // when signal inbetween was lost or cpu rebooted
         if(speed_ckt >= 0 && fast_enough > 0) // valid GPS FIX signal and moving, draw line and update statistics
-          draw_fine_gprmc_line();
+          draw_fast_gprmc_line();
         #if 0
         // TODO tunnel mode
         if(speed_ckt < 0 && fast_enough > 0) // no GPS fix but fast enough, tunnel mode
@@ -1248,7 +1253,7 @@ void handle_gps_line_complete(void)
         gprmc_tprev = t_ms;
         toggle_flag ^= 1; // 0/1 alternating IRI-100 and IRI-20, no bandwidth for both
       }
-      reset_fine_line_split();
+      reset_slow_fast_tdelta();
     }
   }
   #if 0
@@ -1347,11 +1352,13 @@ void handle_obd_line_complete(void)
     if(iri_tag[80] == ' ')
       write_nmea_crc(iri_tag+80); // CRC for IRI part
     //Serial.println(iri_tag+81); // debug
+    gprmc_tprev = t_ms;
     write_tag(iri_tag);
     travel_ct0();
     iri_tag[80] = 0; // null terminate for lastnmea save
     draw_kml_line(iri_tag+1); // for kml file generation
     strcpy(lastnmea, iri_tag+1); // for saving last nmea line
+    reset_slow_fast_tdelta();
   }
   write_logs(); // use SPI_MODE1
   handle_fast_enough(); // will close logs if not fast enough
@@ -1387,6 +1394,7 @@ void loop_run(void)
   char c;
   t_ms = ms();
   line_tdelta = t_ms - line_tprev;
+  gprmc_tdelta = t_ms - gprmc_tprev;
   // handle incoming data as lines and reconnect on 10s silence
   if (connected && SerialBT.available() > 0)
   {
@@ -1404,10 +1412,14 @@ void loop_run(void)
     if(c == line_terminator || c == prompt_obd ) // line complete
     { // GPS has '\n', OBD has '\r' line terminator and '>' prompt
       line[line_i] = 0; // additionally null-terminate string
-      if(mode_obd_gps)
-        handle_gps_line_complete();
-      else
-        handle_obd_line_complete();
+      if(gprmc_tdelta > slow_tdelta)
+      {
+        if(mode_obd_gps)
+          handle_gps_line_complete();
+        else
+          handle_obd_line_complete();
+        slow_tdelta += slow_tdelta_inc;
+      }
       line_tprev = t_ms; // record time, used to detect silence
       line_i = 0; // line consumed, start new
       #ifdef PIN_LED
@@ -1443,7 +1455,7 @@ void loop_run(void)
       t_ms = ms();
       line_tprev = t_ms;
       line_tdelta = 0;
-      reset_fine_line_split();
+      reset_slow_fast_tdelta();
   }
   else
     write_logs();
@@ -1455,28 +1467,27 @@ void loop_run(void)
   // we have to insert points into timed gprmc lines,
   // currently line_tdelta is related any bluetooth traffic
   // not only gprmc
-  gprmc_tdelta = t_ms - gprmc_tprev;
-  if(gprmc_tdelta > fine_tdelta)
+  if(gprmc_tdelta > fast_tdelta)
   {
     get_iri();
     #if 0
     Serial.print("tdelta ");
-    Serial.print(fine_tdelta); // uint32_t
+    Serial.print(fast_tdelta); // uint32_t
     Serial.print(" iri20 ");
     Serial.println(iri20avg); // float
     #endif
-    if(fine_count<FINE_MAX)
+    if(fast_count<FAST_MAX)
     {
-      fine_log[fine_count].ms=fine_tdelta;
-      fine_log[fine_count].iri[0]=iri[0];
-      fine_log[fine_count].iri[1]=iri[1];
-      fine_log[fine_count].iriavg=iriavg;
-      fine_log[fine_count].iri20[0]=iri20[0];
-      fine_log[fine_count].iri20[1]=iri20[1];
-      fine_log[fine_count].iri20avg=iri20avg;
-      fine_count++;
+      fast_log[fast_count].ms=fast_tdelta;
+      fast_log[fast_count].iri[0]=iri[0];
+      fast_log[fast_count].iri[1]=iri[1];
+      fast_log[fast_count].iriavg=iriavg;
+      fast_log[fast_count].iri20[0]=iri20[0];
+      fast_log[fast_count].iri20[1]=iri20[1];
+      fast_log[fast_count].iri20avg=iri20avg;
+      fast_count++;
     }
-    fine_tdelta += fine_tdelta_inc;
+    fast_tdelta += fast_tdelta_inc;
   }
   report_search();
   btn_handler();
