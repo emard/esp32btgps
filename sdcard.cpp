@@ -572,8 +572,8 @@ int read_stat_file(String filename_stat)
     Serial.println(filename_stat);
     return 1; // success
   }
-  else
-    Serial.println("read stat failed.");
+  Serial.println("stat not found: ");
+  Serial.println(filename_stat);
   return 0; // fail
 }
 
