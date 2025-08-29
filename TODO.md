@@ -130,7 +130,7 @@ esp32
         lat,lon 45,16 quantizes approx as 46.000003,16.000002
     [x] for first minute reports sensors NONE, delay initial
         report print for sensors to be detected
-    [ ] for 1Hz GPS update, make more dense lines
+    [x] for 1Hz GPS update, make more dense lines
         split line to segments of configurable length
     [x] fine points
         stat - split data to input struct with double lat/lon
@@ -145,8 +145,8 @@ esp32
     [x] on android GPS it says ready before it gets FIX
     [ ] last NMEA written with only time, no lat/lon
         check 'A'=FIX 'V'=NO_FIX
-    [ ] if .sta doesn't exists (travel not generating any arrow)
-        then .kml is not finalized. Finalize it.
+    [ ] check when .sta doesn't exist (travel not generating any arrow)
+        then .kml still should be finalized.
 
 core
 
