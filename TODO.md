@@ -145,6 +145,8 @@ esp32
     [x] on android GPS it says ready before it gets FIX
     [ ] last NMEA written with only time, no lat/lon
         check 'A'=FIX 'V'=NO_FIX
+    [ ] if .sta doesn't exists (travel not generating any arrow)
+        then .kml is not finalized. Finalize it.
 
 core
 
