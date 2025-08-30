@@ -1195,6 +1195,7 @@ void handle_gps_line_complete(void)
       ilgt ^= 1; // toggle index
       nmea2gprmc(line, &line_gprmc[ilgt]);
       speed_ckt = line_gprmc[ilgt].speed_kt*100+0.5;
+      //Serial.println(speed_ckt);
       if(KMH_BTN) // debug
       {
         // int btn = spi_btn_read();    // debug
@@ -1422,8 +1423,15 @@ void loop_run(void)
           handle_gps_line_complete();
         else
           handle_obd_line_complete();
-        slow_tdelta += slow_tdelta_inc;
       }
+      #if 0
+      else // DEBUG
+      {
+        char msg[200];
+        sprintf(msg, "not yet, gprmc_tdelta=%d, slow_tdelta=%d", gprmc_tdelta, slow_tdelta);
+        Serial.println(msg);
+      }
+      #endif
       line_tprev = t_ms; // record time, used to detect silence
       line_i = 0; // line consumed, start new
       #ifdef PIN_LED
