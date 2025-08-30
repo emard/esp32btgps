@@ -300,11 +300,9 @@ void nmea2gprmc(char *line, struct gprmc *gprmc)
   //printf("%s\n", line);
   //for(i = 0; i < n; i++)
   //  printf("%s\n", rmcfield[i]);
-  if(rmcfield[1])
-    gprmc->fix = rmcfield[1][1];
-  nmea2dlatlon(line, &gprmc->lat, &gprmc->lon);
   nmea2kmltime(line, gprmc->kmltime);
   nmea2tm(line, &gprmc->tm);
+  gprmc->tm_msec = 0;
   if(rmcfield[0])
   {
     if(rmcfield[0][7] == '.')
@@ -313,10 +311,24 @@ void nmea2gprmc(char *line, struct gprmc *gprmc)
       gprmc->tm_msec = 1000 * subsec;
     }
   }
-  gprmc->speed_kt = -1.0; // no FIX
-  if(rmcfield[6])
-    if(rmcfield[6][1] != ',')
-      gprmc->speed_kt = atof(rmcfield[6]+1);
-  if(rmcfield[7])
-    gprmc->heading = atof(rmcfield[7]+1);
+  if(rmcfield[1])
+    gprmc->fix = rmcfield[1][1];
+  else
+    gprmc->fix = ' ';
+  if(gprmc->fix == 'A')
+  {
+    nmea2dlatlon(line, &gprmc->lat, &gprmc->lon);
+    gprmc->speed_kt = 0.0;
+    if(rmcfield[6])
+      if(rmcfield[6][1] != ',')
+        gprmc->speed_kt = atof(rmcfield[6]+1);
+    if(rmcfield[7])
+      gprmc->heading = atof(rmcfield[7]+1);
+  }
+  else // no fix
+  {
+    gprmc->lat = gprmc->lon = 100.0;
+    gprmc->speed_kt = -1.0;
+    gprmc->heading = 0.0;
+  }
 }
