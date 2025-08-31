@@ -573,7 +573,7 @@ int read_stat_file(String filename_stat)
     Serial.println(filename_stat);
     return 1; // success
   }
-  Serial.println("stat not found: ");
+  Serial.print("stat not found: ");
   Serial.println(filename_stat);
   return 0; // fail
 }
