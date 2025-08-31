@@ -142,7 +142,7 @@ uint32_t gprmc_tprev, gprmc_tdelta; // to determine reception of last gprmc (for
 uint32_t line_tprev; // to determine time of latest incoming complete line
 uint32_t line_tdelta; // time between prev and now
 uint32_t fast_tdelta = 999999999, fast_tdelta_inc = 999999999;
-uint32_t slow_tdelta = 0, slow_tdelta_inc = 0;
+uint32_t slow_tdelta = 0;
 uint8_t fast_count = 0;
 #define FAST_MAX 20 // TODO parametrize in config
 struct s_fast_log
@@ -1072,23 +1072,27 @@ void btn_handler(void)
   }
 }
 
-void reset_slow_fast_tdelta(void)
+void reset_slow_tdelta(void)
+{
+  if(speed_mms>0 && MM_SLOW>0)
+  {
+    slow_tdelta = 1000*MM_SLOW/speed_mms; // 1000 converts [s]->[ms]
+    if(slow_tdelta > 1000) // clamp to max 1s
+      slow_tdelta = 1000;
+  }
+  else
+    slow_tdelta = 0; // always trigger
+}
+
+void reset_fast_tdelta(void)
 {
   //Serial.print("final fine tdelta");
   //Serial.println(fast_tdelta);
   if(speed_mms>0 && MM_FAST>0)
-    fast_tdelta = fast_tdelta_inc = 1000*MM_FAST/speed_mms;
+    fast_tdelta = fast_tdelta_inc = 1000*MM_FAST/speed_mms; // 1000 converts [s]->[ms]
   else
     fast_tdelta = fast_tdelta_inc = 999999999; // never trigger
   fast_count = 0;
-  if(speed_mms>0 && MM_SLOW>0)
-  {
-    slow_tdelta = slow_tdelta_inc = 1000*MM_SLOW/speed_mms;
-    if(slow_tdelta > 1000) // clamp to max 1s
-      slow_tdelta = slow_tdelta_inc = 1000;
-  }
-  else
-    slow_tdelta = slow_tdelta_inc = 0; // always trigger
 }
 
 void reset_fast_gprmc_line()
@@ -1242,8 +1246,12 @@ void handle_gps_line_complete(void)
         strcpy(lastnmea, line); // copy line to last nmea for storage
         // prevent long line jumps from last stop to current position:
         // when signal inbetween was lost or cpu rebooted
-        if(speed_ckt >= 0 && fast_enough > 0) // valid GPS FIX signal and moving, draw line and update statistics
+        if(speed_ckt >= 0 && fast_enough > 0 && gprmc_tdelta > slow_tdelta) // valid GPS FIX signal and moving, draw line and update statistics
+        {
           draw_fast_gprmc_line();
+          reset_slow_tdelta();
+          reset_fast_tdelta();
+        }
         #if 0
         // TODO tunnel mode
         if(speed_ckt < 0 && fast_enough > 0) // no GPS fix but fast enough, tunnel mode
@@ -1258,7 +1266,6 @@ void handle_gps_line_complete(void)
         gprmc_tprev = t_ms;
         toggle_flag ^= 1; // 0/1 alternating IRI-100 and IRI-20, no bandwidth for both
       }
-      reset_slow_fast_tdelta();
     }
   }
   #if 0
@@ -1361,9 +1368,13 @@ void handle_obd_line_complete(void)
     write_tag(iri_tag);
     travel_ct0();
     iri_tag[80] = 0; // null terminate for lastnmea save
-    draw_kml_line(iri_tag+1); // for kml file generation
+    if(gprmc_tdelta > slow_tdelta)
+    {
+      draw_kml_line(iri_tag+1); // for kml file generation
+      reset_slow_tdelta();
+      reset_fast_tdelta();
+    }
     strcpy(lastnmea, iri_tag+1); // for saving last nmea line
-    reset_slow_fast_tdelta();
   }
   write_logs(); // use SPI_MODE1
   handle_fast_enough(); // will close logs if not fast enough
@@ -1417,13 +1428,10 @@ void loop_run(void)
     if(c == line_terminator || c == prompt_obd ) // line complete
     { // GPS has '\n', OBD has '\r' line terminator and '>' prompt
       line[line_i] = 0; // additionally null-terminate string
-      if(gprmc_tdelta > slow_tdelta)
-      {
-        if(mode_obd_gps)
-          handle_gps_line_complete();
-        else
-          handle_obd_line_complete();
-      }
+      if(mode_obd_gps)
+        handle_gps_line_complete();
+      else
+        handle_obd_line_complete();
       #if 0
       else // DEBUG
       {
@@ -1467,7 +1475,8 @@ void loop_run(void)
       t_ms = ms();
       line_tprev = t_ms;
       line_tdelta = 0;
-      reset_slow_fast_tdelta();
+      reset_slow_tdelta();
+      reset_fast_tdelta();
   }
   else
     write_logs();
