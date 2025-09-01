@@ -888,11 +888,7 @@ void draw_kml_line(char *line)
   static int ipt = 0; // current point index, alternates 0/1
   static char timestamp[23] = "2000-01-01T00:00:00.0Z";
   if(log_wav_kml&2)
-  { // only if kml mode is enabled, save CPU if when not enabled
-    // strcpy(lastnmea, line); // copy line to last nmea as tmp buffer (overwritten by parser)
-    // parse lastnmea -> ilatlon (parsing should not spoil nmea string)
-    // nmea2latlon(line, &ilatlon);
-    // latlon2double(&ilatlon, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
+  { // only if kml mode is enabled, save CPU when not enabled
     nmea2dlatlon(line, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
     if(fabs(x_kml_line->lat[0]) <= 90.0 && fabs(x_kml_line->lat[1]) <= 90.0)
     {
