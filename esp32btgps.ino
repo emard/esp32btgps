@@ -1181,6 +1181,23 @@ void draw_fast_gprmc_line()
   stat_gprmc_proc(&line_gprmc[ilgt]);
 }
 
+void tag_iri(void)
+{
+  static uint8_t toggle_flag = 0; // IRI-100/20 toggle flag
+  char iri_tag[40];
+  if(toggle_flag)
+    sprintf(iri_tag, " L%05.2fR%05.2f*00 ",
+      iri[0]>99.99?99.99:iri[0],
+      iri[1]>99.99?99.99:iri[1]);
+  else
+    sprintf(iri_tag, " L%05.2fS%05.2f*00 ",
+      iri20[0]>99.99?99.99:iri20[0],
+      iri20[1]>99.99?99.99:iri20[1]);
+  write_nmea_crc(iri_tag+1);
+  write_tag(iri_tag);
+  toggle_flag ^= 1; // 0/1 alternating IRI-100 and IRI-20, no bandwidth for both
+}
+
 void handle_gps_line_complete(void)
 {
   line[line_i-1] = 0; // replace \n termination with 0
@@ -1224,48 +1241,33 @@ void handle_gps_line_complete(void)
       handle_fast_enough();
       tm = line_gprmc[ilgt].tm;
       //nmea2tm(line, &tm);
-      if(true)
+      get_iri();
+      //printf("%10d %10d %10d %10d\n", srvz[0], srvz[1], srvz[2], srvz[3]); // debug
+      tag_iri();
+      set_date_from_tm(&tm);
+      handle_session_log(); // will open logs if fast enough (new filename when reconnected)
+      travel_gps(); // calculate travel length
+      strcpy(lastnmea, line); // copy line to last nmea for storage
+      // prevent long line jumps from last stop to current position:
+      // when signal inbetween was lost or cpu rebooted
+      if(speed_ckt >= 0 && fast_enough > 0 && gprmc_tdelta > slow_tdelta) // valid GPS FIX signal and moving, draw line and update statistics
       {
-        static uint8_t toggle_flag = 0; // IRI-100/20 toggle flag
-        get_iri();
-        //printf("%10d %10d %10d %10d\n", srvz[0], srvz[1], srvz[2], srvz[3]); // debug
-        char iri_tag[40];
-        if(toggle_flag)
-          sprintf(iri_tag, " L%05.2fR%05.2f*00 ",
-            iri[0]>99.99?99.99:iri[0],
-            iri[1]>99.99?99.99:iri[1]);
-        else
-          sprintf(iri_tag, " L%05.2fS%05.2f*00 ",
-            iri20[0]>99.99?99.99:iri20[0],
-            iri20[1]>99.99?99.99:iri20[1]);
-        write_nmea_crc(iri_tag+1);
-        write_tag(iri_tag);
-        set_date_from_tm(&tm);
-        handle_session_log(); // will open logs if fast enough (new filename when reconnected)
-        travel_gps(); // calculate travel length
-        strcpy(lastnmea, line); // copy line to last nmea for storage
-        // prevent long line jumps from last stop to current position:
-        // when signal inbetween was lost or cpu rebooted
-        if(speed_ckt >= 0 && fast_enough > 0 && gprmc_tdelta > slow_tdelta) // valid GPS FIX signal and moving, draw line and update statistics
-        {
-          draw_fast_gprmc_line();
-          reset_slow_tdelta();
-          reset_fast_tdelta();
-        }
-        #if 0
-        // TODO tunnel mode
-        if(speed_ckt < 0 && fast_enough > 0) // no GPS fix but fast enough, tunnel mode
-        {
-          // generate line with incrementing steps
-          // constant speed, keep direction, ignore earth curvature,
-          // similar to OBD, see obd_line_complete() below
-        }
-        #endif
-        report_iri();
-        report_status();
-        gprmc_tprev = t_ms;
-        toggle_flag ^= 1; // 0/1 alternating IRI-100 and IRI-20, no bandwidth for both
+        draw_fast_gprmc_line();
+        reset_slow_tdelta();
+        reset_fast_tdelta();
       }
+      #if 0
+      // TODO tunnel mode
+      if(speed_ckt < 0 && fast_enough > 0) // no GPS fix but fast enough, tunnel mode
+      {
+        // generate line with incrementing steps
+        // constant speed, keep direction, ignore earth curvature,
+        // similar to OBD, see obd_line_complete() below
+      }
+      #endif
+      report_iri();
+      report_status();
+      gprmc_tprev = t_ms;
     }
   }
   #if 0
@@ -1491,6 +1493,7 @@ void loop_run(void)
   if(gprmc_tdelta > fast_tdelta)
   {
     get_iri();
+    tag_iri(); // TODO clamp tag bandwidth
     #if 0
     Serial.print("tdelta ");
     Serial.print(fast_tdelta); // uint32_t
