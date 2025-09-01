@@ -1,3 +1,3 @@
-#define LOGGER_VERSION "4.0.21"
+#define LOGGER_VERSION "4.0.22"
 #define CORE_VERSION "4.0.0"
 #define HARDWARE_VERSION "3.1.7 12F"
