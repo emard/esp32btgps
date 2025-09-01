@@ -387,7 +387,7 @@ void setup() {
   cold_init_sensors();
   init_srvz_iri(); // depends on sensor type detected
 
-  SerialBT.begin("PROFILOG", true);
+  SerialBT.begin(DNS_HOST, true);
   SerialBT.setPin((const char *)GPS_PIN.c_str(), GPS_PIN.length());
   Serial.println("Bluetooth master started");
   Serial.println(esp_get_idf_version()); // v4.4-beta1-189-ga79dc75f0a
