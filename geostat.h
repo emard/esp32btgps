@@ -89,7 +89,6 @@ int store_lon_lat(double lon, double lat, float heading);
 void print_storage(void);
 int find_xya(int xm, int ym, uint8_t a, uint8_t ais);
 void stat_iri_proc(char *nmea, int nmea_len);
-void stat_nmea_proc(char *nmea, int nmea_len);
 void stat_gprmc_proc(struct gprmc *gprmc);
 int check_crc(char *nmea, int len);
 

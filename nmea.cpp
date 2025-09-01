@@ -231,6 +231,7 @@ void latlon2double(struct int_latlon *latlon, double *lat, double *lon)
     *lon = -*lon;
 }
 
+#if 0
 // old code
 uint16_t nmea2iheading(char *nmea)
 {
@@ -271,6 +272,7 @@ int nmea2spd(char *a)
   return (int)(speed*100+0.5);
   #endif
 }
+#endif
 
 // write centiknots speed to nmea
 // remember to fix crc after this
