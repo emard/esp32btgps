@@ -1251,6 +1251,7 @@ void handle_gps_line_complete(void)
         draw_fast_gprmc_line();
         reset_slow_tdelta();
         reset_fast_tdelta();
+        gprmc_tprev = t_ms;
       }
       #if 0
       // TODO tunnel mode
@@ -1263,7 +1264,6 @@ void handle_gps_line_complete(void)
       #endif
       report_iri();
       report_status();
-      gprmc_tprev = t_ms;
     }
   }
   #if 0
