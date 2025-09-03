@@ -154,6 +154,8 @@ esp32
     [x] insert tag iri values faster
         when there is bandwidth for that
     [ ] OBD mode testing
+    [ ] CSV generator
+    [ ] power off after 15 minutes of searching for gps (needs RTC support)
 
 core
 
@@ -186,6 +188,9 @@ core
     [x] SPI slave for speed and iri
     [x] random inbalance in L/R calc results (slope ready not used)
     [ ] math to calculate IRI from sensors inside the car
+    [ ] RTC SPI interface
+    [ ] power off support
+ after 15 minutes of searching for gps
 
 tools (wav2kml etc)
 
