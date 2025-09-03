@@ -664,8 +664,10 @@ void write_csv(String file_name)
   nmea2kmltime(lastnmea, timestamp);
   file_csv = SD_MMC.open(file_name, FILE_WRITE);
   printf("writing %d stat arrows to csv\n", s_stat.wr_snap_ptr);
-  //sprintf(linebuf, "generating csv\n");
-  //file_csv.write((uint8_t *)linebuf, strlen(linebuf));
+  sprintf(linebuf, "\"travel [m]\",\"IRI100 [mm/m]\",\"arrow\",\"heading [°]\",\"lon [°]\",\"lat [°]\",\"time\",\"left\",\"right\",\"repeat\",\"speed\"\n");
+  file_csv.write((uint8_t *)linebuf, strlen(linebuf));
+  // 100, 4.87,"↓",-174.3,+015.999377,+45.808163,2025-09-03T07:13:52.0Z,"L100= 4.99 ± 0.00 mm/m","R100= 4.75 ± 0.00 mm/m","n= 1","v= 32- 32 km/h","",
+  // 200, 5.16,"↓",-164.5,+015.999898,+45.807419,2025-09-03T07:14:00.0Z,"L100= 5.24 ± 0.00 mm/m","R100= 5.08 ± 0.00 mm/m","n= 1","v= 38- 38 km/h","",
   #if 1
   for(int i = 0; i < s_stat.wr_snap_ptr; i++)
   {
@@ -695,7 +697,8 @@ void write_csv(String file_name)
     x_kml_arrow->timestamp = timestamp;
     //kml_arrow(x_kml_arrow);
     //file_kml.write((uint8_t *)kmlbuf, str_kml_arrow_len);
-    sprintf(linebuf, "lat=%12.6f, lon=%12.6f\n", x_kml_arrow->lat, x_kml_arrow->lon);
+    sprintf(linebuf, "%d00,%5.2f,%6.1f,%12.6f,%12.6f\n",
+     i, x_kml_arrow->value, x_kml_arrow->heading, x_kml_arrow->lat, x_kml_arrow->lon);
     file_csv.write((uint8_t *)linebuf, strlen(linebuf));
   }
   #endif
