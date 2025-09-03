@@ -1208,7 +1208,8 @@ void handle_gps_line_complete(void)
       //Serial.println(line);
       // there's bandwidth for only one NMEA sentence at 10Hz (not two sentences)
       // time calculation here should receive no more than one NMEA sentence for one timestamp
-      write_tag(line); // write as early as possible, but BTN debug can't change speed
+      if(gprmc_tdelta > slow_tdelta) // M_SLOW can rarify tagging
+        write_tag(line); // write as early as possible, but BTN debug can't change speed
       ilgt ^= 1; // toggle index
       nmea2gprmc(line, &line_gprmc[ilgt]);
       speed_ckt = line_gprmc[ilgt].speed_kt*100+0.5;
