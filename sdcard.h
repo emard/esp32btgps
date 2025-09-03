@@ -75,6 +75,7 @@ void write_stat_file(struct tm *tm);
 void delete_stat_file(struct tm *tm);
 int read_stat_file(String filename_stat);
 void write_stat_arrows(void);
+void write_csv_tm(struct tm *tm);
 void finalize_data(struct tm *tm);
 void close_logs(void);
 void read_cfg(void);

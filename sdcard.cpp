@@ -20,7 +20,7 @@
 uint8_t GPS_MAC[6], OBD_MAC[6];
 String  GPS_NAME, GPS_PIN, OBD_NAME, OBD_PIN, AP_PASS[AP_MAX], DNS_HOST;
 
-File file_kml, file_accel, file_pcm, file_cfg;
+File file_kml, file_accel, file_pcm, file_cfg, file_csv;
 char filename_data[256];
 char *filename_lastnmea = (char *)"/profilog/var/lastnmea.txt";
 char *filename_fmfreq   = (char *)"/profilog/var/fmfreq.txt";
@@ -279,6 +279,17 @@ void generate_filename_wav(struct tm *tm)
 }
 
 void generate_filename_sta(struct tm *tm)
+{
+  #if 1
+  sprintf(filename_data, (char *)"/profilog/data/%04d%02d%02d-%02d%02d.sta",
+    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min);
+  #else // one file per day
+  sprintf(filename_data, (char *)"/profilog/data/%04d%02d%02d.sta",
+    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
+  #endif
+}
+
+void generate_filename_csv(struct tm *tm)
 {
   #if 1
   sprintf(filename_data, (char *)"/profilog/data/%04d%02d%02d-%02d%02d.sta",
@@ -640,6 +651,65 @@ void write_stat_arrows(void)
   }
 }
 
+void write_csv(String file_name)
+{
+#if 0
+  if(logs_are_open == 0)
+    return;
+  if((log_wav_kml&2) == 0)
+    return;
+#endif
+  char linebuf[256];
+  char timestamp[23] = "2000-01-01T00:00:00.0Z";
+  nmea2kmltime(lastnmea, timestamp);
+  file_csv = SD_MMC.open(file_name, FILE_WRITE);
+  printf("writing %d stat arrows to csv\n", s_stat.wr_snap_ptr);
+  //sprintf(linebuf, "generating csv\n");
+  //file_csv.write((uint8_t *)linebuf, strlen(linebuf));
+  #if 1
+  for(int i = 0; i < s_stat.wr_snap_ptr; i++)
+  {
+    x_kml_arrow->lon       = (float)(s_stat.snap_point[i].xm) / (float)lon2gridm;
+    x_kml_arrow->lat       = (float)(s_stat.snap_point[i].ym) / (float)lat2gridm;
+    x_kml_arrow->value     = (s_stat.snap_point[i].sum_iri[0][0]+s_stat.snap_point[i].sum_iri[0][1]) / (2*s_stat.snap_point[i].n);
+    x_kml_arrow->left      =  s_stat.snap_point[i].sum_iri[0][0] / s_stat.snap_point[i].n;
+    x_kml_arrow->right     =  s_stat.snap_point[i].sum_iri[0][1] / s_stat.snap_point[i].n;
+    x_kml_arrow->left_stdev  =  0.0;
+    x_kml_arrow->right_stdev =  0.0;
+    uint8_t n = s_stat.snap_point[i].n;
+    if(n > 0)
+    {
+      float sum1_left  = s_stat.snap_point[i].sum_iri[0][0];
+      float sum2_left  = s_stat.snap_point[i].sum_iri[1][0];
+      float sum1_right = s_stat.snap_point[i].sum_iri[0][1];
+      float sum2_right = s_stat.snap_point[i].sum_iri[1][1];
+      x_kml_arrow->left_stdev  =  sqrt(fabs( n*sum2_left  - sum1_left  * sum1_left  ))/n;
+      x_kml_arrow->right_stdev =  sqrt(fabs( n*sum2_right - sum1_right * sum1_right ))/n;
+    }
+    x_kml_arrow->n         = n;
+    x_kml_arrow->heading   = (float)(s_stat.snap_point[i].heading * (360.0/256));
+    x_kml_arrow->speed_min_kmh = s_stat.snap_point[i].vmin;
+    x_kml_arrow->speed_max_kmh = s_stat.snap_point[i].vmax;
+    uint16_t dt = s_stat.snap_point[i].daytime; // 2-second ticks since midnight
+    snprintf(timestamp+11, 12, "%02d:%02d:%02d.0Z", dt/1800,dt/30%60,(dt%30)*2);
+    x_kml_arrow->timestamp = timestamp;
+    //kml_arrow(x_kml_arrow);
+    //file_kml.write((uint8_t *)kmlbuf, str_kml_arrow_len);
+    sprintf(linebuf, "lat=%12.6f, lon=%12.6f\n", x_kml_arrow->lat, x_kml_arrow->lon);
+    file_csv.write((uint8_t *)linebuf, strlen(linebuf));
+  }
+  #endif
+  file_csv.close();
+}
+
+// from stat in memory write csv file
+// filename is generated from timestamp "tm"
+void write_csv_tm(struct tm *tm)
+{
+  generate_filename_csv(tm);
+  write_csv(String(filename_data));
+}
+
 // finalize kml file, no more writes after this
 void write_kml_footer(void)
 {
@@ -914,17 +984,25 @@ void finalize_kml(File &kml, String file_name)
     file_kml = SD_MMC.open(file_name, FILE_APPEND);
     // try to open file name with .sta extension instead of .kml
     String file_name_sta = file_name.substring(0,file_name.length()-4) + ".sta";
+    int write_csv_flag = 0;
+    logs_are_open = 1;
     if(read_stat_file(file_name_sta)) // if .sta file read succeeds, add arrows to .kml, delete .sta file.
     {
-      logs_are_open = 1;
       kml_init();
       file_kml.write((uint8_t *)str_kml_arrows_folder, strlen(str_kml_arrows_folder));
       write_stat_arrows();
-      logs_are_open = 0;
+      write_csv_flag = 1;
       SD_MMC.remove(file_name_sta);
     }
     file_kml.write((uint8_t *)str_kml_footer_simple, strlen(str_kml_footer_simple));
     file_kml.close();
+    // generate .csv file
+    if(write_csv_flag)
+    {
+      String file_name_csv = file_name.substring(0,file_name.length()-4) + ".csv";
+      write_csv(file_name_csv);
+    }
+    logs_are_open = 0;
   }
 }
 

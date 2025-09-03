@@ -797,7 +797,9 @@ void handle_reconnect(void)
     {
       open_logs(&tm_session);
       write_stat_arrows(); // write arrows with final statistics
+      write_csv_tm(&tm_session); // write csv with final statistics
       delete_stat_file(&tm_session);
+      //Serial.println("Finalizing from .ino"); // DEBUG print
     }
   }
   close_logs();
