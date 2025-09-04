@@ -33,7 +33,7 @@
         -->
         <xsl:variable name="deg" select="((kml:Style/kml:IconStyle/kml:heading) mod 360)"/>
         <xsl:text>"</xsl:text>
-        <xsl:value-of select="substring('↑↗→↘↓↙←↖',1+floor((($deg + 22.5 + 180) div 45 ) mod 8),1)"/>
+        <xsl:value-of select="substring('🡩🡭🡪🡮🡫🡯🡨🡬',1+floor((($deg + 22.5 + 180) div 45 ) mod 8),1)"/>
         <xsl:text>",</xsl:text>
         <xsl:value-of select="format-number(180 - $deg, '##0.0')"/><xsl:text>,</xsl:text>
         <xsl:value-of select="kml:Point/kml:coordinates"/><xsl:text>,</xsl:text>
