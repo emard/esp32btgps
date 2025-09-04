@@ -1221,6 +1221,7 @@ void handle_gps_line_complete(void)
         // int btn = spi_btn_read();    // debug
         if((btn & 4))
         {
+          line_gprmc[ilgt].lat += 119.79E-9*t_ms; // simulate traveling
           speed_ckt = KMH_BTN*54; // debug BTN2 4320 ckt = 80 km/h = 22 m/s
           //spd2nmea(line, speed_ckt); // debug: write new ckt to nmea line (FIXME CRC is not recalculated)
           //write_nmea_crc(line+1); // debug CRC for NMEA part
