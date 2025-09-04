@@ -292,10 +292,10 @@ void generate_filename_sta(struct tm *tm)
 void generate_filename_csv(struct tm *tm)
 {
   #if 1
-  sprintf(filename_data, (char *)"/profilog/data/%04d%02d%02d-%02d%02d.sta",
+  sprintf(filename_data, (char *)"/profilog/data/%04d%02d%02d-%02d%02d.csv",
     tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min);
   #else // one file per day
-  sprintf(filename_data, (char *)"/profilog/data/%04d%02d%02d.sta",
+  sprintf(filename_data, (char *)"/profilog/data/%04d%02d%02d.csv",
     tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
   #endif
 }
@@ -663,7 +663,7 @@ void write_csv(String file_name)
   char timestamp[23] = "2000-01-01T00:00:00.0Z";
   nmea2kmltime(lastnmea, timestamp);
   file_csv = SD_MMC.open(file_name, FILE_WRITE);
-  printf("writing %d stat arrows to csv\n", s_stat.wr_snap_ptr);
+  printf("writing %d stat arrows to %s\n", s_stat.wr_snap_ptr, file_name.c_str());
   sprintf(linebuf, "\"travel [m]\",\"IRI100 [mm/m]\",\"arrow\",\"heading [°]\",\"lon [°]\",\"lat [°]\",\"time\",\"left\",\"right\",\"repeat\",\"speed\"\n");
   file_csv.write((uint8_t *)linebuf, strlen(linebuf));
   // 100, 4.87,"↓",-174.3,+015.999377,+45.808163,2025-09-03T07:13:52.0Z,"L100= 4.99 ± 0.00 mm/m","R100= 4.75 ± 0.00 mm/m","n= 1","v= 32- 32 km/h","",
