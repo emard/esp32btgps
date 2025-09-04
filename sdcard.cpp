@@ -660,14 +660,13 @@ void write_csv(String file_name)
     return;
 #endif
   char linebuf[256];
+  const char *heading_arrow[] = {"🡩","🡭","🡪","🡮","🡫","🡯","🡨","🡬"}; // 8 arrows UTF-8
   char timestamp[23] = "2000-01-01T00:00:00.0Z";
   nmea2kmltime(lastnmea, timestamp);
   file_csv = SD_MMC.open(file_name, FILE_WRITE);
   printf("writing %d stat arrows to %s\n", s_stat.wr_snap_ptr, file_name.c_str());
-  sprintf(linebuf, "\"travel [m]\",\"IRI100 [mm/m]\",\"arrow\",\"heading [°]\",\"lon [°]\",\"lat [°]\",\"time\",\"left\",\"right\",\"repeat\",\"speed\"\n");
+  sprintf(linebuf, "\"travel [m]\",\"IRI100 [mm/m]\",\"arrow\",\"heading [°]\",\"lon [°]\",\"lat [°]\",\"time\",\"left IRI100 [mm/m]\",\"left ±2σ [mm/m]\",\"right IRI100 [mm/m]\",\"right ±2σ [mm/m]\",\"repeat\",\"min [km/h]\",\"max [km/h]\",\"UTF-8 English (US)\"\n");
   file_csv.write((uint8_t *)linebuf, strlen(linebuf));
-  // 100, 4.87,"↓",-174.3,+015.999377,+45.808163,2025-09-03T07:13:52.0Z,"L100= 4.99 ± 0.00 mm/m","R100= 4.75 ± 0.00 mm/m","n= 1","v= 32- 32 km/h","",
-  // 200, 5.16,"↓",-164.5,+015.999898,+45.807419,2025-09-03T07:14:00.0Z,"L100= 5.24 ± 0.00 mm/m","R100= 5.08 ± 0.00 mm/m","n= 1","v= 38- 38 km/h","",
   #if 1
   for(int i = 0; i < s_stat.wr_snap_ptr; i++)
   {
@@ -697,8 +696,20 @@ void write_csv(String file_name)
     x_kml_arrow->timestamp = timestamp;
     //kml_arrow(x_kml_arrow);
     //file_kml.write((uint8_t *)kmlbuf, str_kml_arrow_len);
-    sprintf(linebuf, "%d00,%5.2f,%6.1f,%12.6f,%12.6f\n",
-     i, x_kml_arrow->value, x_kml_arrow->heading, x_kml_arrow->lat, x_kml_arrow->lon);
+    // 100, 4.87,"↓",-174.3,+015.999377,+45.808163,2025-09-03T07:13:52.0Z,4.99,0.00,4.75,0.00,1,32,32
+    // 200, 5.16,"↓",-164.5,+015.999898,+45.807419,2025-09-03T07:14:00.0Z,5.24,0.00,5.08,0.00,1,38,38
+    int arrow_index = ((int)(x_kml_arrow->heading + 22.5)) / 45 % 8;
+    sprintf(linebuf, "%d00,%5.2f,\"%s\",%6.1f,%10.6f,%10.6f,%s,%5.2f,%5.2f,%5.2f,%5.2f,%d,%d,%d\n",
+     i+1, x_kml_arrow->value,
+     heading_arrow[arrow_index],
+     x_kml_arrow->heading,
+     x_kml_arrow->lat, x_kml_arrow->lon,
+     x_kml_arrow->timestamp,
+     x_kml_arrow->left,  x_kml_arrow->left_stdev,
+     x_kml_arrow->right, x_kml_arrow->right_stdev,
+     x_kml_arrow->n,
+     x_kml_arrow->speed_min_kmh, x_kml_arrow->speed_max_kmh
+     );
     file_csv.write((uint8_t *)linebuf, strlen(linebuf));
   }
   #endif
