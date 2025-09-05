@@ -16,7 +16,7 @@
   <xsl:template match="text()"/>
 
   <xsl:template match="/">
-    <xsl:text>"travel [m]","IRI100 [mm/m]","arrow","heading [°]","lon [°]","lat [°]","time","left","right","repeat","speed"&#xA;</xsl:text>
+    <xsl:text>"travel [m]","IRI100 [mm/m]","arrow","heading [°]","lon [°]","lat [°]","time","left IRI100 [mm/m]","left ±2σ [mm/m]","right IRI100 [mm/m]","right ±2σ [mm/m]","repeat","min [km/h]","max [km/h]","UTF-8 English (US)"&#xA;</xsl:text>
     <xsl:apply-templates/>
   </xsl:template>
 
@@ -46,15 +46,59 @@
     </xsl:for-each>
   </xsl:template>
 
+  <xsl:template match="text/text()" name="iri_avg_stdev">
+    <xsl:param name="text" select="."/>
+    <xsl:variable name="avg" select="normalize-space(substring-before($text, '±'))"/>
+    <xsl:variable name="stdev" select="normalize-space(substring-before(substring-after($text, '±'), 'm'))"/>
+    <xsl:value-of select="$avg"/><xsl:text>,</xsl:text>
+    <xsl:value-of select="$stdev"/><xsl:text>,</xsl:text>
+  </xsl:template>
+
+  <xsl:template match="text/text()" name="min_max_kmh">
+    <xsl:param name="text" select="."/>
+    <xsl:variable name="min_kmh" select="normalize-space(substring-before($text, '-'))"/>
+    <xsl:variable name="max_kmh" select="normalize-space(substring-before(substring-after($text, '-'), 'k'))"/>
+    <xsl:value-of select="$min_kmh"/><xsl:text>,</xsl:text>
+    <xsl:value-of select="$max_kmh"/>
+  </xsl:template>
+
+  <xsl:template match="text/text()" name="description_line">
+    <xsl:param name="text" select="."/>
+    <xsl:variable name="var" select="substring-before($text, '=')"/>
+    <xsl:variable name="value" select="substring-after($text, '=')"/>
+    <xsl:choose>
+      <xsl:when test="$var = 'L100' or $var = 'R100'">
+         <!-- <xsl:text>"</xsl:text><xsl:value-of select="normalize-space($value)"/><xsl:text>",</xsl:text> -->
+         <xsl:call-template name="iri_avg_stdev">
+           <xsl:with-param name="text" select="normalize-space($value)"/>
+         </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="$var = 'n'">
+         <xsl:value-of select="normalize-space($value)"/><xsl:text>,</xsl:text>
+      </xsl:when>
+      <xsl:when test="$var = 'v'">
+         <xsl:call-template name="min_max_kmh">
+           <xsl:with-param name="text" select="normalize-space($value)"/>
+         </xsl:call-template>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+
   <xsl:template match="text/text()" name="tokenize">
     <xsl:param name="text" select="."/>
     <xsl:param name="separator" select="'&#xA;'"/>
     <xsl:choose>
       <xsl:when test="not(contains($text, $separator))">
-        <xsl:text>"</xsl:text><xsl:value-of select="normalize-space($text)"/><xsl:text>",</xsl:text>
+        <!-- <xsl:text>"</xsl:text><xsl:value-of select="normalize-space($text)"/><xsl:text>",</xsl:text> -->
+        <xsl:call-template name="description_line">
+          <xsl:with-param name="text" select="normalize-space($text)"/>
+        </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:text>"</xsl:text><xsl:value-of select="normalize-space(substring-before($text, $separator))"/><xsl:text>",</xsl:text>
+        <!-- <xsl:text>"</xsl:text><xsl:value-of select="normalize-space(substring-before($text, $separator))"/><xsl:text>",</xsl:text> -->
+        <xsl:call-template name="description_line">
+          <xsl:with-param name="text" select="normalize-space(substring-before($text, $separator))"/>
+        </xsl:call-template>
         <xsl:call-template name="tokenize">
           <xsl:with-param name="text" select="substring-after($text, $separator)"/>
         </xsl:call-template>
