@@ -653,12 +653,8 @@ void write_stat_arrows(void)
 
 void write_csv(String file_name)
 {
-#if 0
-  if(logs_are_open == 0)
+  if((log_wav_kml&4) == 0)
     return;
-  if((log_wav_kml&2) == 0)
-    return;
-#endif
   char linebuf[256];
   const char *heading_arrow[] = {"🡩","🡭","🡪","🡮","🡫","🡯","🡨","🡬"}; // 8 arrows UTF-8
   char timestamp[23] = "2000-01-01T00:00:00.0Z";
