@@ -154,7 +154,8 @@ esp32
     [x] insert tag iri values faster
         when there is bandwidth for that
     [ ] OBD mode testing
-    [ ] CSV generator
+    [x] CSV generator
+    [ ] config bit to enable csv output
     [ ] power off after 15 minutes of searching for gps (needs RTC support)
 
 core
