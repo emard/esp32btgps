@@ -66,7 +66,7 @@
   <xsl:template name="direction_arrow">
     <xsl:param name="deg" select="0"/>
     <xsl:variable name="arrow_index" select="floor((($deg + 22.5) div 45 ) mod 8)"/>
-    <xsl:variable name="arrows" select="'↑↗→↘↓↙←↖'"/>
+    <xsl:variable name="arrows" select="'🡩🡭🡪🡮🡫🡯🡨🡬'"/>
     <xsl:value-of select="substring($arrows,1+$arrow_index,1)"/>
   </xsl:template>
   -->
