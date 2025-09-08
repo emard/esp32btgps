@@ -35,7 +35,7 @@
         <xsl:text>"</xsl:text>
         <xsl:value-of select="substring('🡩🡭🡪🡮🡫🡯🡨🡬',1+floor((($deg + 22.5 + 180) div 45 ) mod 8),1)"/>
         <xsl:text>",</xsl:text>
-        <xsl:value-of select="format-number(180 - $deg, '##0.0')"/><xsl:text>,</xsl:text>
+        <xsl:value-of select="format-number(($deg + 180) mod 360, '##0.0')"/><xsl:text>,</xsl:text>
         <xsl:value-of select="kml:Point/kml:coordinates"/><xsl:text>,</xsl:text>
         <xsl:value-of select="kml:TimeStamp/kml:when"/><xsl:text>,</xsl:text>
         <xsl:call-template name="tokenize">
