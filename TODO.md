@@ -155,8 +155,13 @@ esp32
         when there is bandwidth for that
     [ ] OBD mode testing
     [x] CSV generator
-    [ ] config bit to enable csv output
+    [x] config bit to enable csv output
     [ ] power off after 15 minutes of searching for gps (needs RTC support)
+    [ ] check safe wraparound of geohash and no crash
+    [ ] immediately after GPS obtains fix report with speech,
+        do it earlier than each full minute
+        after speech, keep grace time of 30 seconds to prevent
+        another speech coming on full minute schedule
 
 core
 
@@ -191,7 +196,7 @@ core
     [ ] math to calculate IRI from sensors inside the car
     [ ] RTC SPI interface
     [ ] power off support
- after 15 minutes of searching for gps
+        after 15 minutes of searching for gps
 
 tools (wav2kml etc)
 
