@@ -199,6 +199,8 @@ core
     [ ] RTC SPI interface
     [ ] power off support
         after 15 minutes of searching for gps
+    [ ] check if .csv works without .kml
+        LOG_MODE: 4 or 6
     [ ] glitches appear in right channel X axis
         in every 32 bytes in received wav
 33 [1098   68 3766  890  134 3838]
