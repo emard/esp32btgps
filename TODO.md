@@ -162,6 +162,8 @@ esp32
         do it earlier than each full minute
         after speech, keep grace time of 30 seconds to prevent
         another speech coming on full minute schedule
+    [ ] glitches in reading right sensor, repeatable glitch down
+        to some valuea like -16383
 
 core
 
