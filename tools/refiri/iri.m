@@ -28,10 +28,10 @@ X = [(prof(ilead) - prof(1))/(dx*ilead) ;
 sprof = (prof((ibase + 1):(length(prof))) - prof(1:(length(prof) - ibase)))./(dx*ibase);
 
 % State Space Matrix 'A'.
-A = [ -0,   1,            0,    0 ;
-     -K2,  -C,           K2,    C ;
-      -0,  -0,            0,    1 ;
-   +K2/U, C/U, -(K2 + K1)/U, -C/U];
+A = [ -0,   1,            0,    0  ;
+     -K2,  -C,           K2,    C  ;
+      -0,  -0,            0,    1  ;
+   +K2/U, C/U, -(K2 + K1)/U, -C/U ];
 
 % State Space Matrix 'B'.
 B = [0; 0; 0; K1/U];
@@ -46,9 +46,8 @@ irivec = zeros(length(sprof), 1);
 % Calculate the IRI.
 for i = 1:length(sprof)
   % Calculate the new state vector.
-  XN = ST*X + PR*sprof(i);
-  X  = XN;
+  X = ST*X + PR*sprof(i);
   irivec(i) = abs(X(3) - X(1));
 end % for
-
+% TODO running average of irivec to get IRI20
 end % function
