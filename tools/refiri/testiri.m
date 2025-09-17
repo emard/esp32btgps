@@ -5,12 +5,16 @@ p=csvread("low_dx_50mm.txt");
 x_m=real(p); % real part is x-vector in m
 y_mm=imag(p); % complex part is y-vector in mm
 dx=x_m(2)-x_m(1); % diff of first 2 elements is dx, assuming all the rest are the same
-L=20; % [m]
-N=round(L/dx);
-M=5; % internal iri()'s running average of 5 points
 % dx=x_m(1234)-x_m(1233); % should be the same
+L=20; % [m] for IRI20
+N=round(L/dx); % number of 5-cm points to average for IRI20
+M=5; % internal iri()'s running average of 5 points for 25-cm average
 % invoking iri() loads file iri.m and uses function iri(prof,dx)
 iri_value=iri(y_mm,dx);
+% internal iri()'s running average of 5 points for 25-cm average
+% output vector "iri_value" is M shorter than input vector "y_mm":
+% M=5 actually
+M=length(y_mm)-length(iri_value)
 disp("x[m]   IRI20[mm/m]");
 disp("------------------");
 for i = N:N:length(x_m)
