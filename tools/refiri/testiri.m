@@ -8,7 +8,6 @@ dx=x_m(2)-x_m(1); % diff of first 2 elements is dx, assuming all the rest are th
 % dx=x_m(1234)-x_m(1233); % should be the same
 L=20; % [m] for IRI20
 N=round(L/dx); % number of 5-cm points to average for IRI20
-M=5; % internal iri()'s running average of 5 points for 25-cm average
 % invoking iri() loads file iri.m and uses function iri(prof,dx)
 iri_value=iri(y_mm,dx);
 % internal iri()'s running average of 5 points for 25-cm average
