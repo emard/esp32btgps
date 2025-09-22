@@ -39,7 +39,7 @@ module adxl355_sync
   begin
     pa_sync <= pa_sync_next;
   end
-  assign o_clk_sync = pa_sync[pa_sync_bits-1]; // 1 kHz
+  assign o_clk_sync = pa_sync[pa_sync_bits-1]; // 1 kHz, width 1 pulse of 40 MHz
 
   // rising edge detection of sync
   reg [1:0] sync_shift;
