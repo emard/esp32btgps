@@ -20,7 +20,7 @@ module adxl355_sync
   pa_sync_bits = 32          // SYNC phase accumulator bits, less->faster convergence, more->smaller jitter
 )
 (
-  input  i_clk,       // 40 kHz system clock
+  input  i_clk,       // 40 MHz system clock
   input  i_pps,       // 1 Hz pulse per second from GPS TODO not used
   output [7:0] o_cnt, // debug output sample counter captured each rising edge of PPS
   output o_pps_valid, // 1 when pps in +-clk_pps_tol_us
