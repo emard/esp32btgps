@@ -19,7 +19,7 @@ def header(name:str,version:str)->str:
 Speed-time 100 m segment cuts with statistics.<br/>\n\
 Click any point on the track to display mm/m value of a 100 m\n\
 segment measured before the point. Value represents average\n\
-rectified speed in the shock absorber over 100 m segment\n\
+rectified speed in the shock absorber in m/h over 100 m segment\n\
 and divided by standard speed of 80 km/h. Value comes from the\n\
 numeric model that calculates response at standard speed,\n\
 removing dependency on actual speed at which measurement has been done.<br/>\n\
