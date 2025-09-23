@@ -9,7 +9,7 @@ xinit = 11;
 
 % Physical Constants Of Quarter Car.
 K1 = 653.0;  % kt/ms
-K2 = 63.3;   % ks/ms (EN 13036-5 appendix A and WTP-46 at p.37)
+K2 = 63.3;   % ks/ms (EN 13036-5 appendix A,B and WTP-46 code at p.37)
 % K2 = 62.3;   % ks/ms (WTP-46 pre-calculated ST,PR at p.36 and in all examples)
 U  = 0.15;   % mu/ms
 C  = 6.0;    % cs/ms
