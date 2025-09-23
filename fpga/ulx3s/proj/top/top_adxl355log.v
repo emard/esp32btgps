@@ -404,8 +404,8 @@ module top_adxl355log
   adxl355_drdy
   #(
     .clk_out0_hz(clk_out0_hz), // Hz, 40 MHz, PLL internal clock
-    .sync_width_us(200),       // extends length of sync_hardware pulse
-    .drdy_delay_us(220)        // delays rising edge of drdy pulse after sync pulse
+    .sync_width_us(100),       // extends length of sync_hardware pulse
+    .drdy_delay_us(120)        // delays rising edge of drdy pulse after sync pulse
   )
   adxl355_drdy_inst
   (
