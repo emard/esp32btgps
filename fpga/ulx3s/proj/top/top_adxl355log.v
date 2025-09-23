@@ -155,9 +155,9 @@ module top_adxl355log
 
   wire int1 = gp17;
   wire int2 = gp15;
-  wire drdy; // gp14;
-  assign gp14 = drdy; // adxl0 
-  assign gp21 = drdy; // adxl1
+  wire sync_hardware; // gp14;
+  assign gp14 = sync_hardware; // adxl0
+  assign gp21 = sync_hardware; // adxl1
 
   // base clock for making 1024 kHz for ADXL355
   wire [3:0] clocks;
@@ -380,6 +380,7 @@ module top_adxl355log
 
   wire [7:0] phase;
   wire pps_valid, sync_locked;
+  wire sync_internal;
   adxl355_sync
   #(
     .clk_out0_hz(clk_out0_hz), // Hz, 40 MHz, PLL internal clock
@@ -389,17 +390,33 @@ module top_adxl355log
     .clk_sync_hz(clk_sync_hz), // Hz, 1 kHz SYNC clock, sample rate
     .pa_sync_bits(pa_sync_bits)// PA bit size
   )
-  adxl355_clk_inst
+  adxl355_sync_inst
   (
     .i_clk(clk),
     .i_pps(pps_btn), // rising edge sensitive
     .o_cnt(phase), // monitor phase angle
     .o_pps_valid(pps_valid),
     .o_locked(sync_locked),
-    .o_clk_sync(drdy)
+    .o_clk_sync(sync_internal) // only connected to adxl355_drdy module
+  );
+
+  wire drdy_pulse;
+  adxl355_drdy
+  #(
+    .clk_out0_hz(clk_out0_hz), // Hz, 40 MHz, PLL internal clock
+    .sync_width_us(200),       // extends length of sync_hardware pulse
+    .drdy_delay_us(220)        // delays rising edge of drdy pulse after sync pulse
+  )
+  adxl355_drdy_inst
+  (
+    .i_clk(clk),
+    .i_clk_sync(sync_internal), // 1 kHz 1 pulse in 40 MHz domain
+    .o_clk_sync(sync_hardware), // 1 kHz width extended for hardware
+    .o_clk_drdy(drdy_pulse)     // 1 kHz delayed 1 pilse in 40 MHz domain
   );
 
   // sync counter
+  /*
   reg [11:0] cnt_sync, cnt_sync_prev;
   reg [1:0] sync_shift, pps_shift;
   always @(posedge clk)
@@ -412,17 +429,18 @@ module top_adxl355log
     end
     else
     begin
-      sync_shift <= {drdy, sync_shift[1]};
+      sync_shift <= {sync_hardware, sync_shift[1]};
       if(sync_shift == 2'b01) // falling to avoid sampling near edge
       begin
         cnt_sync <= cnt_sync+1;
       end
     end
   end
+  */
 
   // LED monitoring
 
-  //assign led[7:4] = {drdy,int2,int1,1'b0};
+  //assign led[7:4] = {sync_hardware,int2,int1,1'b0};
   //assign led[3:0] = {gn27,gn26,gn25,gn24};
   //assign led[3:0] = {sclk,wifi_gpio35,mosi,csn};
   //assign led[3:0] = {sclk,miso,mosi,csn};
@@ -436,14 +454,16 @@ module top_adxl355log
   //assign led = phase;
   //assign led = cnt_sync_prev[7:0]; // should show 0xE8 from 1000 = 0x3E8
 
-  // rising edge detection of drdy (sync)
+  // rising edge detection of sync_hardware (sync)
+  /*
   reg [1:0] r_sync_shift;
-  reg sync_pulse;
+  reg drdy_pulse;
   always @(posedge clk)
   begin
-    r_sync_shift <= {drdy, r_sync_shift[1]};
-    sync_pulse <= r_sync_shift == 2'b10 ? 1 : 0;
+    r_sync_shift <= {sync_hardware, r_sync_shift[1]};
+    drdy_pulse <= r_sync_shift == 2'b10 ? 1 : 0;
   end
+  */
 
   // SPI reader
   reg [autospi_clkdiv:0] r_sclk_en;
@@ -490,7 +510,7 @@ module top_adxl355log
     .tag_pulse(pps_pulse),
     .tag_en(tag_en),  // write signal from SPI
     .tag(w_tag), // 6-bit char from SPI
-    .sync(sync_pulse), // start reading a sample
+    .sync(drdy_pulse), // start reading a sample
     .sclk_phase(ctrl_sclk_phase),
     .sclk_polarity(ctrl_sclk_polarity),
     .adxl_csn(rd_csn),
@@ -504,7 +524,7 @@ module top_adxl355log
     .wr(spi_ram_wr), // signal to write received byte to BRAM
     .x(spi_ram_x) // signal to reset BRAM addr before first received byte in a sample
   );
-  //assign spi_ram_x = sync_pulse;
+  //assign spi_ram_x = drdy_pulse;
 
   // store one sample in reg memory
   reg [7:0] r_accel[0:17]; // 18 bytes
@@ -726,7 +746,7 @@ module top_adxl355log
           r_fault <= 0;
         else
         begin
-          if(sync_pulse)
+          if(drdy_pulse)
             r_fault <= r_fault | {azl[15:2]==0 || ~azl[15:2]==0, azr[15:2]==0 || ~azr[15:2]==0}; // if z-axis reads near 0, set fault
         end
       end
@@ -787,11 +807,11 @@ module top_adxl355log
   //#(
   //  .c_resolution_x(240),
   //  .c_hsync_front_porch(1800),
-  //  .c_hsync_pulse(1),
+  //  .c_hdrdy_pulse(1),
   //  .c_hsync_back_porch(1800),
   //  .c_resolution_y(240),
   //  .c_vsync_front_porch(1),
-  //  .c_vsync_pulse(1),
+  //  .c_vdrdy_pulse(1),
   //  .c_vsync_back_porch(1),
   //  .c_bits_x(12),
   //  .c_bits_y(8)
@@ -900,7 +920,7 @@ module top_adxl355log
     //.reset(1'b0),
     //.reset(btn_debounce[1]), // debug
     .reset(slope_reset2), // check is reset working (delayed, sometimes fixes synth problems)
-    .enter(sync_pulse), // normal
+    .enter(drdy_pulse), // normal
     //.enter(btn_rising[1]), // debug
     //.enter(autofire), // debug
     .hold(1'b0), // normal

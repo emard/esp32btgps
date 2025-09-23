@@ -10,7 +10,7 @@ module adxl355_drdy
   clk_out0_hz   = 40*1000000, // Hz, 40 MHz, input system clock rate
   sync_width_us = 20,         // output sync with extended width
   drdy_delay_us = 50,         // output delayed sync = drdy 1 kHz 1 pulse in 40 MHz domain
-  timing_bits   = 20          // timer counters are this bits wide
+  timing_bits   = 18          // timer counters are this bits wide
 )
 (
   input  i_clk,       // 40 MHz system clock
@@ -18,7 +18,7 @@ module adxl355_drdy
   output o_clk_sync,  // 1 kHz extended pulse width
   output o_clk_drdy   // 1 kHz narrow 1-clk-40MHz pulse width  
 );
-  localparam real re_sync_count = sync_width_us * 1000000 / clk_out0_hz; // real number of counts for sync width
+  localparam real re_sync_count = sync_width_us * clk_out0_hz / 1000000; // real number of counts for sync width
   localparam integer int_sync_count = re_sync_count; // integer number of counts for sync width
 
   reg [timing_bits-1:0] counter_sync;
@@ -33,7 +33,7 @@ module adxl355_drdy
         counter_sync <= counter_sync-1;
   end
 
-  localparam real re_drdy_count = drdy_delay_us * 1000000 / clk_out0_hz; // real number of counts for drdy delay
+  localparam real re_drdy_count = drdy_delay_us * clk_out0_hz / 1000000; // real number of counts for drdy delay
   localparam integer int_drdy_count = re_drdy_count; // integer number of counts for drdy delay
   reg [timing_bits-1:0] counter_drdy;
   reg prev_run_drdy;
