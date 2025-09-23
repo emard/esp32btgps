@@ -33,6 +33,7 @@ $(TOP_MODULE_FILE) \
 ../spi_slave/hdl/spirw_slave_v.v \
 ../adxl355/hdl/adxl355rd.v \
 ../adxl355/hdl/adxl355_sync.v \
+../adxl355/hdl/adxl355_drdy.v \
 ../bram/hdl/bram_true2p_2clk.v \
 ../osd/hdl/spi_osd_v.v \
 ../osd/hdl/osd.v \
