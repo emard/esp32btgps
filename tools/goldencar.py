@@ -43,9 +43,13 @@ def st_pr(DX = 0.05, K1 = 653.0, K2 = 62.3, MU = 0.15, C = 6.0):
   # DX =   0.05  # m sampling_length (for 0.05 m it takes 2000 points per 100 m)
   # HSRI-type golden car:
   # K1 = 653.0   # tyre stiffness per vehicle body mass
-  # K2 =  62.3   # shock absorber spring stiffness per vehicle body mass (wtp-46 uses 63.3)
+  # K2 =  62.3   # shock absorber spring stiffness per vehicle body mass
   # MU =   0.15  # tyre mass per vehicle body mass
   # C  =   6.0   # shock absorber damping coefficient per vehicle body mass
+  # NOTE WTP-46 small contradiction in K2:
+  # WTP-46 uses K2=62.3 for pre-calculated ST and PR at p.36 tab.2
+  # but uses K2=63.3 in BASIC code at p.37 fig.4
+  # this K2 diference has negligible influence in resulting IRI, below +-0.01
   # BPR-type golden car:
   # K1 = 643.0   # tyre stiffness per vehicle body mass
   # K2 = 128.7   # shock absorber spring stiffness per vehicle body mass
