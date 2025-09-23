@@ -21,7 +21,7 @@ module adxl355_drdy
   localparam real re_sync_count = sync_width_us * 1000000 / clk_out0_hz; // real number of counts for sync width
   localparam integer int_sync_count = re_sync_count; // integer number of counts for sync width
 
-  reg counter_sync[timing_bits-1:0];
+  reg [timing_bits-1:0] counter_sync;
   assign o_clk_sync = ~(counter_sync[timing_bits-1]);
   always @(posedge i_clk)
   begin
@@ -35,7 +35,7 @@ module adxl355_drdy
 
   localparam real re_drdy_count = drdy_delay_us * 1000000 / clk_out0_hz; // real number of counts for drdy delay
   localparam integer int_drdy_count = re_drdy_count; // integer number of counts for drdy delay
-  reg counter_drdy[timing_bits-1:0];
+  reg [timing_bits-1:0] counter_drdy;
   reg prev_run_drdy;
   reg o_clk_drdy;
   wire run_drdy = ~(counter_drdy[timing_bits-1]);
