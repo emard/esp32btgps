@@ -38,7 +38,7 @@ module adxl355_drdy
   reg counter_drdy[timing_bits-1:0];
   reg prev_run_drdy;
   reg o_clk_drdy;
-  assign run_drdy = ~(counter_drdy[timing_bits-1]);
+  wire run_drdy = ~(counter_drdy[timing_bits-1]);
   always @(posedge i_clk)
   begin
     // reset delayed pulse counter
