@@ -9,7 +9,8 @@ xinit = 11;
 
 % Physical Constants Of Quarter Car.
 K1 = 653.0;  % kt/ms
-K2 = 63.3;   % ks/ms
+K2 = 63.3;   % ks/ms (EN 13036-5 appendix A and WTP-46 at p.37)
+% K2 = 62.3;   % ks/ms (WTP-46 pre-calculated ST,PR at p.36 and in all examples)
 U  = 0.15;   % mu/ms
 C  = 6.0;    % cs/ms
 V  = 80/3.6; % m/s   speed
@@ -40,6 +41,10 @@ B = [0; 0; 0; K1/U];
 ST = expm(A*dx/V);
 PR = inv(A)*(ST - eye(4))*B;
 
+disp("ST=")
+disp(ST)
+disp("PR=")
+disp(PR)
 % Initialize the IRI vector.
 irivec = zeros(length(sprof), 1);
 
