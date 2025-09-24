@@ -79,6 +79,8 @@ void init_sensors(void)
 {
   if(adxl_devid_detected == 0xED) // ADXL355
   {
+    adxl355_write_reg(ADXL355_POWER_CTL, 7); // 7: turn device OFF
+    adxl355_write_reg(ADXL355_RESET, 0x52); // 0x52: RESET device
     adxl355_write_reg(ADXL355_POWER_CTL, 0); // 0: turn device ON
     // i=1-3 range 1:+-2g, 2:+-4g, 3:+-8g
     // high speed i2c, INT1,INT2 active high
