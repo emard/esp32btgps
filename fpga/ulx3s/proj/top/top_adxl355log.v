@@ -454,17 +454,6 @@ module top_adxl355log
   //assign led = phase;
   //assign led = cnt_sync_prev[7:0]; // should show 0xE8 from 1000 = 0x3E8
 
-  // rising edge detection of sync_hardware (sync)
-  /*
-  reg [1:0] r_sync_shift;
-  reg drdy_pulse;
-  always @(posedge clk)
-  begin
-    r_sync_shift <= {sync_hardware, r_sync_shift[1]};
-    drdy_pulse <= r_sync_shift == 2'b10 ? 1 : 0;
-  end
-  */
-
   // SPI reader
   reg [autospi_clkdiv:0] r_sclk_en;
   always @(posedge clk)
