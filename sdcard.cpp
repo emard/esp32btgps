@@ -268,18 +268,18 @@ int sensor_check(void)
     // initial condition
     gptr = (int16_t *) (spi_master_rx_buf + lr[i]);
     g_prev = *gptr;
-    // rest 32 are tested for glitch
-    for(j = 1; j < 33; j++)
+    // rest 32 samples are tested for glitch
+    for(j = 1*12; j < 33*12; j+=12)
     {
-      gptr = (int16_t *) (spi_master_rx_buf + lr[i] + 12*j);
+      gptr = (int16_t *) (spi_master_rx_buf + lr[i] + j);
       g = *gptr;
       if(abs(g - g_prev) > 10000)
       {
         // X channel glitch detected
         // now it sets "no sensor" signal
-        // TODO separate signal for glitch
-        // sensor can keep working
-        // only Z channel is needed
+        // TODO separate signal for glitch.
+        // sensor with X-chanel -glitch can keep working
+        // because only Z channel is needed
         retval &= ~(1<<i); // clr bit = no sensor
       }
       g_prev = g;
