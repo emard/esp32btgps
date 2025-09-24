@@ -74,13 +74,24 @@ void adxl355_ctrl(uint8_t x)
 //                    sensor type          sclk polarity        sclk phase
 #define CTRL_SELECT ((adxl355_regio)<<2)|((adxl355_regio)<<3)|((adxl355_regio)<<4)
 
+void reset_sensors(void)
+{
+  if(adxl_devid_detected == 0xED) // ADXL355
+  {
+    #if 1
+    // without this reset, glitches can happen every 5-6 power on's
+    // such glitch manifest as X-channel spike every 32 samples
+    // adxl355_write_reg(ADXL355_POWER_CTL, 7); // 7: turn device OFF
+    adxl355_write_reg(ADXL355_RESET, 0x52); // 0x52: RESET device
+    #endif
+  }
+}
+
 // turn sensor power on, set range, filtering, sync mode
 void init_sensors(void)
 {
   if(adxl_devid_detected == 0xED) // ADXL355
   {
-    adxl355_write_reg(ADXL355_POWER_CTL, 7); // 7: turn device OFF
-    adxl355_write_reg(ADXL355_RESET, 0x52); // 0x52: RESET device
     adxl355_write_reg(ADXL355_POWER_CTL, 0); // 0: turn device ON
     // i=1-3 range 1:+-2g, 2:+-4g, 3:+-8g
     // high speed i2c, INT1,INT2 active high
@@ -235,6 +246,7 @@ void cold_init_sensors(void)
       chipid[0], chipid[1], chipid[2], chipid[3], serialno[0], serialno[1]
   );
   Serial.println(sprintf_buf);
+  reset_sensors();
   init_sensors();
   //debug_sensors_print();
   read_temperature();
