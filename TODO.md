@@ -221,6 +221,9 @@ core
 100 [1002  -88 3960  856    8 4100]
 101 [1014  -66 3976  868   36 4118]
 
+    [ ] scan 32 samples and detect glitch,
+        when sensor has glitch, inform user
+        to power cycle instead of reporting "no sensor"
 
 tools (wav2kml etc)
 
