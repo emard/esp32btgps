@@ -239,6 +239,7 @@ int sensor_check(void)
   }; // list of indexes to check (0 not included)
   int lr[2] = {6, 12}; // l, r index of sensors in rx buf to check
   uint8_t v0[6], v[6]; // sensor readings
+  int16_t g_prev, g, *gptr; // X-axis glitch finder
 
   int i, j, k;
 
@@ -256,6 +257,32 @@ int sensor_check(void)
         v[k] |= 1;
       if(memcmp(v, v0, 6) != 0)
         retval |= 1<<i;
+    }
+    // glitch comes from adxl355 hardware
+    // with bad timing of sync/drdy/spi read
+    // happens as a spike in X channel every 32 samples
+    // spike has about 20000 difference.
+    // To fix it sensor needs power off/on.
+    // In normal operation this spike would never happen.
+    // first sample sets
+    // initial condition
+    gptr = (int16_t *) (spi_master_rx_buf + lr[i]);
+    g_prev = *gptr;
+    // rest 32 are tested for glitch
+    for(j = 1; j < 33; j++)
+    {
+      gptr = (int16_t *) (spi_master_rx_buf + lr[i] + 12*j);
+      g = *gptr;
+      if(abs(g - g_prev) > 10000)
+      {
+        // X channel glitch detected
+        // now it sets "no sensor" signal
+        // TODO separate signal for glitch
+        // sensor can keep working
+        // only Z channel is needed
+        retval &= ~(1<<i); // clr bit = no sensor
+      }
+      g_prev = g;
     }
   }
   return retval;
