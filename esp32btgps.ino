@@ -864,13 +864,12 @@ void travel_gps(void)
   {
     int travel_dt = (864000 + daytime - daytime_prev) % 864000; // seconds*10 since last time
     if(travel_dt < 100) // ok reports are below 10s difference
-      #if 0
-      // faster, less precise?
-      travel_mm += speed_mms * travel_dt / 10;
-      #else
-      // slower, more precise?
-      travel_mm += 1000 * distance(line_gprmc[0].lat, line_gprmc[0].lon, line_gprmc[1].lat, line_gprmc[1].lon);
-      #endif
+      if(speed_ckt < 0) // tunnel mode GPS signal lost
+        // faster calculation but less accurate
+        travel_mm += speed_mms * travel_dt / 10;
+      else // normal GPS signal
+        // slower calculation but more accurate
+        travel_mm += 1000 * distance(line_gprmc[0].lat, line_gprmc[0].lon, line_gprmc[1].lat, line_gprmc[1].lon);
     travel_report1 = travel_mm / MM_REPORT1; // normal: report every 100 m
     travel_report2 = travel_mm / MM_REPORT2; // normal: report every  20 m
   }
