@@ -61,6 +61,7 @@ module top_adxl355log
   pps_n        = 10,         // N, 1 Hz, number of PPS pulses per interval
   pps_s        = 1,          // s, 1 s, PPS interval
   clk_sync_hz  = 1000,       // Hz, 1 kHz SYNC pulse, sample rate
+  wifi_por_bits = 28,        // bits of 40 MHz counter, after power on, how long to hold down wifi_en
   pa_sync_bits = 30          // bit size of phase accumulator, less->faster convergence larger jitter , more->slower convergence less jitter
 )
 (
@@ -150,7 +151,13 @@ module top_adxl355log
   // assign wifi_gpio0 = R_prog_release[C_prog_release_timeout] ? 1'bz : S_prog_out[0] & btn[0]; // holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
   assign wifi_gpio0 = R_prog_release[C_prog_release_timeout] ? 1'bz : S_prog_out[0]; // holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
 
-  assign wifi_en = S_prog_out[1] & ~(&btn[6:3]); // press BTN3,4,5,6 to reboot ESP32
+  reg [wifi_por_bits-1:0] wifi_por_cnt = 0;
+  wire wifi_en_por_hold = wifi_por_cnt[wifi_por_bits-1];
+  always @(posedge clk)
+    if(wifi_en_por_hold == 1'b0)
+      wifi_por_cnt <= wifi_por_cnt+1;
+
+  assign wifi_en = S_prog_out[1] & ~(&btn[6:3]) & wifi_en_por_hold; // press BTN3,4,5,6 to reboot ESP32
   //assign wifi_gpio0 = S_prog_out[0];
 
   wire int1 = gp17;
@@ -858,7 +865,8 @@ module top_adxl355log
   #(
     .c_clk_spi_mhz(clk_out2_hz/1000000),
     .c_vga_sync(lcd_txt),
-    .c_reset_us(2000), // adjust for reliable start of LCD, wrong value = blank screen
+    //.c_reset_us(10000), // adjust for reliable start of LCD, wrong value = blank screen
+    //.c_reset_us(500000), // adjust for reliable start of LCD, wrong value = blank screen
     .c_init_file(lcd_txt ? "st7789_linit.mem" : "st7789_linit_xflip.mem"), // flip for HEX display
     //.c_init_size(75), // long init
     //.c_init_size(35), // standard init (not long)
