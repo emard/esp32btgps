@@ -61,7 +61,7 @@ VHDL_FILES4 = \
 ../vga/hdl/vga.vhd \
 
 #osd.mem: osd.txt
-#       hexdump -n 480 -v -e '32/1 "%02x " "\n"' $< > $@
+#	hexdump -n 480 -v -e '32/1 "%02x " "\n"' $< > $@
 
 # synthesis options
 #YOSYS_OPTIONS = -noccu2
