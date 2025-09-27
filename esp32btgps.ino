@@ -35,7 +35,7 @@
 // Flash Mode: "QIO"
 // Flash Size: "4MB (32Mb)"
 // JTAG Adapter: "Disabled"
-// Partition Scheme: "No OTA (2MB APP/2MB SPIFFS)"
+// Partition Scheme: "Huge APP (3MB No OTA/1MB SPIFFS)"
 // PSRAM: "Enabled" (geostat.h snap_point_max 1000 up to 100km)
 // PSRAM: "Disabled" (geostat.h snap_point_max 50 up to 5km)
 // ESP32 without PSRAM is useless and may reboot often
