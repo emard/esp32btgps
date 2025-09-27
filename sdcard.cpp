@@ -8,6 +8,7 @@
 #include "spidma.h"
 #include <sys/time.h>
 #include <WiFi.h> // for rds_report_ip()
+#include "zip.h" // kml->kmz
 
 // TODO
 // too much of various code is put into this module
@@ -1041,6 +1042,32 @@ void finalize_kml(File &kml, String file_name)
     }
     logs_are_open = 0;
   }
+  #if 1
+  // .kml -> ZIP -> .kmz
+  String file_name_kmz = file_name.substring(0,file_name.length()-4) + ".kmz";
+  File file_kmz = SD_MMC.open(file_name_kmz, FILE_READ);
+  size_t file_kmz_size = 0;
+  if(file_kmz) // .kmz exists (opened for read)
+  {
+    file_kmz_size = file_kmz.size(); // find its size
+    file_kmz.close(); // close for reading, will reopen for writing
+  }
+  if(file_kmz_size == 0) // .kmz doesn't exist or has size = 0 -> ZIP
+  {
+    kml.seek(0); // rewind
+    int expect_zip_time_s = kml.size()/300000;
+    Serial.printf("ZIP %s ETA %02d:%02d min:sec", file_name_kmz.c_str(), expect_zip_time_s/60, expect_zip_time_s%60);
+    String file_name_kmz = file_name.substring(0,file_name.length()-4) + ".kmz";
+    File file_kmz = SD_MMC.open(file_name_kmz, FILE_WRITE);
+    zip(file_kmz, kml, "doc.kml");
+    Serial.println(" done.");
+    file_kmz.close();
+    // can not close and remove now, because
+    // "File kml" is needed after return from this function
+    // file_kml.close();
+    // SD_MMC.remove(file_name); // when we have .kmz, remove .kml
+  }
+  #endif
 }
 
 // finalize everyting except
