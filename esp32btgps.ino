@@ -305,7 +305,11 @@ void setup() {
     read_fmfreq();
     set_fm_freq();
     read_last_nmea();
+    finalize_busy=1;
+    rds_message(&tm);
     finalize_data(&tm);
+    finalize_busy=0;
+    rds_message(&tm);
     lcd_print(22,0,0,(char *)"WiFi");
     lcd_print(0,1,0,(char *)"L");
     lcd_print(1,1,0,(char *)LOGGER_VERSION);
@@ -805,7 +809,11 @@ void handle_reconnect(void)
   close_logs();
   write_last_nmea();
   session_log = 0; // request new timestamp file name when reconnected
+  finalize_busy=1;
+  rds_message(&tm);
   finalize_data(&tm); // finalize all except current session (if one file per day)
+  finalize_busy=0;
+  rds_message(&tm);
   umount();
   clear_storage(); // finalize reads .sta file to s_stat, here we clear s_stat
   // this fixes when powered on while driving with fast_enough speed,

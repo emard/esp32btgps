@@ -453,7 +453,10 @@ void rds_message(struct tm *tm)
     uint16_t year = tm->tm_year + 1900;
     if(speed_ckt < 0 && fast_enough == 0)
     { // no signal and not fast enough (not in tunnel mode)
-      sprintf(disp_short, "WAIT  0X");
+      if(finalize_busy)
+        sprintf(disp_short, "ZIP   0X");
+      else
+        sprintf(disp_short, "WAIT  0X");
       sprintf(disp_long, "%s %dMB free %02d:%02d %d km/h WAIT FOR GPS FIX",
         iri99avg2digit,
         free_MB,
@@ -494,7 +497,10 @@ void rds_message(struct tm *tm)
     // null pointer, dummy time
     if(sdcard_ok)
     {
-      sprintf(disp_short, "OFF    X");
+      if(finalize_busy)
+        sprintf(disp_short, "ZIP    X");
+      else
+        sprintf(disp_short, "OFF    X");
       sprintf(disp_long,  "SEARCHING FOR %s SENSOR %s", name_obd_gps[mode_obd_gps], sensor_check_status ? (adxl355_regio ? "ACEL ADXL355" : "GYRO ADXRS290") : "NONE");
     }
     else

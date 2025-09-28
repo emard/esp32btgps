@@ -55,6 +55,7 @@ extern uint8_t btn, btn_prev;
 extern File file_kml, file_accel, file_pcm, file_cfg;
 extern uint64_t total_bytes, used_bytes, free_bytes;
 extern uint32_t free_MB;
+extern uint8_t finalize_busy;
 
 void mount(void);
 void umount(void);

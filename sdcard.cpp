@@ -63,6 +63,7 @@ uint32_t MM_SLOW = 0; // [mm] skip points, 0 to disable for too slow driving
 uint32_t fm_freq[2] = {107900000, 87600000};
 uint8_t fm_freq_cursor = 0; // cursor highlighting fm freq bitmask 0,1,2
 uint8_t btn, btn_prev;
+uint8_t finalize_busy = 0;
 
 // SD status
 uint64_t total_bytes = 0, used_bytes, free_bytes;
