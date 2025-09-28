@@ -8,7 +8,7 @@
  *                            *
  * Waiting for ESP32 to boot. *
  *                            *
- *                            *
+ * Hold F1 for WiFi server    *
  *                            *
  *                            *
  *                            *
