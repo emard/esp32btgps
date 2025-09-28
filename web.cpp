@@ -84,9 +84,11 @@ bool loadFromSdCard(String path) {
   } else if (path.endsWith(".csv")) {
     dataType = "text/csv";
   } else if (path.endsWith(".kml")) {
-    dataType = "application/kml";
+    //dataType = "application/kml"; // gnome maps opens
+    dataType = "application/vnd.google-earth.kml+xml"; // google earth opens
   } else if (path.endsWith(".kmz")) {
-    dataType = "application/kmz";
+    //dataType = "application/kmz"; // gnome maps opens
+    dataType = "application/vnd.google-earth.kmz"; // google earth opens
   } else if (path.endsWith(".pdf")) {
     dataType = "application/pdf";
   } else if (path.endsWith(".zip")) {
