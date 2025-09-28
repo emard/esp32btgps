@@ -164,7 +164,8 @@ esp32
         another speech coming on full minute schedule
     [x] glitches in reading right sensor, repeatable glitch down
         to some valuea like -16383, fix is to soft-reset adxl355
-    [ ] after finalizing kml we must close and re-open to create kmz
+    [x] after finalizing kml we must close and re-open to create kmz
+    [ ] ZIP show filename.kmz and ETA on LCD
 
 core
 
