@@ -1471,7 +1471,7 @@ void loop_run(void)
   {
       #ifdef PIN_LED
       // BT LED OFF
-      pinMode(PIN_LED, INPUT);
+      pinMode(PIN_LED, INPUT_PULLDOWN);
       digitalWrite(PIN_LED, LED_OFF);
       #endif
       //Serial.println("reconnect");
@@ -1566,7 +1566,7 @@ void loop_web(void)
   {
     #ifdef PIN_LED
     // WiFi LED OFF
-    pinMode(PIN_LED, INPUT);
+    pinMode(PIN_LED, INPUT_PULLDOWN);
     digitalWrite(PIN_LED, LED_OFF);
     #endif
   }
