@@ -166,6 +166,8 @@ esp32
         to some valuea like -16383, fix is to soft-reset adxl355
     [x] after finalizing kml we must close and re-open to create kmz
     [ ] ZIP show filename.kmz and ETA on LCD
+    [ ] speech notification when ZIP starts and after it ends
+    [ ] FLAC encoder https://github.com/pschatzmann/arduino-libflac
 
 core
 
