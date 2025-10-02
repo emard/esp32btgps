@@ -1011,7 +1011,7 @@ void close_logs()
 }
 
 // file_name should have full file path
-void finalize_kml(File &file_kml, String file_name)
+void finalize_kml(File &file_kml, String file_name, uint8_t enable_compression)
 {
   file_kml.seek(file_kml.size() - 7);
   String file_end = file_kml.readString();
@@ -1043,35 +1043,36 @@ void finalize_kml(File &file_kml, String file_name)
     }
     logs_are_open = 0;
   }
-  #if 1
   else // .kml file has proper ending zip it to .kmz
   {
-    // .kml -> .kmz
-    String file_name_kmz_part = file_name.substring(0,file_name.length()-4) + ".kmz.part";
-    String file_name_kmz = file_name.substring(0,file_name.length()-4) + ".kmz";
-    File file_kmz = SD_MMC.open(file_name_kmz, FILE_READ);
-    size_t file_kmz_size = 0;
-    if(file_kmz) // .kmz exists (opened for read)
+    if(enable_compression)
     {
-      file_kmz_size = file_kmz.size(); // find its size
-      file_kmz.close(); // close for reading, will reopen for writing
-    }
-    if(file_kmz_size == 0) // .kmz doesn't exist or has size = 0 -> ZIP
-    {
-      file_kml.seek(0); // rewind
-      int expect_zip_time_s = file_kml.size()/300000;
-      Serial.printf("%s ETA %02d:%02d min:sec", file_name_kmz.c_str(), expect_zip_time_s/60, expect_zip_time_s%60);
-      file_kmz = SD_MMC.open(file_name_kmz_part, FILE_WRITE);
-      zip(file_kmz, file_kml, "doc.kml");
-      Serial.println(" done.");
-      file_kmz.close();
-      SD_MMC.rename(file_name_kmz_part, file_name_kmz);
-      // TODO in finalize_data() allow to remove .kml file
-      // file_kml.close();
-      // SD_MMC.remove(file_name); // when we have .kmz, remove .kml
+      // .kml -> .kmz
+      String file_name_kmz_part = file_name.substring(0,file_name.length()-4) + ".kmz.part";
+      String file_name_kmz = file_name.substring(0,file_name.length()-4) + ".kmz";
+      File file_kmz = SD_MMC.open(file_name_kmz, FILE_READ);
+      size_t file_kmz_size = 0;
+      if(file_kmz) // .kmz exists (opened for read)
+      {
+        file_kmz_size = file_kmz.size(); // find its size
+        file_kmz.close(); // close for reading, will reopen for writing
+      }
+      if(file_kmz_size == 0) // .kmz doesn't exist or has size = 0 -> ZIP
+      {
+        file_kml.seek(0); // rewind
+        int expect_zip_time_s = file_kml.size()/300000;
+        Serial.printf("%s ETA %02d:%02d min:sec", file_name_kmz.c_str(), expect_zip_time_s/60, expect_zip_time_s%60);
+        file_kmz = SD_MMC.open(file_name_kmz_part, FILE_WRITE);
+        zip(file_kmz, file_kml, "doc.kml");
+        Serial.println(" done.");
+        file_kmz.close();
+        SD_MMC.rename(file_name_kmz_part, file_name_kmz);
+        // TODO in finalize_data() allow to remove .kml file
+        // file_kml.close();
+        // SD_MMC.remove(file_name); // when we have .kmz, remove .kml
+      }
     }
   }
-  #endif
 }
 
 // file_name should have full file path
@@ -1106,90 +1107,92 @@ void encode_wav_to_flac(File &file_wav, String file_name)
 // finalize everyting except
 // the file that would be opened
 // as session based on time (tm)
-void finalize_data(struct tm *tm){
-    if(card_is_mounted == 0)
-      return;
-    if(logs_are_open)
-      return;
-    const char *dirname = (char *)"/profilog/data";
-    Serial.printf("Finalizing directory: %s\n", dirname);
-    char lcd_msg[64];
+void finalize_data(struct tm *tm, uint8_t enable_compression)
+{
+  if(card_is_mounted == 0)
+    return;
+  if(logs_are_open)
+    return;
+  const char *dirname = (char *)"/profilog/data";
+  Serial.printf("Finalizing directory: %s\n", dirname);
+  char lcd_msg[64];
 
-    File root = SD_MMC.open(dirname);
-    if(!root){
-        Serial.println("Failed to open directory");
-        return;
-    }
-    if(!root.isDirectory()){
-        Serial.println("Not a directory");
-        return;
-    }
-    char todaystr[10];
-    sprintf(todaystr, "%04d%02d%02d", 1900+tm->tm_year, 1+tm->tm_mon, tm->tm_mday);
-    Serial.println(todaystr); // debug
-    int lcd_n=0; // counts printed LCD lines
-    const int max_lcd_n=12;
-    // generate_filename_kml(tm); TODO generate kml and wav filename move here
-    // to save CPU
-    File file = root.openNextFile();
-    while(file){
-        if(file.isDirectory()){
-            Serial.print("  DIR : ");
-            Serial.println(file.name());
-        } else {
-            Serial.print("  FILE: ");
-            Serial.print(file.name());
-            Serial.print("  SIZE: ");
-            Serial.println(file.size());
-            char *is_kml = strstr(file.name(),".kml");
-            char *is_wav = strstr(file.name(),".wav");
-            char *is_today = strstr(file.name(),todaystr);
-            // print on LCD
-            // if both wav and kml are enabled then list only wav
-            // if only kml is configured, then list kml
-            // TODO handle kmz and flac
-            if(is_today && (is_wav != NULL || (log_wav_kml == 2 && is_kml != NULL)) )
-            {
-              int wrap_lcd_n = lcd_n % max_lcd_n; // wraparound last N lines
-              if(is_wav)
-                sprintf(lcd_msg, "%s %4d min", is_today, file.size()/720000);
-              if(is_kml)
-                sprintf(lcd_msg, "%s %4d min", is_today, file.size()/360000); // approx minutes
-              lcd_print(0, 3+wrap_lcd_n, 0, lcd_msg);
-              lcd_n++;
-            }
-            // postprocess: finalize .kml and .kmz -> .kmz
-            if(is_kml)
-            {
-              String full_path = String(file.name());
-              if((file.name())[0] != '/')
-                full_path = String(dirname) + "/" + String(file.name());
-              generate_filename_kml(tm);
-              if(strcmp(full_path.c_str(), filename_data) != 0) // different name
-              {
-                uint16_t eta_s = file.size()/300000; // 300 K/s ZIP speed
-                sprintf(lcd_msg, "%s %02d:%02d ZIP ", file.name(), eta_s/60, eta_s%60);
-                lcd_print(0,1,0,lcd_msg);
-                finalize_kml(file, full_path); // and ZIP kml->kmz
-              }
-            }
-            // postprocess .wav -> .flac
+  File root = SD_MMC.open(dirname);
+  if(!root){
+      Serial.println("Failed to open directory");
+      return;
+  }
+  if(!root.isDirectory()){
+      Serial.println("Not a directory");
+      return;
+  }
+  char todaystr[10];
+  sprintf(todaystr, "%04d%02d%02d", 1900+tm->tm_year, 1+tm->tm_mon, tm->tm_mday);
+  Serial.println(todaystr); // debug
+  int lcd_n=0; // counts printed LCD lines
+  const int max_lcd_n=12;
+  // generate_filename_kml(tm); TODO generate kml and wav filename move here
+  // to save CPU
+  File file = root.openNextFile();
+  while(file){
+      if(file.isDirectory()){
+          Serial.print("  DIR : ");
+          Serial.println(file.name());
+      } else {
+          Serial.print("  FILE: ");
+          Serial.print(file.name());
+          Serial.print("  SIZE: ");
+          Serial.println(file.size());
+          char *is_kml = strstr(file.name(),".kml");
+          char *is_wav = strstr(file.name(),".wav");
+          char *is_today = strstr(file.name(),todaystr);
+          // print on LCD
+          // if both wav and kml are enabled then list only wav
+          // if only kml is configured, then list kml
+          // TODO handle kmz and flac
+          if(is_today && (is_wav != NULL || (log_wav_kml == 2 && is_kml != NULL)) )
+          {
+            int wrap_lcd_n = lcd_n % max_lcd_n; // wraparound last N lines
             if(is_wav)
+              sprintf(lcd_msg, "%s %4d min", is_today, file.size()/720000);
+            if(is_kml)
+              sprintf(lcd_msg, "%s %4d min", is_today, file.size()/360000); // approx minutes
+            lcd_print(0, 3+wrap_lcd_n, 0, lcd_msg);
+            lcd_n++;
+          }
+          // postprocess: finalize .kml and .kmz -> .kmz
+          if(is_kml)
+          {
+            String full_path = String(file.name());
+            if((file.name())[0] != '/')
+              full_path = String(dirname) + "/" + String(file.name());
+            generate_filename_kml(tm);
+            if(strcmp(full_path.c_str(), filename_data) != 0) // different name
             {
-              String full_path = String(file.name());
-              if((file.name())[0] != '/')
-                full_path = String(dirname) + "/" + String(file.name());
-              generate_filename_wav(tm);
-              if(strcmp(full_path.c_str(), filename_data) != 0) // different name
-              {
-                uint16_t eta_s = file.size()/600000; // 600 K/s FLAC speed
-                sprintf(lcd_msg, "%s %02d:%02d FLAC", file.name(), eta_s/60, eta_s%60);
-                lcd_print(0,1,0,lcd_msg);
-                encode_wav_to_flac(file, full_path);
-              }
+              uint16_t eta_s = file.size()/300000; // 300 K/s ZIP speed
+              sprintf(lcd_msg, "%s %02d:%02d ZIP ", file.name(), eta_s/60, eta_s%60);
+              lcd_print(0,1,0,lcd_msg);
+              finalize_kml(file, full_path, enable_compression); // and ZIP kml->kmz
             }
-        }
-        file = root.openNextFile();
-    }
-    lcd_print(0,1,0,"                              "); // clear ZIP/FLAC status line
+          }
+          if(enable_compression)
+          // postprocess .wav -> .flac
+          if(is_wav)
+          {
+            String full_path = String(file.name());
+            if((file.name())[0] != '/')
+              full_path = String(dirname) + "/" + String(file.name());
+            generate_filename_wav(tm);
+            if(strcmp(full_path.c_str(), filename_data) != 0) // different name
+            {
+              uint16_t eta_s = file.size()/600000; // 600 K/s FLAC speed
+              sprintf(lcd_msg, "%s %02d:%02d FLAC", file.name(), eta_s/60, eta_s%60);
+              lcd_print(0,1,0,lcd_msg);
+              encode_wav_to_flac(file, full_path);
+            }
+          }
+      }
+      file = root.openNextFile();
+  }
+  lcd_print(0,1,0,"                              "); // clear ZIP/FLAC status line
 }

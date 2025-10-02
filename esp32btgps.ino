@@ -320,7 +320,7 @@ void setup() {
     finalize_busy=1;
     // RDS is not likeley to be used with WiFi
     // rds_message(&tm);
-    finalize_data(&tm);
+    finalize_data(&tm, 1 /* enable compression*/);
     finalize_busy=0;
     web_setup();
     speakaction[0] = (char *)"/profilog/speak/webserver.wav"; // TODO say web server maybe IP too
@@ -816,14 +816,10 @@ void handle_reconnect(void)
   close_logs();
   write_last_nmea();
   session_log = 0; // request new timestamp file name when reconnected
-  #if 0
   finalize_busy=1;
   rds_message(&tm);
-  finalize_data(&tm); // finalize all except current session (if one file per day)
+  finalize_data(&tm, 0 /* disable compression */); // finalize all except current session (if one file per day)
   finalize_busy=0;
-  #else
-  rds_message(&tm); // avoid finalize, crash during ZIP
-  #endif
   umount();
   clear_storage(); // finalize reads .sta file to s_stat, here we clear s_stat
   // this fixes when powered on while driving with fast_enough speed,
