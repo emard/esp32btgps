@@ -42,8 +42,10 @@
 // #define IDF3 0
 // #define IDF4 1
 // install dependency for FLAC encoding
+// cd ~/Arduino/libraries/
 // git clone https://github.com/pschatzmann/arduino-libflac
 // git clone https://github.com/pschatzmann/codec-ogg
+// if not in ~/Arduino/libraries/ then
 // zip -r arduino-libflac.zip arduino-libflac
 // zip -r codec-ogg.zip codec-ogg
 // Sketch -> Include Library -> Add .ZIP Library... -> arduino-libflac.zip and codec-ogg.zip
