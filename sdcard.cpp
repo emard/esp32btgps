@@ -1107,14 +1107,13 @@ void encode_wav_to_flac(File &file_wav, String file_name)
 // the file that would be opened
 // as session based on time (tm)
 void finalize_data(struct tm *tm){
-    uint8_t zip_lcd_msg[256]; // LCD message buf
     if(card_is_mounted == 0)
       return;
     if(logs_are_open)
       return;
     const char *dirname = (char *)"/profilog/data";
     Serial.printf("Finalizing directory: %s\n", dirname);
-    char *txzipmsgptr = (char *)zip_lcd_msg+5;
+    char lcd_msg[64];
 
     File root = SD_MMC.open(dirname);
     if(!root){
@@ -1152,16 +1151,14 @@ void finalize_data(struct tm *tm){
             if(is_today && (is_wav != NULL || (log_wav_kml == 2 && is_kml != NULL)) )
             {
               int wrap_lcd_n = lcd_n % max_lcd_n; // wraparound last N lines
-              char *txbufptr = (char *)spi_master_tx_buf+5+(wrap_lcd_n<<5);
-              memset(txbufptr, 32, 32); // clear line
-              strcpy(txbufptr, is_today);
               if(is_wav)
-                sprintf(txbufptr+17, " %4d min", file.size()/720000);
+                sprintf(lcd_msg, "%s %4d min", is_today, file.size()/720000);
               if(is_kml)
-                sprintf(txbufptr+17, " %4d min", file.size()/360000); // approx minutes
+                sprintf(lcd_msg, "%s %4d min", is_today, file.size()/360000); // approx minutes
+              lcd_print(0, 3+wrap_lcd_n, 0, lcd_msg);
               lcd_n++;
             }
-            // postprocess (ZIP)
+            // postprocess: finalize .kml and .kmz -> .kmz
             if(is_kml)
             {
               String full_path = String(file.name());
@@ -1170,19 +1167,13 @@ void finalize_data(struct tm *tm){
               generate_filename_kml(tm);
               if(strcmp(full_path.c_str(), filename_data) != 0) // different name
               {
-                zip_lcd_msg[0] = 0; // 0: write ram
-                zip_lcd_msg[1] = 0xC; // addr [31:24] msb LCD addr
-                zip_lcd_msg[2] = 0; // addr [23:16] (0:normal, 1:invert)
-                zip_lcd_msg[3] = 0; // addr [15: 8]
-                zip_lcd_msg[4] = 1+(1<<5); // addr [ 7: 0] lsb HOME X=0 Y=1
-                memset(txzipmsgptr, 32, 64); // clear 2 lines
-                strcpy(txzipmsgptr, file.name());
                 uint16_t eta_s = file.size()/300000; // 300 K/s ZIP speed
-                sprintf(txzipmsgptr+17, " %02d:%02d ZIP", eta_s/60, eta_s%60);
-                master_txrx(zip_lcd_msg, 5+64); // write to LCD
+                sprintf(lcd_msg, "%s %02d:%02d ZIP ", file.name(), eta_s/60, eta_s%60);
+                lcd_print(0,1,0,lcd_msg);
                 finalize_kml(file, full_path); // and ZIP kml->kmz
               }
             }
+            // postprocess .wav -> .flac
             if(is_wav)
             {
               String full_path = String(file.name());
@@ -1191,31 +1182,14 @@ void finalize_data(struct tm *tm){
               generate_filename_wav(tm);
               if(strcmp(full_path.c_str(), filename_data) != 0) // different name
               {
-                zip_lcd_msg[0] = 0; // 0: write ram
-                zip_lcd_msg[1] = 0xC; // addr [31:24] msb LCD addr
-                zip_lcd_msg[2] = 0; // addr [23:16] (0:normal, 1:invert)
-                zip_lcd_msg[3] = 0; // addr [15: 8]
-                zip_lcd_msg[4] = 1+(1<<5); // addr [ 7: 0] lsb HOME X=0 Y=1
-                memset(txzipmsgptr, 32, 64); // clear 2 lines
-                strcpy(txzipmsgptr, file.name());
                 uint16_t eta_s = file.size()/600000; // 600 K/s FLAC speed
-                sprintf(txzipmsgptr+17, " %02d:%02d FLAC", eta_s/60, eta_s%60);
-                master_txrx(zip_lcd_msg, 5+64); // write to LCD
+                sprintf(lcd_msg, "%s %02d:%02d FLAC", file.name(), eta_s/60, eta_s%60);
+                lcd_print(0,1,0,lcd_msg);
                 encode_wav_to_flac(file, full_path);
               }
             }
         }
         file = root.openNextFile();
     }
-    // write to LCD
-    if(lcd_n)
-    {
-      int limit_lcd_n = lcd_n > max_lcd_n ? max_lcd_n : lcd_n;
-      spi_master_tx_buf[0] = 0; // 0: write ram
-      spi_master_tx_buf[1] = 0xC; // addr [31:24] msb LCD addr
-      spi_master_tx_buf[2] = 0; // addr [23:16] (0:normal, 1:invert)
-      spi_master_tx_buf[3] = 0; // addr [15: 8]
-      spi_master_tx_buf[4] = 1+(3<<5); // addr [ 7: 0] lsb HOME X=0 Y=3
-      master_txrx(spi_master_tx_buf, 5+(limit_lcd_n<<5)); // write to LCD
-    }
+    lcd_print(0,1,0,"                              "); // clear ZIP/FLAC status line
 }
