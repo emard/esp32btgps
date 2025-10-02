@@ -79,6 +79,8 @@ bool loadFromSdCard(String path) {
     dataType = "image/x-icon";
   } else if (path.endsWith(".wav")) {
     dataType = "audio/wav";
+  } else if (path.endsWith(".flac")) {
+    dataType = "audio/flac";
   } else if (path.endsWith(".xml")) {
     dataType = "text/xml";
   } else if (path.endsWith(".csv")) {
