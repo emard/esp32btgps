@@ -303,6 +303,9 @@ void setup() {
   spi_rds_write();
   clr_lcd();
   lcd_print(14,0,0,(char *)"MHz");
+  lcd_print(0,14,0,(char *)"Lx.y.z  Cx.y.z  ");
+  lcd_print(1,14,0,(char *)LOGGER_VERSION);
+  lcd_print(9,14,0,(char *)CORE_VERSION);
 
   int web = (spi_btn_read() & 2); // hold BTN1 and plug power to enable web server
   if(web)
@@ -313,17 +316,12 @@ void setup() {
     read_fmfreq();
     set_fm_freq();
     read_last_nmea();
+    lcd_print(22,0,0,(char *)"WiFi");
     finalize_busy=1;
     // RDS is not likeley to be used with WiFi
     // rds_message(&tm);
     finalize_data(&tm);
     finalize_busy=0;
-    rds_message(&tm);
-    lcd_print(22,0,0,(char *)"WiFi");
-    lcd_print(0,1,0,(char *)"L");
-    lcd_print(1,1,0,(char *)LOGGER_VERSION);
-    lcd_print(7,1,0,(char *)"C");
-    lcd_print(8,1,0,(char *)CORE_VERSION);
     web_setup();
     speakaction[0] = (char *)"/profilog/speak/webserver.wav"; // TODO say web server maybe IP too
     speakaction[1] = NULL;
@@ -818,11 +816,14 @@ void handle_reconnect(void)
   close_logs();
   write_last_nmea();
   session_log = 0; // request new timestamp file name when reconnected
+  #if 0
   finalize_busy=1;
   rds_message(&tm);
   finalize_data(&tm); // finalize all except current session (if one file per day)
   finalize_busy=0;
-  rds_message(&tm);
+  #else
+  rds_message(&tm); // avoid finalize, crash during ZIP
+  #endif
   umount();
   clear_storage(); // finalize reads .sta file to s_stat, here we clear s_stat
   // this fixes when powered on while driving with fast_enough speed,
