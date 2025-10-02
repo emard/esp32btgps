@@ -48,7 +48,7 @@ uint32_t iri99sum = 0, iri99count = 0, iri99avg = 0; // collect session average
 // struct int_latlon last_latlon; // degrees and microminutes
 double last_dlatlon[2];
 struct tm tm, tm_session; // tm_session gives new filename_data when reconnected
-uint8_t log_wav_kml = 3; // 1-wav 2-kml 3-both
+uint8_t log_wav_kml = 3; // 1-wav 2-kml 3-both 4-csv 16-flac 32-kmz
 uint8_t G_RANGE = 8; // +-2/4/8 g sensor range (at digital reading +-32000)
 uint8_t FILTER_ADXL355_CONF = 0; // see datasheet adxl355 p.38 0:1kHz ... 10:0.977Hz
 uint8_t FILTER_ADXRS290_CONF = 0; // see datasheet adxrs290 p.11 0:480Hz ... 7:20Hz
@@ -394,7 +394,7 @@ void write_string_to_wav(char *a)
 
   if(logs_are_open == 0)
     return;
-  if((log_wav_kml&1) == 0)
+  if((log_wav_kml&0x11) == 0)
     return;
 
   for(j = 0; *a != 0; a++, j+=12)
@@ -622,7 +622,7 @@ void write_stat_arrows(void)
 {
   if(logs_are_open == 0)
     return;
-  if((log_wav_kml&2) == 0)
+  if((log_wav_kml&0x22) == 0)
     return;
 
   char timestamp[23] = "2000-01-01T00:00:00.0Z";
@@ -895,7 +895,7 @@ void read_cfg(void)
     else if(varname.equalsIgnoreCase("obd_mac" )) parse_mac(OBD_MAC, varvalue);
     else if(varname.equalsIgnoreCase("obd_pin" )) OBD_PIN  = varvalue;
     else if(varname.equalsIgnoreCase("silence_reconnect" )) MS_SILENCE_RECONNECT  = 1000*strtol(varvalue.c_str(), NULL,10);
-    else if(varname.equalsIgnoreCase("log_mode")) log_wav_kml = strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("log_mode")) log_wav_kml = strtol(varvalue.c_str(), NULL,0); // dec or hex 0x
     else if(varname.equalsIgnoreCase("red_iri" )) red_iri = strtof(varvalue.c_str(), NULL);
     else if(varname.equalsIgnoreCase("g_range" )) G_RANGE = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("filter_adxl355" )) FILTER_ADXL355_CONF  = strtol(varvalue.c_str(), NULL,10);
@@ -938,7 +938,7 @@ void read_cfg(void)
   for(int i = 0; i < ap_n; i++)
   { Serial.print("AP_PASS  : "); Serial.println(AP_PASS[i]); }
   Serial.print("DNS_HOST : "); Serial.println(DNS_HOST);
-  Serial.print("LOG_MODE : "); Serial.println(log_wav_kml);
+  Serial.print("LOG_MODE : 0x"); Serial.println(log_wav_kml, HEX);
   char chr_red_iri[20]; sprintf(chr_red_iri, "%.1f", red_iri);
   Serial.print("RED_IRI  : "); Serial.println(chr_red_iri);
   Serial.print("G_RANGE  : "); Serial.println(G_RANGE);
@@ -976,16 +976,16 @@ void open_logs(struct tm *tm)
 {
   if(logs_are_open != 0)
     return;
-  if(log_wav_kml&1)
+  if(log_wav_kml&0x11)
     open_log_wav(tm);
-  if(log_wav_kml&2)
+  if(log_wav_kml&0x22)
     open_log_kml(tm);
   logs_are_open = 1;
 }
 
 void write_logs()
 {
-  if(log_wav_kml&1)
+  if(log_wav_kml&0x11)
     write_log_wav();
   //if(log_wav_kml&2)
   //  write_log_kml(0); // write logs, no force
@@ -995,7 +995,7 @@ void flush_logs()
 {
   if(logs_are_open == 0)
     return;
-  if(log_wav_kml&1)
+  if(log_wav_kml&0x11)
     flush_log_wav();
 }
 
@@ -1003,9 +1003,9 @@ void close_logs()
 {
   if(logs_are_open == 0)
     return;
-  if(log_wav_kml&1)
+  if(log_wav_kml&0x11)
     close_log_wav();
-  if(log_wav_kml&2)
+  if(log_wav_kml&0x22)
     close_log_kml();
   logs_are_open = 0;
 }
@@ -1070,6 +1070,11 @@ void finalize_kml(File &file_kml, String file_name, uint8_t enable_compression)
         // TODO in finalize_data() allow to remove .kml file
         // file_kml.close();
         // SD_MMC.remove(file_name); // when we have .kmz, remove .kml
+        if((log_wav_kml & 0x02) == 0)
+        {
+          file_kml.close();
+          SD_MMC.remove(file_name); // when we have .flac, remove .wav
+        }
       }
     }
   }
@@ -1099,8 +1104,11 @@ void encode_wav_to_flac(File &file_wav, String file_name)
     file_flac.close();
     SD_MMC.rename(file_name_flac_part, file_name_flac);
     // TODO in finalize_data() allow to remove .wav file
-    // file_wav.close();
-    // SD_MMC.remove(file_name); // when we have .flac, remove .wav
+    if((log_wav_kml & 0x01) == 0)
+    {
+      file_wav.close();
+      SD_MMC.remove(file_name); // when we have .flac, remove .wav
+    }
   }
 }
 
@@ -1150,7 +1158,7 @@ void finalize_data(struct tm *tm, uint8_t enable_compression)
           // if both wav and kml are enabled then list only wav
           // if only kml is configured, then list kml
           // TODO handle kmz and flac
-          if(is_today && (is_wav != NULL || (log_wav_kml == 2 && is_kml != NULL)) )
+          if(is_today && (is_wav != NULL || ((log_wav_kml&0x11) == 0 && is_kml != NULL)) )
           {
             int wrap_lcd_n = lcd_n % max_lcd_n; // wraparound last N lines
             if(is_wav)
@@ -1161,7 +1169,7 @@ void finalize_data(struct tm *tm, uint8_t enable_compression)
             lcd_n++;
           }
           // postprocess: finalize .kml and .kmz -> .kmz
-          if(is_kml)
+          if(is_kml != NULL && (log_wav_kml & 0x20) != 0)
           {
             String full_path = String(file.name());
             if((file.name())[0] != '/')
@@ -1177,7 +1185,7 @@ void finalize_data(struct tm *tm, uint8_t enable_compression)
           }
           if(enable_compression)
           // postprocess .wav -> .flac
-          if(is_wav)
+          if(is_wav != NULL && (log_wav_kml & 0x10) != 0)
           {
             String full_path = String(file.name());
             if((file.name())[0] != '/')
