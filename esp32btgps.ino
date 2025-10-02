@@ -314,7 +314,8 @@ void setup() {
     set_fm_freq();
     read_last_nmea();
     finalize_busy=1;
-    rds_message(&tm);
+    // RDS is not likeley to be used with WiFi
+    // rds_message(&tm);
     finalize_data(&tm);
     finalize_busy=0;
     rds_message(&tm);
