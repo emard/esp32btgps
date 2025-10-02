@@ -1,3 +1,4 @@
+#include <FS.h>
 #include "miniz.h"
 
 // Callback function to read data from the input file

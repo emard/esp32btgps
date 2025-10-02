@@ -1139,29 +1139,12 @@ void finalize_data(struct tm *tm){
             Serial.print("  SIZE: ");
             Serial.println(file.size());
             char *is_kml = strstr(file.name(),".kml");
-            if(is_kml)
-            {
-              String full_path = String(file.name());
-              if((file.name())[0] != '/')
-                full_path = String(dirname) + "/" + String(file.name());
-              generate_filename_kml(tm);
-              if(strcmp(full_path.c_str(), filename_data) != 0) // different name
-                finalize_kml(file, full_path);
-            }
             char *is_wav = strstr(file.name(),".wav");
-            if(is_wav)
-            {
-              String full_path = String(file.name());
-              if((file.name())[0] != '/')
-                full_path = String(dirname) + "/" + String(file.name());
-              generate_filename_wav(tm);
-              if(strcmp(full_path.c_str(), filename_data) != 0) // different name
-                encode_wav_to_flac(file, full_path);
-            }
-            // print on LCD
             char *is_today = strstr(file.name(),todaystr);
+            // print on LCD
             // if both wav and kml are enabled then list only wav
             // if only kml is configured, then list kml
+            // TODO handle kmz and flac
             if(is_today && (is_wav != NULL || (log_wav_kml == 2 && is_kml != NULL)) )
             {
               int wrap_lcd_n = lcd_n % max_lcd_n; // wraparound last N lines
@@ -1173,6 +1156,25 @@ void finalize_data(struct tm *tm){
               if(is_kml)
                 sprintf(txbufptr+17, " %4d min", file.size()/360000); // approx minutes
               lcd_n++;
+            }
+            // postprocess (ZIP)
+            if(is_kml)
+            {
+              String full_path = String(file.name());
+              if((file.name())[0] != '/')
+                full_path = String(dirname) + "/" + String(file.name());
+              generate_filename_kml(tm);
+              if(strcmp(full_path.c_str(), filename_data) != 0) // different name
+                finalize_kml(file, full_path); // and ZIP kml->kmz
+            }
+            if(is_wav)
+            {
+              String full_path = String(file.name());
+              if((file.name())[0] != '/')
+                full_path = String(dirname) + "/" + String(file.name());
+              generate_filename_wav(tm);
+              if(strcmp(full_path.c_str(), filename_data) != 0) // different name
+                encode_wav_to_flac(file, full_path);
             }
         }
         file = root.openNextFile();
