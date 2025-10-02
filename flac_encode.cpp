@@ -23,6 +23,24 @@ FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder *encoder
     return FLAC__STREAM_ENCODER_WRITE_STATUS_OK;
 }
 
+// Define WAV header structure (simplified)
+// This structure needs to match the actual header of input WAV file
+typedef struct {
+    char chunkID[4];
+    uint32_t chunkSize;
+    char format[4];
+    char subchunk1ID[4];
+    uint32_t subchunk1Size;
+    uint16_t audioFormat;
+    uint16_t numChannels;
+    uint32_t sampleRate;
+    uint32_t byteRate;
+    uint16_t blockAlign;
+    uint16_t bitsPerSample;
+    char subchunk2ID[4];
+    uint32_t subchunk2Size;
+} wav_header_t;
+
 // 0:fail
 // 1:success
 // expected encoding speed is about 600 K/s
@@ -136,5 +154,5 @@ int flac_encode(File &outputFile, File &inputFile)
 
     // Clean up
     FLAC__stream_encoder_delete(encoder);
-    return retval; // success=1 fail==
+    return retval; // success=1 fail=0
 }
