@@ -1105,12 +1105,14 @@ void encode_wav_to_flac(File &file_wav, String file_name)
 // the file that would be opened
 // as session based on time (tm)
 void finalize_data(struct tm *tm){
+    uint8_t zip_lcd_msg[256]; // LCD message buf
     if(card_is_mounted == 0)
       return;
     if(logs_are_open)
       return;
     const char *dirname = (char *)"/profilog/data";
     Serial.printf("Finalizing directory: %s\n", dirname);
+    char *txzipmsgptr = (char *)zip_lcd_msg+5;
 
     File root = SD_MMC.open(dirname);
     if(!root){
@@ -1165,7 +1167,19 @@ void finalize_data(struct tm *tm){
                 full_path = String(dirname) + "/" + String(file.name());
               generate_filename_kml(tm);
               if(strcmp(full_path.c_str(), filename_data) != 0) // different name
+              {
+                zip_lcd_msg[0] = 0; // 0: write ram
+                zip_lcd_msg[1] = 0xC; // addr [31:24] msb LCD addr
+                zip_lcd_msg[2] = 0; // addr [23:16] (0:normal, 1:invert)
+                zip_lcd_msg[3] = 0; // addr [15: 8]
+                zip_lcd_msg[4] = 1+(1<<5); // addr [ 7: 0] lsb HOME X=0 Y=1
+                memset(txzipmsgptr, 32, 64); // clear 2 lines
+                strcpy(txzipmsgptr, file.name());
+                uint16_t eta_s = file.size()/300000; // 300 K/s ZIP speed
+                sprintf(txzipmsgptr+17, " %02d:%02d ZIP", eta_s/60, eta_s%60);
+                master_txrx(zip_lcd_msg, 5+64); // write to LCD
                 finalize_kml(file, full_path); // and ZIP kml->kmz
+              }
             }
             if(is_wav)
             {
@@ -1174,7 +1188,19 @@ void finalize_data(struct tm *tm){
                 full_path = String(dirname) + "/" + String(file.name());
               generate_filename_wav(tm);
               if(strcmp(full_path.c_str(), filename_data) != 0) // different name
+              {
+                zip_lcd_msg[0] = 0; // 0: write ram
+                zip_lcd_msg[1] = 0xC; // addr [31:24] msb LCD addr
+                zip_lcd_msg[2] = 0; // addr [23:16] (0:normal, 1:invert)
+                zip_lcd_msg[3] = 0; // addr [15: 8]
+                zip_lcd_msg[4] = 1+(1<<5); // addr [ 7: 0] lsb HOME X=0 Y=1
+                memset(txzipmsgptr, 32, 64); // clear 2 lines
+                strcpy(txzipmsgptr, file.name());
+                uint16_t eta_s = file.size()/600000; // 600 K/s FLAC speed
+                sprintf(txzipmsgptr+17, " %02d:%02d FLAC", eta_s/60, eta_s%60);
+                master_txrx(zip_lcd_msg, 5+64); // write to LCD
                 encode_wav_to_flac(file, full_path);
+              }
             }
         }
         file = root.openNextFile();
