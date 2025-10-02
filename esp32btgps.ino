@@ -41,6 +41,12 @@
 // ESP32 without PSRAM is useless and may reboot often
 // #define IDF3 0
 // #define IDF4 1
+// install dependency for FLAC encoding
+// git clone https://github.com/pschatzmann/arduino-libflac
+// git clone https://github.com/pschatzmann/codec-ogg
+// zip -r arduino-libflac.zip arduino-libflac
+// zip -r codec-ogg.zip codec-ogg
+// Sketch -> Include Library -> Add .ZIP Library... -> arduino-libflac.zip and codec-ogg.zip
 
 #include "pins.h"
 #include "spidma.h"
