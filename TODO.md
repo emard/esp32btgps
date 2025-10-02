@@ -167,7 +167,10 @@ esp32
     [x] after finalizing kml we must close and re-open to create kmz
     [ ] ZIP show filename.kmz and ETA on LCD
     [ ] speech notification when ZIP starts and after it ends
-    [ ] FLAC encoder https://github.com/pschatzmann/arduino-libflac
+    [x] FLAC encoder https://github.com/pschatzmann/arduino-libflac
+    [ ] .cfg options for kmz and flac
+    [ ] .cfg options to compress at normal boot and wifi boot 
+    [ ] .kmz.part and .flac.part renamed to .kmz and .flac
 
 core
 
