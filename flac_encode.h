@@ -4,7 +4,7 @@
 // zip -r codec-ogg.zip codec-ogg
 // Sketch -> Include Library -> Add .ZIP Library... -> arduino-libflac.zip and codec-ogg.zip
 
-#include <SD_MMC.h>
+// #include <SD_MMC.h>
 
 // Define WAV header structure (simplified)
 // This structure needs to match the actual header of input WAV file
