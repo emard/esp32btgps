@@ -1011,16 +1011,16 @@ void close_logs()
 }
 
 // file_name should have full file path
-void finalize_kml(File &kml, String file_name)
+void finalize_kml(File &file_kml, String file_name)
 {
-  kml.seek(kml.size() - 7);
-  String file_end = kml.readString();
+  file_kml.seek(file_kml.size() - 7);
+  String file_end = file_kml.readString();
   if(file_end != "</kml>\n")
   {
     Serial.print("Finalizing ");
     Serial.println(file_name);
     // kml.close(); // crash with arduino esp32 v2.0.2
-    file_kml = SD_MMC.open(file_name, FILE_APPEND);
+    File append_file_kml = SD_MMC.open(file_name, FILE_APPEND);
     // try to open file name with .sta extension instead of .kml
     String file_name_sta = file_name.substring(0,file_name.length()-4) + ".sta";
     int write_csv_flag = 0;
@@ -1028,13 +1028,13 @@ void finalize_kml(File &kml, String file_name)
     if(read_stat_file(file_name_sta)) // if .sta file read succeeds, add arrows to .kml, delete .sta file.
     {
       kml_init();
-      file_kml.write((uint8_t *)str_kml_arrows_folder, strlen(str_kml_arrows_folder));
+      append_file_kml.write((uint8_t *)str_kml_arrows_folder, strlen(str_kml_arrows_folder));
       write_stat_arrows();
       write_csv_flag = 1;
       SD_MMC.remove(file_name_sta);
     }
-    file_kml.write((uint8_t *)str_kml_footer_simple, strlen(str_kml_footer_simple));
-    file_kml.close();
+    append_file_kml.write((uint8_t *)str_kml_footer_simple, strlen(str_kml_footer_simple));
+    append_file_kml.close();
     // generate .csv file
     if(write_csv_flag)
     {
@@ -1046,7 +1046,8 @@ void finalize_kml(File &kml, String file_name)
   #if 1
   else // .kml file has proper ending zip it to .kmz
   {
-    // .kml -> ZIP -> .kmz
+    // .kml -> .kmz
+    String file_name_kmz_part = file_name.substring(0,file_name.length()-4) + ".kmz.part";
     String file_name_kmz = file_name.substring(0,file_name.length()-4) + ".kmz";
     File file_kmz = SD_MMC.open(file_name_kmz, FILE_READ);
     size_t file_kmz_size = 0;
@@ -1057,15 +1058,15 @@ void finalize_kml(File &kml, String file_name)
     }
     if(file_kmz_size == 0) // .kmz doesn't exist or has size = 0 -> ZIP
     {
-      kml.seek(0); // rewind
-      int expect_zip_time_s = kml.size()/300000;
+      file_kml.seek(0); // rewind
+      int expect_zip_time_s = file_kml.size()/300000;
       Serial.printf("%s ETA %02d:%02d min:sec", file_name_kmz.c_str(), expect_zip_time_s/60, expect_zip_time_s%60);
-      File file_kmz = SD_MMC.open(file_name_kmz, FILE_WRITE);
-      zip(file_kmz, kml, "doc.kml");
+      file_kmz = SD_MMC.open(file_name_kmz_part, FILE_WRITE);
+      zip(file_kmz, file_kml, "doc.kml");
       Serial.println(" done.");
       file_kmz.close();
-      // can not close and remove now, because
-      // "File kml" is needed after return from this function
+      SD_MMC.rename(file_name_kmz_part, file_name_kmz);
+      // TODO in finalize_data() allow to remove .kml file
       // file_kml.close();
       // SD_MMC.remove(file_name); // when we have .kmz, remove .kml
     }
@@ -1077,6 +1078,7 @@ void finalize_kml(File &kml, String file_name)
 void encode_wav_to_flac(File &file_wav, String file_name)
 {
   // .wav -> .flac
+  String file_name_flac_part = file_name.substring(0,file_name.length()-4) + ".flac.part";
   String file_name_flac = file_name.substring(0,file_name.length()-4) + ".flac";
   File file_flac = SD_MMC.open(file_name_flac, FILE_READ);
   size_t file_flac_size = 0;
@@ -1090,12 +1092,12 @@ void encode_wav_to_flac(File &file_wav, String file_name)
     file_wav.seek(0); // rewind wav file
     int expect_flac_time_s = file_wav.size()/600000;
     Serial.printf("%s ETA %02d:%02d min:sec", file_name_flac.c_str(), expect_flac_time_s/60, expect_flac_time_s%60);
-    File file_flac = SD_MMC.open(file_name_flac, FILE_WRITE);
+    file_flac = SD_MMC.open(file_name_flac_part, FILE_WRITE);
     flac_encode(file_flac, file_wav);
     Serial.println(" done.");
     file_flac.close();
-    // can not close and remove now, because
-    // "File wav" is needed after return from this function
+    SD_MMC.rename(file_name_flac_part, file_name_flac);
+    // TODO in finalize_data() allow to remove .wav file
     // file_wav.close();
     // SD_MMC.remove(file_name); // when we have .flac, remove .wav
   }
