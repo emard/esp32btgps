@@ -9,13 +9,13 @@
 #include <sys/time.h>
 #include <WiFi.h> // for rds_report_ip()
 #include "zip.h" // kml->kmz
+#include "flac_encode.h" // wav->flac
 
 // TODO
 // too much of various code is put into this module
 // big cleanup needed, code from here should be distributed
 // to multiple modules for readability
 // (sdcard, adxl master, adxl reader, audio player, ascii tagger)
-
 
 // config file parsing
 uint8_t GPS_MAC[6], OBD_MAC[6];
@@ -1059,8 +1059,7 @@ void finalize_kml(File &kml, String file_name)
     {
       kml.seek(0); // rewind
       int expect_zip_time_s = kml.size()/300000;
-      Serial.printf("ZIP %s ETA %02d:%02d min:sec", file_name_kmz.c_str(), expect_zip_time_s/60, expect_zip_time_s%60);
-      String file_name_kmz = file_name.substring(0,file_name.length()-4) + ".kmz";
+      Serial.printf("%s ETA %02d:%02d min:sec", file_name_kmz.c_str(), expect_zip_time_s/60, expect_zip_time_s%60);
       File file_kmz = SD_MMC.open(file_name_kmz, FILE_WRITE);
       zip(file_kmz, kml, "doc.kml");
       Serial.println(" done.");
@@ -1072,6 +1071,34 @@ void finalize_kml(File &kml, String file_name)
     }
   }
   #endif
+}
+
+// file_name should have full file path
+void encode_wav_to_flac(File &file_wav, String file_name)
+{
+  // .wav -> .flac
+  String file_name_flac = file_name.substring(0,file_name.length()-4) + ".flac";
+  File file_flac = SD_MMC.open(file_name_flac, FILE_READ);
+  size_t file_flac_size = 0;
+  if(file_flac) // .kmz exists (opened for read)
+  {
+    file_flac_size = file_flac.size(); // find its size
+    file_flac.close(); // close for reading, will reopen for writing
+  }
+  if(file_flac_size == 0) // .flac doesn't exist or has size = 0 -> FLAC ENCODE
+  {
+    file_wav.seek(0); // rewind wav file
+    int expect_flac_time_s = file_wav.size()/600000;
+    Serial.printf("%s ETA %02d:%02d min:sec", file_name_flac.c_str(), expect_flac_time_s/60, expect_flac_time_s%60);
+    File file_flac = SD_MMC.open(file_name_flac, FILE_WRITE);
+    flac_encode(file_flac, file_wav);
+    Serial.println(" done.");
+    file_flac.close();
+    // can not close and remove now, because
+    // "File wav" is needed after return from this function
+    // file_wav.close();
+    // SD_MMC.remove(file_name); // when we have .flac, remove .wav
+  }
 }
 
 // finalize everyting except
@@ -1099,7 +1126,8 @@ void finalize_data(struct tm *tm){
     Serial.println(todaystr); // debug
     int lcd_n=0; // counts printed LCD lines
     const int max_lcd_n=12;
-    generate_filename_kml(tm);
+    // generate_filename_kml(tm); TODO generate kml and wav filename move here
+    // to save CPU
     File file = root.openNextFile();
     while(file){
         if(file.isDirectory()){
@@ -1116,11 +1144,21 @@ void finalize_data(struct tm *tm){
               String full_path = String(file.name());
               if((file.name())[0] != '/')
                 full_path = String(dirname) + "/" + String(file.name());
+              generate_filename_kml(tm);
               if(strcmp(full_path.c_str(), filename_data) != 0) // different name
                 finalize_kml(file, full_path);
             }
-            // print on LCD
             char *is_wav = strstr(file.name(),".wav");
+            if(is_wav)
+            {
+              String full_path = String(file.name());
+              if((file.name())[0] != '/')
+                full_path = String(dirname) + "/" + String(file.name());
+              generate_filename_wav(tm);
+              if(strcmp(full_path.c_str(), filename_data) != 0) // different name
+                encode_wav_to_flac(file, full_path);
+            }
+            // print on LCD
             char *is_today = strstr(file.name(),todaystr);
             // if both wav and kml are enabled then list only wav
             // if only kml is configured, then list kml
