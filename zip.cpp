@@ -1,6 +1,3 @@
-#include <Arduino.h>
-#include <FS.h>
-#include <SD_MMC.h>
 #include "miniz.h"
 
 // Callback function to read data from the input file
@@ -14,6 +11,8 @@ size_t read_file_callback(void* pOpaque, mz_uint64 file_ofs, void* pBuf, size_t 
 // open() files before zip()
 // close() files after zip()
 // speed of zipping on SD_MMC card is about 300 K/s
+// return 0: fail
+// return 1: success
 int zip(File &kmzOutputFile, File &kmlInputFile, const char *archived_name)
 {
   size_t kml_file_size = kmlInputFile.size();
