@@ -908,8 +908,8 @@ void draw_kml_line(char *line)
 {
   static int ipt = 0; // current point index, alternates 0/1
   static char timestamp[23] = "2000-01-01T00:00:00.0Z";
-  if(log_wav_kml&2)
-  { // only if kml mode is enabled, save CPU when not enabled
+  if(log_wav_kml&0x22)
+  { // only if kml or kmz mode is enabled, save CPU when not enabled
     nmea2dlatlon(line, &(x_kml_line->lat[ipt]), &(x_kml_line->lon[ipt]));
     if(fabs(x_kml_line->lat[0]) <= 90.0 && fabs(x_kml_line->lat[1]) <= 90.0)
     {
@@ -960,8 +960,8 @@ void draw_kml_line(char *line)
 void draw_kml_line_gprmc(struct gprmc *gprmc)
 {
   static int ipt = 0; // current point index, alternates 0/1
-  if(log_wav_kml&2)
-  { // only if kml mode is enabled, save CPU if when not enabled
+  if(log_wav_kml&0x22)
+  { // only if kml or kmz mode is enabled, save CPU if when not enabled
     x_kml_line->lat[ipt] = gprmc->lat;
     x_kml_line->lon[ipt] = gprmc->lon;
     if(fabs(x_kml_line->lat[0]) <= 90.0 && fabs(x_kml_line->lat[1]) <= 90.0)
