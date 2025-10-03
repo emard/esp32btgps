@@ -226,7 +226,7 @@ void kml_buf_init(void)
   strcpy(kmlbuf, str_kml_arrow);
   
   kmlbuf_len = str_kml_arrow_len; // bytes in the buffer
-  char *a = kmlbuf+str_kml_arrow_len; // pointer to the boffer
+  char *a = kmlbuf+str_kml_arrow_len; // pointer to the buffer
 
   for(; kmlbuf_len < sizeof(kmlbuf)-str_kml_line_len-1; a += str_kml_line_len, kmlbuf_len += str_kml_line_len)
     strcpy(a, str_kml_line);
