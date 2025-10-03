@@ -55,9 +55,9 @@ where \"uncertainty\" represents 2σ = 95%% coverage.\n\
 ]]>\n\
     </description>\n\
     <visibility>1</visibility>\n\
-    <Folder id=\"lines\">\n\
-      <name>Lines</name>\n\
-      <description>Lines with measurement details</description>\n\
+    <Folder id=\"track\">\n\
+      <name>Track</name>\n\
+      <description>Track with measurement details</description>\n\
       <visibility>1</visibility>\n\
 ";
 
