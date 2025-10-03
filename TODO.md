@@ -2,8 +2,8 @@
 
 esp32
 
-    [ ] kml: arrows in separate foloder (close/open folders)
-    [ ] kml: id's (maybe names too) for folders and icons
+    [ ] kml: arrows in separate folder (close/open folders)
+    [ ] kml: different id for each object
     [ ] if wav is not enabled (only kml) then no-sensors reported although sensors work
         (try to check is IRI = 0 as no-sensors condition)
     [ ] what happens to kml and stat in tunnel mode?
@@ -15,10 +15,10 @@ esp32
     [x] instead of default lat=46, calculate_grid(latitude) at first point of new storage
     [x] arrow heading before turn is a bit off, fixed by static new_heading
     [x] creation timestamp to stat arrows or ascending time
-    [ ] avoid double nmea parsing for kml and stat (CPU saving)
+    [x] avoid double nmea parsing for kml and stat (CPU saving)
     [x] stat speed min-max range
     [ ] kml config option for lines and arrows
-    [ ] kml demo circular run
+    [x] kml demo circular run
     [x] report pass count on RDS and LCD
     [x] when standing, display LAT/LON in decimal format
     [x] ESP32 reports IRI 20% smaller than wav2kml (disable matrix_write)
@@ -47,11 +47,11 @@ esp32
     [x] config file temperature calibration
     [x] write temperature to log at each start
     [ ] RTC support (for OBD without GPS)
-    [ ] color scale config and description
+    [x] color scale config and description
     [x] configurable report frequency (m)
     [ ] notify g-range in wav
     [ ] notify g-range in kml
-    [ ] kml->kmz zip https://github.com/lbernstone/miniz-esp32
+    [x] kml->kmz zip https://github.com/lbernstone/miniz-esp32
     [ ] kml handle missing sensors
     [x] sensor hotplug (initialized every minute when stopped)
     [x] script for binary exe upload to esp32 and fpga
@@ -71,7 +71,7 @@ esp32
     [x] detecting left ADXRS290
     [x] sometimes false report no L/R sensor
     [ ] OBD2 stop PPS PLL
-    [ ] web visited links in different color
+    [x] web visited links in different color
     [x] web server LED when activated and connected
     [ ] web MDNS not updating address to dnsmasq
     [x] web server list dump only filenames not full path
@@ -116,9 +116,9 @@ esp32
     [x] kml generation
     [x] kml iterate old logs and finalize
     [x] kml sometimes name (lastnmea) filled with junk string
-    [ ] wav log off by 1 byte, peristent at stops
-    [ ] sometimes kml not finalized (1 minute not passed?)
-    [ ] kml wrong line color and placemarks with gnome firefox maps
+    [x] wav log off by 1 byte, peristent at stops
+    [x] sometimes kml not finalized (1 minute not passed?)
+    [ ] kml wrong line color and placemarks with gnome-maps
     [x] web finalize before starting server
     [x] config log mode wav/kml
     [x] kml date in the document description
@@ -153,7 +153,6 @@ esp32
         introduce slow_tdelta
     [x] insert tag iri values faster
         when there is bandwidth for that
-    [ ] OBD mode testing
     [x] CSV generator
     [x] config bit to enable csv output
     [ ] power off after 15 minutes of searching for gps (needs RTC support)
@@ -165,12 +164,12 @@ esp32
     [x] glitches in reading right sensor, repeatable glitch down
         to some valuea like -16383, fix is to soft-reset adxl355
     [x] after finalizing kml we must close and re-open to create kmz
-    [ ] ZIP show filename.kmz and ETA on LCD
+    [x] ZIP/FLAC show filename and ETA on LCD
     [ ] speech notification when ZIP starts and after it ends
     [x] FLAC encoder https://github.com/pschatzmann/arduino-libflac
-    [ ] .cfg options for kmz and flac
+    [x] .cfg options for kmz and flac
     [ ] .cfg options to compress at normal boot and wifi boot 
-    [ ] .kmz.part and .flac.part renamed to .kmz and .flac
+    [x] .kmz.part and .flac.part renamed to .kmz and .flac
 
 core
 
@@ -228,9 +227,6 @@ core
 100 [1002  -88 3960  856    8 4100]
 101 [1014  -66 3976  868   36 4118]
 
-    [ ] scan 32 samples and detect glitch,
-        when sensor has glitch, inform user
-        to power cycle instead of reporting "no sensor"
 
 tools (wav2kml etc)
 
