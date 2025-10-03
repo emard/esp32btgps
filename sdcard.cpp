@@ -1063,8 +1063,14 @@ void finalize_kml(File &file_kml, String file_name, uint8_t enable_compression)
         int expect_zip_time_s = file_kml.size()/300000;
         Serial.printf("%s ETA %02d:%02d min:sec", file_name_kmz.c_str(), expect_zip_time_s/60, expect_zip_time_s%60);
         file_kmz = SD_MMC.open(file_name_kmz_part, FILE_WRITE);
-        zip(file_kmz, file_kml, "doc.kml");
-        Serial.println(" done.");
+        int success = zip(file_kmz, file_kml, "doc.kml");
+        if(success)
+          Serial.println(" done.");
+        else
+        {
+          Serial.println(" fail.");
+          return;
+        }
         file_kmz.close();
         SD_MMC.rename(file_name_kmz_part, file_name_kmz);
         // TODO in finalize_data() allow to remove .kml file
@@ -1099,8 +1105,14 @@ void encode_wav_to_flac(File &file_wav, String file_name)
     int expect_flac_time_s = file_wav.size()/600000;
     Serial.printf("%s ETA %02d:%02d min:sec", file_name_flac.c_str(), expect_flac_time_s/60, expect_flac_time_s%60);
     file_flac = SD_MMC.open(file_name_flac_part, FILE_WRITE);
-    flac_encode(file_flac, file_wav);
-    Serial.println(" done.");
+    int success = flac_encode(file_flac, file_wav);
+    if(success)
+      Serial.println(" done.");
+    else
+    {
+      Serial.println(" fail.");
+      return;
+    }
     file_flac.close();
     SD_MMC.rename(file_name_flac_part, file_name_flac);
     // TODO in finalize_data() allow to remove .wav file
