@@ -171,6 +171,8 @@ esp32
     [ ] .cfg options to compress at normal boot and wifi boot 
     [x] .kmz.part and .flac.part renamed to .kmz and .flac
     [ ] test power off during ZIP/FLAC
+    [ ] test geostat s_stat = malloc() instead of static s_stat
+        we want snap_point_max > 1000 
 
 core
 
