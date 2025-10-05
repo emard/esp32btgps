@@ -170,6 +170,7 @@ esp32
     [x] .cfg options for kmz and flac
     [ ] .cfg options to compress at normal boot and wifi boot 
     [x] .kmz.part and .flac.part renamed to .kmz and .flac
+    [ ] test power off during ZIP/FLAC
 
 core
 
