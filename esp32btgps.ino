@@ -1485,6 +1485,9 @@ void loop_run(void)
   {
       #ifdef PIN_LED
       // BT LED OFF
+      // INPUT_PULLDOWN mode allows FPGA programming thus prevents bricking
+      // LED may be unwantedly ON if board is powered from US2
+      // because FTDI back-powered from ftdi_rx drives LED_ON
       pinMode(PIN_LED, INPUT_PULLDOWN);
       digitalWrite(PIN_LED, LED_OFF);
       #endif
@@ -1580,6 +1583,9 @@ void loop_web(void)
   {
     #ifdef PIN_LED
     // WiFi LED OFF
+    // INPUT_PULLDOWN mode allows FPGA programming thus prevents bricking
+    // LED may be unwantedly ON if board is powered from US2
+    // because FTDI back-powered from ftdi_rx drives LED_ON
     pinMode(PIN_LED, INPUT_PULLDOWN);
     digitalWrite(PIN_LED, LED_OFF);
     #endif
