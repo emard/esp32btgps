@@ -172,7 +172,8 @@ esp32
     [x] .kmz.part and .flac.part renamed to .kmz and .flac
     [ ] test power off during ZIP/FLAC
     [ ] test geostat s_stat = malloc() instead of static s_stat
-        we want snap_point_max > 1000 
+        we want snap_point_max > 1000
+    [ ] load .sta at boot and try to continue with arrows
 
 core
 
