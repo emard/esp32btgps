@@ -298,6 +298,7 @@ void setup() {
   // Without this delay, too many ESP32 programming retries are required or
   // "passthru" bitstream flashed in FPGA before programming ESP32
 
+  clear_storage();
   spi_init();
   rds_init();
   spi_rds_write();
@@ -743,7 +744,7 @@ void handle_fast_enough(void)
       write_string_to_wav(stop_delimiter);
       close_logs(); // save data in case of power lost
       write_last_nmea();
-      if(s_stat.wr_snap_ptr != 0)
+      if(s_stat->wr_snap_ptr != 0)
         write_stat_file(&tm_session);
       reset_kml_line(x_kml_line);
       reset_fast_gprmc_line();
@@ -801,7 +802,7 @@ void get_iri(void)
 void handle_reconnect(void)
 {
   //if(session_log != 0) // if session enabled
-  if(s_stat.wr_snap_ptr != 0 && session_log != 0) // if session enabled and any stat arrows are in storage
+  if(s_stat->wr_snap_ptr != 0 && session_log != 0) // if session enabled and any stat arrows are in storage
   {
     mount();
     if(card_is_mounted)

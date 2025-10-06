@@ -38,7 +38,7 @@
 // snap_point_max is largest memory hog. If set too large,
 // SD card will not mount or esp32 will reboot at open SD log files
 //#define snap_point_max 50 // (Tools->PSRAM: Disabled) total max snap points up to 5 km
-#define snap_point_max 1000 // (Tools->PSRAM: Enabled) total max snap points up to 100 km
+#define snap_point_max 2000 // (Tools->PSRAM: Enabled) total max snap points up to 200 km
 
 //extern int wr_snap_ptr;
 extern int lat2grid,  lon2grid;
@@ -74,7 +74,7 @@ struct s_stat
   struct s_snap_point snap_point[snap_point_max];
 };
 
-extern struct s_stat s_stat;
+extern struct s_stat *s_stat;
 
 extern uint8_t round_count;
 extern uint8_t stat_speed_kmh;
