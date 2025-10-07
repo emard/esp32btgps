@@ -4,7 +4,8 @@ function irivec = iri(prof, dx)
 % 'prof' is given in millimeters and 'dx' in meters.
 
 % Set parameters.
-base = 0.25;
+base = 0.25; % [m] running average
+%base = dx; % running average disabled
 xinit = 11;
 
 % Physical Constants Of Quarter Car.
