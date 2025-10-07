@@ -1,12 +1,12 @@
 #!/usr/bin/octave
 
-% reads profile as complex vector (x,y*i)
 dx=0.05; % [m] sampling step
 % dx=x_m(1234)-x_m(1233); % should be the same
 %L=20; % [m] for IRI20
 L=100; % [m] for IRI100
 %L=500; % [m] for IRI500
 N=round(L/dx); % number of 5-cm points to average for IRI
+% evaluate fpath function to generate input data
 for i = 1:N
   x_m(i)=i*dx;
   y_mm(i)=1000*fpath(x_m(i)); % [m] -> [mm]
