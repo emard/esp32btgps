@@ -1,5 +1,6 @@
 function y = fpath(x)
-% wave function: x [m] = f(y [m]) 
+% wave function: x = fpath(y)
+% x,y are in meters [m]
 
 % each example makes a profile with IRI=1 mm/m:
 
