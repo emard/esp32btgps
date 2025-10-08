@@ -96,6 +96,11 @@ void clear_storage(void)
   int i, j;
   if(s_stat == NULL)
     s_stat = (struct s_stat *)malloc(sizeof(struct s_stat));
+  if(s_stat == NULL)
+  {
+    Serial.printf("insufficent RAM for %d arrows\n", snap_point_max);
+    return;
+  }
   for(i = 0; i < hash_grid_size; i++)
     for(j = 0; j < hash_grid_size; j++)
       s_stat->hash_grid[i][j] = -1; // -1 is empty, similar to null pointer

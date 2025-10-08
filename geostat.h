@@ -37,7 +37,7 @@
 #define hash_grid_size 32 // N*N grid 32*32=1024
 // snap_point_max is largest memory hog. If set too large,
 // SD card will not mount or esp32 will reboot at open SD log files
-//#define snap_point_max 50 // (Tools->PSRAM: Disabled) total max snap points up to 5 km
+//#define snap_point_max 200 // (Tools->PSRAM: Disabled) total max snap points up to 20 km
 #define snap_point_max 2000 // (Tools->PSRAM: Enabled) total max snap points up to 200 km
 
 //extern int wr_snap_ptr;
