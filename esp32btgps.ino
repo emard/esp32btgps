@@ -29,15 +29,15 @@
 // CPU Frequency: "240 MHz (WiFi/BT)"
 // Core Debug Level: "None"
 // Erase All Flash Before Sketch Upload: "Enabled"
-// Events Run On: "Core 1"
+// Events Run On: "Core 0"
 // Flash Frequency: "80 MHz"
 // Arduino Runs On: "Core 1"
 // Flash Mode: "QIO"
 // Flash Size: "4MB (32Mb)"
 // JTAG Adapter: "Disabled"
 // Partition Scheme: "Huge APP (3MB No OTA/1MB SPIFFS)"
-// PSRAM: "Enabled" (geostat.h snap_point_max 1000 up to 100km)
-// PSRAM: "Disabled" (geostat.h snap_point_max 50 up to 5km)
+// PSRAM: "Enabled" (geostat.h snap_point_max 2000 up to 200km)
+// PSRAM: "Disabled" (geostat.h snap_point_max 200 up to 20km)
 // ESP32 without PSRAM is useless and may reboot often
 // #define IDF3 0
 // #define IDF4 1
