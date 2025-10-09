@@ -37,7 +37,7 @@
 // JTAG Adapter: "Disabled"
 // Partition Scheme: "Huge APP (3MB No OTA/1MB SPIFFS)"
 // PSRAM: "Enabled" (geostat.h snap_point_max 2000 up to 200km)
-// PSRAM: "Disabled" (geostat.h snap_point_max 200 up to 20km)
+// PSRAM: "Disabled" (geostat.h snap_point_max 50 up to 5km)
 // ESP32 without PSRAM is useless and may reboot often
 // #define IDF3 0
 // #define IDF4 1
@@ -817,10 +817,7 @@ void handle_reconnect(void)
   close_logs();
   write_last_nmea();
   session_log = 0; // request new timestamp file name when reconnected
-  finalize_busy=1;
-  rds_message(&tm);
   finalize_data(&tm, 0 /* disable compression */); // finalize all except current session (if one file per day)
-  finalize_busy=0;
   umount();
   clear_storage(); // finalize reads .sta file to s_stat, here we clear s_stat
   // this fixes when powered on while driving with fast_enough speed,
