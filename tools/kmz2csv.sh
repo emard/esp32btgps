@@ -9,3 +9,5 @@ do
   xsltproc $BASEDIR/kml2csv.xsl $x.kml > $x.csv
   rm $x.kml
 done
+
+# rename 's/\.kmz.csv$/\.csv/' /tmp/data/*.kmz.csv
