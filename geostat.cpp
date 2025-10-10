@@ -230,7 +230,8 @@ void stat_gprmc_proc(struct gprmc *gprmc)
   static uint8_t new_heading;
   static uint16_t new_daytime;
   static float new_iri[2], closest_iri[2];
-  static uint8_t new_kmh, closest_kmh;
+  static uint8_t new_vmin_kmh, new_vmax_kmh;
+  static uint8_t closest_vmin_kmh = 255, closest_vmax_kmh = 0;
   static int have_new = 0;
   //if(true)
     if(gprmc->fix=='A') // A means valid signal (not in tunnel)
@@ -268,7 +269,10 @@ void stat_gprmc_proc(struct gprmc *gprmc)
             new_daytime = daytime/20; // new_daytime is in 2-second ticks 0-43199
             new_iri[0] = iri[0];
             new_iri[1] = iri[1];
-            new_kmh = speed_kmh;
+            if(speed_kmh < new_vmin_kmh)
+              new_vmin_kmh = speed_kmh;
+            if(speed_kmh > new_vmax_kmh)
+              new_vmax_kmh = speed_kmh;
             have_new = 1; // updated until 100 m
           }
           prev_stat_travel_mm = stat_travel_mm;
@@ -285,7 +289,10 @@ void stat_gprmc_proc(struct gprmc *gprmc)
               closest_found_dist = found_dist; // [m] metric that covers diamond shaped area x+y = const
               closest_iri[0] = iri[0];
               closest_iri[1] = iri[1];
-              closest_kmh = speed_kmh;
+              if(speed_kmh < closest_vmin_kmh)
+                closest_vmin_kmh = speed_kmh;
+              if(speed_kmh > closest_vmax_kmh)
+                closest_vmax_kmh = speed_kmh;
             }
           }
           if(stat_travel_mm > SNAP_DECISION_MM) // at 120 m we have to decide, new or existing
@@ -300,10 +307,10 @@ void stat_gprmc_proc(struct gprmc *gprmc)
               s_stat->snap_point[closest_index].sum_iri[0][1] += closest_iri[1];
               s_stat->snap_point[closest_index].sum_iri[1][0] += closest_iri[0]*closest_iri[0];
               s_stat->snap_point[closest_index].sum_iri[1][1] += closest_iri[1]*closest_iri[1];
-              if(closest_kmh < s_stat->snap_point[closest_index].vmin)
-                s_stat->snap_point[closest_index].vmin = closest_kmh;
-              if(closest_kmh > s_stat->snap_point[closest_index].vmax)
-                s_stat->snap_point[closest_index].vmax = closest_kmh;
+              if(closest_vmin_kmh < s_stat->snap_point[closest_index].vmin)
+                s_stat->snap_point[closest_index].vmin = closest_vmin_kmh;
+              if(closest_vmax_kmh > s_stat->snap_point[closest_index].vmax)
+                s_stat->snap_point[closest_index].vmax = closest_vmax_kmh;
               prev_snap_ptr = closest_index; // prevents snap again
             }
             else // create new point
@@ -321,7 +328,8 @@ void stat_gprmc_proc(struct gprmc *gprmc)
                   s_stat->snap_point[new_index].sum_iri[1][1] = new_iri[1]*new_iri[1];
                   s_stat->snap_point[new_index].daytime = new_daytime;
                   // set initial speed, informative only
-                  s_stat->snap_point[new_index].vmin = s_stat->snap_point[new_index].vmax = new_kmh;
+                  s_stat->snap_point[new_index].vmin = new_vmin_kmh;
+                  s_stat->snap_point[new_index].vmax = new_vmax_kmh;
                   prev_snap_ptr = new_index; // prevents snap again
                 }
                 //printf("new\n");
@@ -337,6 +345,10 @@ void stat_gprmc_proc(struct gprmc *gprmc)
             closest_found_stat_travel_mm = 0;
             closest_index = -1;
             closest_found_dist = 999999;
+            closest_vmin_kmh = 255;
+            closest_vmax_kmh = 0;
+            new_vmin_kmh = 255;
+            new_vmax_kmh = 0;
             have_new = 0;
           }
         }
@@ -350,6 +362,10 @@ void stat_gprmc_proc(struct gprmc *gprmc)
         closest_found_stat_travel_mm = 0;
         closest_index = -1;
         closest_found_dist = 999999;
+        closest_vmin_kmh = 255;
+        closest_vmax_kmh = 0;
+        new_vmin_kmh = 255;
+        new_vmax_kmh = 0;
         have_new = 0;
       }
       #endif
