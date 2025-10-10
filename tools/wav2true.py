@@ -258,8 +258,15 @@ for wavfile in argv[1:]:
       # replace Y with true profile
       # left  Y: ac[1]
       # right Y: ac[4]
-      ac[out_wav_ch_hl]=int(float2hint*hci.sum[0])
-      ac[out_wav_ch_hr]=int(float2hint*hci.sum[1])
+      # 0xFFFF casts to uint16_t (16-bit unsigned)
+      hl=int(float2hint*hci.sum[0]) & 0xFFFF
+      hr=int(float2hint*hci.sum[1]) & 0xFFFF
+      # if casts to int16_t (16-bit signed)
+      if(hl>=0x8000): hl-=0x10000
+      if(hr>=0x8000): hr-=0x10000
+      # ac[] accepts only 16-bit signed
+      ac[out_wav_ch_hl]=hl
+      ac[out_wav_ch_hr]=hr
       # reset X to 0
       # fictional "laser" has 0 acceleration
       # with accel 0 it will be "fixed" to some
