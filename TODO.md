@@ -177,11 +177,12 @@ esp32
 
 core
 
-    [ ] filter out glitches: left sensor sometimes in one sample reads all 3 axis
+    [x] filter out glitches: left sensor sometimes in one sample reads all 3 axis
         as 0x00 or 0xFF (wavhexdump.sh 15-bit).
         depends on GP/GN 4/8/16 mA and cable length but no combination fits
+        glitches removed by sensor software reset at boot
     [ ] core analzyer, SPI register report of signal validity
-    [ ] on initial screen write REBOOT, power OFF->ON as user guidance
+    [x] on initial screen write REBOOT, power OFF->ON as user guidance
     [x] 12-byte spi buf to wav buf alignment
     [x] trellis weak FM (fixed by signed->unsigned multiply)
     [x] core reports IRI 20% smaller than wav2kml (forgot to disable write_matrix)
@@ -230,9 +231,9 @@ core
 99 [  1002    -88   3960 -22970    -12   4080]
 100 [1002  -88 3960  856    8 4100]
 101 [1014  -66 3976  868   36 4118]
-
     [ ] prevent back-powering FTDI USB_SERIAL and turning ON BLUE LED
         if USB is not enumerated, HI-Z to all FTDI outputs
+
 
 
 tools (wav2kml etc)
@@ -255,7 +256,12 @@ tools (wav2kml etc)
     [x] colorized description
         https://developers.google.com/kml/documentation/kml_tut
     [ ] improve snap
+    [ ] find .flac example with android gps
     [ ] unbreak for android gps
+    [ ] allow user to prepare modified .kmz with arrows moved
+        to any desired position, read .kmz as initial set of snap points
+        snap to arrows in kmz
+    [ ] snap user arrows (orthogonal move to track) to align with track 
 
 makecircle
 
