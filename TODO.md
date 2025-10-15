@@ -262,6 +262,7 @@ tools (wav2kml etc)
         to any desired position, read .kmz as initial set of snap points
         snap to arrows in kmz
     [ ] snap user arrows (orthogonal move to track) to align with track 
+    [ ] wav2kml output one line with full stat for each point
 
 makecircle
 
