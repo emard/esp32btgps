@@ -808,7 +808,7 @@ void handle_reconnect(void)
     if(card_is_mounted)
     {
       open_logs(&tm_session);
-      write_stat_arrows(); // write arrows with final statistics
+      write_stat_arrows(file_kml); // write arrows with final statistics
       write_csv_tm(&tm_session); // write csv with final statistics
       delete_stat_file(&tm_session);
       //Serial.println("Finalizing from .ino"); // DEBUG print

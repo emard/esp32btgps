@@ -75,7 +75,7 @@ void write_log_kml(uint8_t force);
 void write_stat_file(struct tm *tm);
 void delete_stat_file(struct tm *tm);
 int read_stat_file(String filename_stat);
-void write_stat_arrows(void);
+void write_stat_arrows(File &f_kml);
 void write_csv_tm(struct tm *tm);
 void finalize_data(struct tm *tm, uint8_t enable_compression);
 void close_logs(void);

@@ -586,7 +586,7 @@ void write_stat_file(struct tm *tm)
   File file_stat = SD_MMC.open(filename_data, FILE_WRITE);
   if(file_stat)
   {
-    file_stat.write((uint8_t *)&s_stat, sizeof(s_stat));
+    file_stat.write((uint8_t *)s_stat, sizeof(struct s_stat));
     file_stat.close();
     Serial.print("write stat: ");
     Serial.println(filename_data);
@@ -606,7 +606,8 @@ int read_stat_file(String filename_stat)
   File file_stat = SD_MMC.open(filename_stat, FILE_READ);
   if(file_stat)
   {
-    file_stat.read((uint8_t *)&s_stat, sizeof(s_stat));
+    Serial.printf("s_stat=0x%08X len=%d one snap len=%d\n", (uint32_t)s_stat, sizeof(struct s_stat), sizeof(struct s_snap_point));
+    file_stat.read((uint8_t *)s_stat, sizeof(struct s_stat));
     file_stat.close();
     calculate_grid(s_stat->lat);
     Serial.print("read stat: ");
@@ -618,7 +619,7 @@ int read_stat_file(String filename_stat)
   return 0; // fail
 }
 
-void write_stat_arrows(void)
+void write_stat_arrows(File &f_kml)
 {
   if(logs_are_open == 0)
     return;
@@ -645,7 +646,7 @@ void write_stat_arrows(void)
     x_kml_arrow->speed_max_kmh = 80.0;
     x_kml_arrow->timestamp = timestamp;
     kml_arrow(x_kml_arrow);
-    file_kml.write((uint8_t *)kmlbuf, str_kml_arrow_len);
+    f_kml.write((uint8_t *)kmlbuf, str_kml_arrow_len);
   }
   #endif
   printf("writing %d stat arrows to kml\n", s_stat->wr_snap_ptr);
@@ -676,7 +677,7 @@ void write_stat_arrows(void)
     snprintf(timestamp+11, 12, "%02d:%02d:%02d.0Z", dt/1800,dt/30%60,(dt%30)*2);
     x_kml_arrow->timestamp = timestamp;
     kml_arrow(x_kml_arrow);
-    file_kml.write((uint8_t *)kmlbuf, str_kml_arrow_len);
+    f_kml.write((uint8_t *)kmlbuf, str_kml_arrow_len);
   }
 }
 
@@ -1011,15 +1012,15 @@ void close_logs()
 }
 
 // file_name should have full file path
-void finalize_kml(File &file_kml, String file_name, uint8_t enable_compression)
+void finalize_kml(File &f_kml, String file_name, uint8_t enable_compression)
 {
-  file_kml.seek(file_kml.size() - 7);
-  String file_end = file_kml.readString();
+  f_kml.seek(f_kml.size() - 7);
+  String file_end = f_kml.readString();
   if(file_end != "</kml>\n")
   {
     Serial.print("Finalizing ");
     Serial.println(file_name);
-    // kml.close(); // crash with arduino esp32 v2.0.2
+    f_kml.close(); // should not close because of openNextFile() ?
     File append_file_kml = SD_MMC.open(file_name, FILE_APPEND);
     // try to open file name with .sta extension instead of .kml
     String file_name_sta = file_name.substring(0,file_name.length()-4) + ".sta";
@@ -1029,7 +1030,7 @@ void finalize_kml(File &file_kml, String file_name, uint8_t enable_compression)
     {
       kml_init();
       append_file_kml.write((uint8_t *)str_kml_arrows_folder, strlen(str_kml_arrows_folder));
-      write_stat_arrows();
+      write_stat_arrows(append_file_kml);
       write_csv_flag = 1;
       SD_MMC.remove(file_name_sta);
     }
@@ -1059,11 +1060,11 @@ void finalize_kml(File &file_kml, String file_name, uint8_t enable_compression)
       }
       if(file_kmz_size == 0) // .kmz doesn't exist or has size = 0 -> ZIP
       {
-        file_kml.seek(0); // rewind
-        int expect_zip_time_s = file_kml.size()/300000;
+        f_kml.seek(0); // rewind
+        int expect_zip_time_s = f_kml.size()/300000;
         Serial.printf("%s ETA %02d:%02d min:sec", file_name_kmz.c_str(), expect_zip_time_s/60, expect_zip_time_s%60);
         file_kmz = SD_MMC.open(file_name_kmz_part, FILE_WRITE);
-        int success = zip(file_kmz, file_kml, "doc.kml");
+        int success = zip(file_kmz, f_kml, "doc.kml");
         if(success)
           Serial.println(" done.");
         else
@@ -1074,12 +1075,13 @@ void finalize_kml(File &file_kml, String file_name, uint8_t enable_compression)
         file_kmz.close();
         SD_MMC.rename(file_name_kmz_part, file_name_kmz);
         // TODO in finalize_data() allow to remove .kml file
-        // file_kml.close();
+        // f_kml.close();
         // SD_MMC.remove(file_name); // when we have .kmz, remove .kml
         if((log_wav_kml & 0x02) == 0)
         {
-          file_kml.close();
-          SD_MMC.remove(file_name); // when we have .flac, remove .wav
+          f_kml.close(); // should not close because of openNextFile() ?
+          // we delete file and then doing openNextFile(), check is it ok
+          SD_MMC.remove(file_name); // when we have .kmz, remove .kml
         }
       }
     }
@@ -1156,13 +1158,17 @@ void finalize_data(struct tm *tm, uint8_t enable_compression)
   File file = root.openNextFile();
   while(file){
       if(file.isDirectory()){
+          #if 0
           Serial.print("  DIR : ");
           Serial.println(file.name());
+          #endif
       } else {
+          #if 0
           Serial.print("  FILE: ");
           Serial.print(file.name());
           Serial.print("  SIZE: ");
           Serial.println(file.size());
+          #endif
           char *is_kml = strstr(file.name(),".kml");
           char *is_wav = strstr(file.name(),".wav");
           char *is_today = strstr(file.name(),todaystr);
