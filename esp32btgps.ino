@@ -24,7 +24,7 @@
 // #define IDF4 1
 
 // Arduino 2.3.6
-// Tools -> Boards Manager -> esp32 by Espressif Systems
+// Tools -> Boards Manager -> esp32 by Espressif Systems v3.3.2
 // Board: "ESP32 Dev Module"
 // CPU Frequency: "240 MHz (WiFi/BT)"
 // Core Debug Level: "None"
