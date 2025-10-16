@@ -986,6 +986,7 @@ void read_cfg(void)
   Serial.print("ALIGN_TO_REVERSE_MAX_M: "); Serial.println(ALIGN_TO_REVERSE_MAX_MM/1000);
   Serial.print("IGNORE_TOO_LARGE_JUMP_M: "); Serial.println(IGNORE_TOO_LARGE_JUMP_MM/1000);
   Serial.print("SEARCH_SNAP_AFTER_M: "); Serial.println(START_SEARCH_FOR_SNAP_POINT_AFTER_TRAVEL_MM/1000);
+  Serial.print("KMH_START   : "); Serial.println(KMH_START);
   Serial.print("KMH_STOP    : "); Serial.println(KMH_STOP);
   Serial.print("KMH_BTN     : "); Serial.println(KMH_BTN);
   Serial.print("*** close ");
