@@ -49,6 +49,13 @@ extern uint8_t KMH_REPORT1;
 extern uint32_t MM_REPORT1, MM_REPORT2; // mm report each travel distance
 extern uint32_t MM_SLOW;
 extern uint32_t MM_FAST;
+extern uint32_t SEGMENT_LENGTH_MM; // [mm] arrows placemarks spacing
+extern uint16_t SNAP_RANGE_M; // [m] x+y < snap_range_m search for existing point
+extern uint32_t SNAP_DECISION_MM; // [mm] after this length decide how to snap, new or existing
+extern uint32_t ALIGN_TO_REVERSE_MIN_MM; // [mm] reverse alignment min
+extern uint32_t ALIGN_TO_REVERSE_MAX_MM; // [mm] reverse alignment max
+extern uint32_t IGNORE_TOO_LARGE_JUMP_MM; // [mm] ignore points from jumps larger than this
+extern uint32_t START_SEARCH_FOR_SNAP_POINT_AFTER_TRAVEL_MM; // [mm] after this long travel search for new snap
 extern uint32_t fm_freq[2];
 extern uint8_t fm_freq_cursor;
 extern uint8_t btn, btn_prev;

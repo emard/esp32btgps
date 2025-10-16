@@ -8,7 +8,7 @@
 #include "nmea.h"
 #include "kml.h"
 #include "geostat.h"
-#include "sdcard.h" // for iri[] only
+#include "sdcard.h" // for iri[], config
 
 // initial NULL -> malloc() before 1st use
 struct s_stat *s_stat = NULL; // statistics for kml "arrows"

@@ -4,8 +4,9 @@
 #include <stdint.h>
 #include "nmea.h" // struct gprmc
 
-// try to snap at segment length 100 m
-#define SEGMENT_LENGTH_MM 100000
+// try to snap at segment length 10 m
+// now in config
+//#define SEGMENT_LENGTH_MM 10000
 
 // angular insensitivity, scale factor to compare
 // angle with maters. 0-max sensitive, 8-insensitive
@@ -15,22 +16,27 @@
 // abs(x1-x0)+abs(y1-y0)+abs(a1-a0)
 #define ANGULAR_INSENSITIVITY_RSHIFT 0
 
-#define SNAP_RANGE_M 40 // [m] x+y < snap_range_m search for existing point
+// now in config
+//#define SNAP_RANGE_M 40 // [m] x+y < snap_range_m search for existing point
 
 // after this length decide how to snap, new or existing point
-// decide usually at 120 m if snap length is 100 m
-#define SNAP_DECISION_MM (SEGMENT_LENGTH_MM+20000)
+// decide usually at 12 m if snap length is 10 m
+// now in config
+//#define SNAP_DECISION_MM (SEGMENT_LENGTH_MM+2000)
 
 // reverse alignment: allowed range usually +-5m from snap legnth
-#define ALIGN_TO_REVERSE_MIN_MM (SEGMENT_LENGTH_MM-5000)
-#define ALIGN_TO_REVERSE_MAX_MM (SEGMENT_LENGTH_MM+5000)
+// now in config
+//#define ALIGN_TO_REVERSE_MIN_MM (SEGMENT_LENGTH_MM-5000)
+//#define ALIGN_TO_REVERSE_MAX_MM (SEGMENT_LENGTH_MM+5000)
 
 // ignore this point if distance from prev reading to current reading 
 // is more than this length apart 
-#define IGNORE_TOO_LARGE_JUMP_MM 40000
+// now in config
+//#define IGNORE_TOO_LARGE_JUMP_MM 4000
 
 // after this travel length start searching for snap point
-#define START_SEARCH_FOR_SNAP_POINT_AFTER_TRAVEL_MM 40000
+// now in config
+//#define START_SEARCH_FOR_SNAP_POINT_AFTER_TRAVEL_MM 4000
 
 // hash grid parameters
 #define hash_grid_spacing_m 64 // [m] steps power of 2 should be > snap_range_m

@@ -37,6 +37,14 @@ int speed_kmh = -1; // km/h speed
 int fast_enough = 0; // for speed logging hysteresis
 uint8_t KMH_START = 12, KMH_STOP = 6; // km/h start/stop speed hystereis
 uint8_t KMH_BTN = 0; // debug btn2 for fake km/h
+uint32_t SEGMENT_LENGTH_MM = 100000; // [mm] arrows placemarks spacing
+uint16_t SNAP_RANGE_M = 40; // [m] x+y < snap_range_m search for existing point
+uint32_t SNAP_DECISION_MM = SEGMENT_LENGTH_MM+20000; // [mm] after this length decide how to snap, new or existing
+uint32_t ALIGN_TO_REVERSE_MIN_MM = SEGMENT_LENGTH_MM-5000; // [mm] reverse alignment min
+uint32_t ALIGN_TO_REVERSE_MAX_MM = SEGMENT_LENGTH_MM+5000; // [mm] reverse alignment max
+uint32_t IGNORE_TOO_LARGE_JUMP_MM = 40000; // [mm] ignore points from jumps larger than this
+uint32_t START_SEARCH_FOR_SNAP_POINT_AFTER_TRAVEL_MM = 40000; // [mm] after this long travel search for new snap
+// uint16_t snap_point_max = 2000, // number of snap points, 32 byte each
 int mode_obd_gps = 0; // alternates 0:OBD and 1:GPS
 uint8_t gps_obd_configured = 0; // existence of (1<<0):OBD config, (1<<1):GPS config
 uint32_t MS_SILENCE_RECONNECT = 0; // [ms] milliseconds of silence to reconnect
@@ -917,6 +925,14 @@ void read_cfg(void)
     else if(varname.equalsIgnoreCase("kmh_start")) KMH_START = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("kmh_stop")) KMH_STOP = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("kmh_btn" )) KMH_BTN = strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("arrow_m")) SEGMENT_LENGTH_MM = 1000*strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("snap_range_m")) SNAP_RANGE_M = strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("snap_decision_m")) SNAP_DECISION_MM = 1000*strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("align_to_reverse_min_m")) ALIGN_TO_REVERSE_MIN_MM = 1000*strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("align_to_reverse_max_m")) ALIGN_TO_REVERSE_MAX_MM = 1000*strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("ignore_too_large_jump_m")) IGNORE_TOO_LARGE_JUMP_MM = 1000*strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("search_snap_after_m")) START_SEARCH_FOR_SNAP_POINT_AFTER_TRAVEL_MM = 1000*strtol(varvalue.c_str(), NULL,10);
+    // else if(varname.equalsIgnoreCase("snap_point_max")) snap_point_max = strtol(varvalue.c_str(), NULL,10);
     else
     {
       Serial.print(filename_cfg);
@@ -963,8 +979,13 @@ void read_cfg(void)
   Serial.print("M_SLOW      : "); Serial.println(macstr);
   sprintf(macstr, "%.1f", MM_FAST*1.0E-3);
   Serial.print("M_FAST      : "); Serial.println(macstr);
-  Serial.print("KMH_REPORT1 : "); Serial.println(KMH_REPORT1);
-  Serial.print("KMH_START   : "); Serial.println(KMH_START);
+  Serial.print("SEGMENT_LENGTH_M: "); Serial.println(SEGMENT_LENGTH_MM/1000);
+  Serial.print("SNAP_RANGE_M: "); Serial.println(SNAP_RANGE_M);
+  Serial.print("SNAP_DECISION_M: "); Serial.println(SNAP_DECISION_MM/1000);
+  Serial.print("ALIGN_TO_REVERSE_MIN_M: "); Serial.println(ALIGN_TO_REVERSE_MIN_MM/1000);
+  Serial.print("ALIGN_TO_REVERSE_MAX_M: "); Serial.println(ALIGN_TO_REVERSE_MAX_MM/1000);
+  Serial.print("IGNORE_TOO_LARGE_JUMP_M: "); Serial.println(IGNORE_TOO_LARGE_JUMP_MM/1000);
+  Serial.print("SEARCH_SNAP_AFTER_M: "); Serial.println(START_SEARCH_FOR_SNAP_POINT_AFTER_TRAVEL_MM/1000);
   Serial.print("KMH_STOP    : "); Serial.println(KMH_STOP);
   Serial.print("KMH_BTN     : "); Serial.println(KMH_BTN);
   Serial.print("*** close ");
