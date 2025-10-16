@@ -297,6 +297,7 @@ void setup() {
   // This 1s delay is not needed for normal function but
   // Without this delay, too many ESP32 programming retries are required or
   // "passthru" bitstream flashed in FPGA before programming ESP32
+  heap_caps_malloc_extmem_enable(4096); // use PSRAM for malloc() > 4K
 
   clear_storage();
   spi_init();
