@@ -733,8 +733,8 @@ void write_csv(String file_name)
     // 100, 4.87,"↓",-174.3,+015.999377,+45.808163,2025-09-03T07:13:52.0Z,4.99,0.00,4.75,0.00,1,32,32
     // 200, 5.16,"↓",-164.5,+015.999898,+45.807419,2025-09-03T07:14:00.0Z,5.24,0.00,5.08,0.00,1,38,38
     int arrow_index = ((int)(x_kml_arrow->heading + 22.5)) / 45 % 8;
-    sprintf(linebuf, "%4d00,%5.2f, \"%s\",%6.1f,%10.6f,%10.6f,%23s,%5.2f,%5.2f,%5.2f,%5.2f,%2d,%3d,%3d\n",
-     i+1, x_kml_arrow->value,
+    sprintf(linebuf, "%6d,%5.2f, \"%s\",%6.1f,%10.6f,%10.6f,%23s,%5.2f,%5.2f,%5.2f,%5.2f,%2d,%3d,%3d\n",
+     (i+1)*SEGMENT_LENGTH_MM/1000, x_kml_arrow->value,
      heading_arrow[arrow_index],
      x_kml_arrow->heading,
      x_kml_arrow->lat, x_kml_arrow->lon,
