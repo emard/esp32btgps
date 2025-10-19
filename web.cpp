@@ -85,6 +85,8 @@ bool loadFromSdCard(String path) {
     dataType = "text/xml";
   } else if (path.endsWith(".csv")) {
     dataType = "text/csv";
+  } else if (path.endsWith(".apk") || path.endsWith(".apkm") || path.endsWith(".xapk")) {
+    dataType = "application/octet-stream";
   } else if (path.endsWith(".kml")) {
     //dataType = "application/kml"; // gnome maps opens
     dataType = "application/vnd.google-earth.kml+xml"; // google earth opens
