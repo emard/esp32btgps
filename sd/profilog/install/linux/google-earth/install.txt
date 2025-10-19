@@ -1,0 +1,22 @@
+To install Google Earth on Debian 10,
+we need to install gdebi package on
+Debian 10 system. To install gdebi
+
+apt install gdebi-core
+
+download google earth for linux:
+
+wget https://dl.google.com/dl/earth/client/current/google-earth-pro-stable_current_amd64.deb
+
+install the package:
+
+sudo gdebi google-earth-pro-stable_current_amd64.deb
+
+copy .desktop file allow firefox to open google earth
+
+cp google-earth-pro.desktop /home/$USER/.local/share/applications/
+
+Configure firefox
+
+(on top right find "Hamburger" it is 3 horizontal lines one above another)
+"Hamburger" -> Settings -> Applications
