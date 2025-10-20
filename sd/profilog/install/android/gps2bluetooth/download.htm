@@ -16,12 +16,30 @@
 file like 
 <a href="https://apkpure.com/gps-2-bluetooth/com.cajax.gps2bt2/download">GPS 2 Bluetooth_5.3.6_APKPure.xapk</a>
 </p>
+<p>At installing, android OS will show some warning
+that app is old and doesn't support newest privacy requirements.
+View details and confirm to install it anyway.
+</p>
 <h2>Show Bluetooth MAC</h2>
+<p>In profilog/config/profilog.cfg set GPS_MAC from the
+phone bluetooth interface and GPS_PIN as empty.</p>
+<p>GPS_MAC : 11:22:33:44:55:66</p>
+<p>GPS_PIN :</p>
 <h3>Android 10</h3>
-<p>Settings -> About phone -> All specs -> Status</p>
+<p>Settings > About phone > All specs > Status</p>
 <p>scroll to the bottom and find "Bluetooth address"</p>
 <h3>Android 15</h3>
-<p>Settings -> About phone -> Status information</p>
+<p>Settings > About phone > Status information</p>
 <p>and find "Bluetooth address"</p>
+<h2>Run GPS in background</h2>
+<p>By default when phone screen goes off
+then GPS2Bluetooth will stop receiving GPS
+signal.</p>
+<p>Settings to run app in background:</p>
+<h3>Background in Android 15</h3>
+<p>Settings > Battery > Power saving > Off</p>
+<p>Settings > Apps > GPS2Bluetooth > Battery > Unrestricted</p>
+<p>After screen goes off, GPS2Bluetooth should keep receiving GPS
+signal in the background.</p>
 </body>
 </html>
