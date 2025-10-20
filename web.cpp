@@ -55,8 +55,68 @@ void returnFail(String msg) {
   server.send(500, "text/plain", msg + "\r\n");
 }
 
-bool loadFromSdCard(String path) {
+int c_str_percent_decode(char* out, const char* in)
+{
+    static const int8_t tbl[256] =
+    {
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+         0, 1, 2, 3, 4, 5, 6, 7,  8, 9,-1,-1,-1,-1,-1,-1,
+        -1,10,11,12,13,14,15,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,10,11,12,13,14,15,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1
+    };
+    char c;
+    char *beg=out;
+    int8_t v1, v2;
+    int len = 0;
+    if(in != NULL) {
+        while((c=*in++) != '\0') {
+            if(c == '%') {
+                if((v1=tbl[(uint8_t)*in++])<0 ||
+                   (v2=tbl[(uint8_t)*in++])<0) {
+                    *beg = '\0';
+                    return -1;
+                }
+                c = (char)(v1<<4)|v2;
+            }
+            *out++ = c;
+            len++;
+        }
+    }
+    *out = '\0';
+    return len;
+}
+
+String percent_decode(String in)
+{
+  char *c_out = (char *)malloc(in.length()+1);
+  if(!c_out)
+    return String("");
+  int len = c_str_percent_decode(c_out, in.c_str());
+  if(len < 0)
+  {
+    free(c_out);
+    return String("");
+  }
+  String out = String(c_out);
+  free(c_out);
+  return String(out);
+}
+
+bool loadFromSdCard(String percent_encoded_path) {
   String dataType = "text/plain";
+  String path = percent_decode(percent_encoded_path);
   if (path.endsWith("/")) {
     path += "index.htm";
   }
