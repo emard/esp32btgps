@@ -1,0 +1,7 @@
+Android 10
+Settings -> About phone -> All specs -> Status
+scroll to the bottom and look for Bluetooth address
+
+Android 15
+Settings -> About phone -> Status information
+and then find the Bluetooth Address
