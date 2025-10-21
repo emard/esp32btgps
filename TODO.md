@@ -171,9 +171,11 @@ esp32
     [ ] .cfg options to compress at normal boot and wifi boot 
     [x] .kmz.part and .flac.part renamed to .kmz and .flac
     [ ] test power off during ZIP/FLAC
-    [ ] test geostat s_stat = malloc() instead of static s_stat
+    [x] test geostat s_stat = malloc() instead of static s_stat
         we want snap_point_max > 1000
     [ ] load .sta at boot and try to continue with arrows
+    [ ] configurable earth radius for calculating distance
+    [ ] configurable number of stat points
 
 core
 
@@ -256,8 +258,9 @@ tools (wav2kml etc)
     [x] colorized description
         https://developers.google.com/kml/documentation/kml_tut
     [ ] improve snap
-    [ ] find .flac example with android gps
-    [ ] unbreak for android gps
+    [x] find .flac example with android gps
+    [x] unbreak for android gps
+    [ ] for 1Hz GPS insert fine points
     [ ] allow user to prepare modified .kmz with arrows moved
         to any desired position, read .kmz as initial set of snap points
         snap to arrows in kmz
