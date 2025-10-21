@@ -339,6 +339,15 @@ def nmea_latlon2kml(ns):
     lon_min=float(ns[17:26])
     return (lon_deg+lon_min/60.0,lat_deg+lat_min/60.0)
 
+# input is NMEA split tuple like (b"4500.112233",b"N",b"01500.112233",b"E")
+# output is (lon,lat) tuple
+def nmeasplit_latlon2kml(ns):
+  lat_deg=int(ns[0][0:2])
+  lat_min=float(ns[0][2:])
+  lon_deg=int(ns[2][0:3])
+  lon_min=float(ns[2][3:])
+  return (lon_deg+lon_min/60.0,lat_deg+lat_min/60.0)
+
 # helper function for distance
 def haversin(theta:float) -> float:
   return sin(0.5*theta)**2
@@ -788,26 +797,31 @@ for wavfile in argv[1:]:
           speed_kmh = 0.0
           if calculate:
             should_reset_iri = 1
-        elif (len(nmea)==79 or len(nmea)==68) and nmea[0:2]==b"$G" and nmea[3:6]==b"RMC" and nmea[-3]==42: # 68 is lost signal, tunnel mode
+        elif nmea[0:2]==b"$G" and nmea[3:6]==b"RMC" and nmea[-3]==42: # GPRMC or GNRMC
          # nmea[-3]="*" checks for asterisk on the right place, simple 8-bit crc follows
          crc = reduce(xor, map(int, nmea[1:-3]))
          hexcrc = bytearray(b"%02X" % crc)
          if nmea[-2:] == hexcrc:
-          if len(nmea)==79: # normal mode with signal
-            lonlat=nmea_latlon2kml(nmea[18:46])
+          nmeasplit=nmea.split(b",")
+          #print(nmea)
+          #for i in range(len(nmeasplit)):
+          #  print(i,nmeasplit[i])
+          if nmeasplit[2]==b"A": # normal mode with signal
+            #lonlat=nmea_latlon2kml(nmeasplit[3]+b","+nmeasplit[4]+b","+nmeasplit[5]+b","+nmeasplit[6])
+            lonlat=nmeasplit_latlon2kml(nmeasplit[3:7])
             tunel = 0
-          elif len(nmea)==68: # tunnel mode without signal, keep heading
+          elif len(nmeasplit[2]): # tunnel mode without signal, keep heading
             if lonlat_diff:
               lonlat = ( lonlat[0] + lonlat_diff[0], lonlat[1] + lonlat_diff[1] )
             tunel = 11 # number of less chars in shorter nmea sentence for tunnel mode
           if lonlat_1st == None:
             lonlat_1st = lonlat
-          datetime=b"20"+nmea[64-tunel:66-tunel]+b"-"+nmea[62-tunel:64-tunel]+b"-"+nmea[60-tunel:62-tunel]+b"T"+nmea[7:9]+b":"+nmea[9:11]+b":"+nmea[11:15]+b"Z"
+          datetime=b"20"+nmeasplit[9][4:6]+b"-"+nmeasplit[9][2:4]+b"-"+nmeasplit[9][0:2]+b"T"+nmeasplit[1][0:2]+b":"+nmeasplit[1][2:4]+b":"+nmeasplit[1][4:]+b"Z"
           if time_1st == None:
             time_1st = datetime
           if tunel == 0:
-            heading=float(nmea[54:59])
-            speed_kt=float(nmea[47:53])
+            heading=float(nmeasplit[8])
+            speed_kt=float(nmeasplit[7])
           speed_kmh=speed_kt*1.852
           if speed_kmh > kmh_max:
             kmh_max = speed_kmh
