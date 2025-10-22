@@ -7,6 +7,101 @@
 </head>
 <body>
 <a href="help.htm">Help</a>
+<h1>Quickstart</h1>
+<h2>Preparation</h2>
+<p>Find 2 distant "holes" in FM city radio broadcast where there
+are no radio stations (just noise) and note those 2 "empty" frequencies.</p>
+<p>POWER ON ULX3S only, keep GPS POWERED OFF.</p>
+<p>With ULX3S cursor left-right buttons choose one of
+two "empty" frequencies and with cursor up-down enter
+the frequency in MHz. FM station should be clearly received
+on radio and RDS (radio display screen or radio data system)
+should display "OFF 9Y1".</p>
+<p>OFF indicates GPS is POWERED OFF so ULX3S can be safely POWERED OFF</p>
+<p>9 indicates free space on SD card = more than 2^9 bytes free (1GB)</p>
+<p>Y indicates both sensors are working</p>
+<p>L indicates only left sensor is working</p>
+<p>R indicates only right sensor is working</p>
+<p>X indicates no sensor is working</p>
+<p>1 indicates first pass over the same point</p>
+<h2>Measurement</h2>
+<p>POWER ON GPS, POWER ON ULX3S
+It does not matter which order they are POWERED ON
+but it matters later order of POWER OFF.</p>
+<p>Wait about 30 s for bluetooth to connect with GPS.
+When GPS blue LED is blinking ON/OFF, bluetooth is not connected.
+When GPS blue LED is constantly ON, bluetooth is connected.</p>
+<p>While on RDS is written "WAIT", measurement can not start
+because GPS is connected over bluetooth but it is waiting for
+GPS signal. It usually takes few minutes
+but if GPS battery was removed or it was few weeks powered off then
+it has to download "almanac" which may take up to 40 minutes.</p>
+<p>When on RDS is written "GO" start car and drive 5 or more passes over
+the same track. After 2nd pass RDS display will show "9Y2" etc.
+and after 5th pass "9Y5". More passes make mesurement with
+better statistic repeatability.</p>
+<p>After measurement, first POWER OFF GPS, wait for "OFF" displayed
+on RDS or LCD, then POWER OFF ULX3S. This takes less than a
+minute to correctly finalize files on SD card.</p>
+<h3>Get Data</h3>
+<p>To download data, WiFi mode is started by holding F1 button
+(first from the left side) and turning on ULX3S.
+Button should be held for few seconds until power-on LCD screen is
+cleared and "WiFi" is displayed.</p>
+<p>Before WiFi mode connects, on the LCD screen will be
+displayed "ZIP" and "FLAC" while CPU creates .kmz and .flac files.
+Keep board reliably powered ON during ZIP/FLAC phase.</p>
+<p>For N minutes of measurement, ZIP/FLAC phase takes 2N seconds.</p>
+<p>Once ZIP/FLAC is done it will not run again until new measurement is done.</p>
+<p>After WiFi connects, "http://some_address" will appear on LCD screen like:</p>
+<p>http://192.168.4.20</p>
+<p>Read "http://some_address" from LCD and retype it to Web Browser (Firefox, Chrome on PC or
+Android) address input field.
+Measurement files are in "/profilog/data" directory.</p>
+<p>Each mesurement typically results in 3 files. Each file starts with date and
+time. Time is in UTC (Greenwitch) time zone. Example measurement started
+on 15th june 2025 at 12:30 UTC+2 local time:</p>
+<p>20250615-1030.csv  : spreadsheet file, one line every 100 m</p>
+<p>20250615-1030.flac : source file, raw sensor and GPS readings 6-channel 16-bit-signed 1-kHz</p>
+<p>20250615-1030.kmz  : map file, track and placemarks for satellite map "Google Earth" or "KMZView"</p>
+<h2>View Data</h2>
+<p>Clicking on .csv file should open it in spreadsheet (MS Office or
+LibreOffice) if installed or plain text editor.</p>
+<p>When spreadsheet asks how to open .csv file, choose "UTF-8" encoding and "," (comma) separator.<p>
+<p>Clicking on .kmz file should open file in "Google Earth" if properly
+installed.</p>
+<p>.flac file can be opened with "Baudline" or "Audacity" on linux
+or similar audio tools on other platforms.
+Audio applications can visualize sensor waveform and frequency spectrum
+where expert can check condition and symmetry of sensors and other
+mechanical parts.</p>
+<p>.flac file can be post-processed on PC to generate .kmz or .csv
+files. Depending on different boundary conditions, data filtering
+and different numerical precision, post-processed files will have
+values more or less close to runtime-generated .kmz and .csv but
+almost never exactly the same.
+</p>
+<p>Measurement files can be downloaded to PC or Android local storage and
+opened later or e-mailed.</p>
+<p>For standalone installation without internet, save
+"Google Earth" and other useful applications to SD card, for example
+to "/profilog/install/android/google-earth" directory.</p>
+<h2>Troubleshooting</h2>
+<p>While car is stopped, POWER OFF ULX3S before POWER OFF GPS
+should still result in finalized measurement data
+because at each stop, all files are closed and SD card is unmounted.
+Then WiFi mode should be started two times.
+First start of WiFi mode makes .csv and .flac files.
+Second start of WiFi mode makes .kmz files.</p>
+<p>While car is running, POWER OFF ULX3S before POWER OFF GPS
+will in most cases cause partial or complete loss of currently collected data.
+In some cases it will make all data on SD card unreadable.</p>
+<p>POWER OFF ULX3S during WiFi ZIP/FLAC phase in most cases will
+leave ".part" partial files. Files
+will be usually correctly finalized at next start of WiFi mode.
+In some cases it will make all data on SD card unreadable.</p>
+<p>If SD becomes unreadable, put it in PC and
+try some VFAT data recovery tools and hop for good luck.</p>
 <h1>KML/KMZ Online Viewers</h1>
 <p>No installation needed. From web browser (firefox) Goto</p>
 <p><a href="https://kmzview.com/">KMZView</a> light and fast</p>
