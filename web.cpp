@@ -127,6 +127,12 @@ bool loadFromSdCard(String percent_encoded_path) {
     dataType = "text/html";
   } else if (path.endsWith(".css")) {
     dataType = "text/css";
+  } else if (path.endsWith(".txt")) {
+    dataType = "text/plain";
+  } else if (path.endsWith(".cfg")) {
+    dataType = "text/plain";
+  } else if (path.endsWith(".desktop")) {
+    dataType = "text/plain";
   } else if (path.endsWith(".js")) {
     dataType = "application/javascript";
   } else if (path.endsWith(".png")) {
@@ -144,7 +150,8 @@ bool loadFromSdCard(String percent_encoded_path) {
   } else if (path.endsWith(".xml")) {
     dataType = "text/xml";
   } else if (path.endsWith(".csv")) {
-    dataType = "text/csv";
+    //dataType = "text/csv"; // Android opens with Copilot365 unpractical
+    dataType = "text/plain"; // Android opens with text editor
   } else if (path.endsWith(".apk") || path.endsWith(".apkm") || path.endsWith(".xapk")) {
     dataType = "application/octet-stream";
   } else if (path.endsWith(".kml")) {
