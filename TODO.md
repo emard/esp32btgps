@@ -236,7 +236,11 @@ core
     [ ] prevent back-powering FTDI USB_SERIAL and turning ON BLUE LED
         if USB is not enumerated, HI-Z to all FTDI outputs
 
+web interface
 
+    [ ] Android upload file doesn't work, it tries to make
+        a snapshot instead of choosing local file to upload
+        can't upload .cfg file
 
 tools (wav2kml etc)
 
