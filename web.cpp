@@ -128,7 +128,7 @@ bool loadFromSdCard(String percent_encoded_path) {
   } else if (path.endsWith(".css")) {
     dataType = "text/css";
   } else if (path.endsWith(".txt")) {
-    dataType = "text/plain";
+    dataType = "text/plain;charset=UTF-8";
   } else if (path.endsWith(".cfg")) {
     dataType = "text/plain";
   } else if (path.endsWith(".desktop")) {
