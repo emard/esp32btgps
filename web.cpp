@@ -150,8 +150,8 @@ bool loadFromSdCard(String percent_encoded_path) {
   } else if (path.endsWith(".xml")) {
     dataType = "text/xml";
   } else if (path.endsWith(".csv")) {
-    //dataType = "text/csv"; // Android opens with Copilot365 unpractical
-    dataType = "text/plain"; // Android opens with text editor
+    //dataType = "text/csv;charset=UTF-8"; // Android opens with Copilot365 unpractical
+    dataType = "text/plain;charset=UTF-8"; // Android opens with text editor
   } else if (path.endsWith(".apk") || path.endsWith(".apkm") || path.endsWith(".xapk")) {
     dataType = "application/octet-stream";
   } else if (path.endsWith(".kml")) {
