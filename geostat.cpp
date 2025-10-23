@@ -38,7 +38,9 @@ double haversin(double theta)
   return s*s;
 };
 
-const int Rearth_m = 6378137; // [m] earth radius
+// const int Rearth_m = 6378137; // [m] earth radius
+// from profilog.cfg:
+#define Rearth_m REARTH_M
 
 // formula to check distance
 // input lat/lon in degrees

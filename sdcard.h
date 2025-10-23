@@ -47,8 +47,9 @@ extern float T_OFFSET_ADXRS290_CONF[2] ; // L,R
 extern float T_SLOPE_ADXRS290_CONF[2]  ; // L,R
 extern uint8_t KMH_REPORT1;
 extern uint32_t MM_REPORT1, MM_REPORT2; // mm report each travel distance
-extern uint32_t MM_SLOW;
-extern uint32_t MM_FAST;
+extern uint32_t MM_SLOW; // [mm] to reduce points if slow driving
+extern uint32_t MM_FAST; // [mm] to insert points if fast driving
+extern uint32_t REARTH_M; // [m] earth radius for calculating distance
 extern uint32_t SEGMENT_LENGTH_MM; // [mm] arrows placemarks spacing
 extern uint16_t SNAP_RANGE_M; // [m] x+y < snap_range_m search for existing point
 extern uint32_t SNAP_DECISION_MM; // [mm] after this length decide how to snap, new or existing

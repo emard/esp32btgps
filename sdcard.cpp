@@ -44,6 +44,7 @@ uint32_t ALIGN_TO_REVERSE_MIN_MM = SEGMENT_LENGTH_MM-5000; // [mm] reverse align
 uint32_t ALIGN_TO_REVERSE_MAX_MM = SEGMENT_LENGTH_MM+5000; // [mm] reverse alignment max
 uint32_t IGNORE_TOO_LARGE_JUMP_MM = 40000; // [mm] ignore points from jumps larger than this
 uint32_t START_SEARCH_FOR_SNAP_POINT_AFTER_TRAVEL_MM = 40000; // [mm] after this long travel search for new snap
+uint32_t REARTH_M = 6378137; // [m] earth radius to calculate distance
 // uint16_t snap_point_max = 2000, // number of snap points, 32 byte each
 int mode_obd_gps = 0; // alternates 0:OBD and 1:GPS
 uint8_t gps_obd_configured = 0; // existence of (1<<0):OBD config, (1<<1):GPS config
@@ -925,6 +926,7 @@ void read_cfg(void)
     else if(varname.equalsIgnoreCase("kmh_start")) KMH_START = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("kmh_stop")) KMH_STOP = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("kmh_btn" )) KMH_BTN = strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("rearth_m" )) REARTH_M = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("arrow_m")) SEGMENT_LENGTH_MM = 1000*strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("snap_range_m")) SNAP_RANGE_M = strtol(varvalue.c_str(), NULL,10);
     else if(varname.equalsIgnoreCase("snap_decision_m")) SNAP_DECISION_MM = 1000*strtol(varvalue.c_str(), NULL,10);
@@ -979,7 +981,8 @@ void read_cfg(void)
   Serial.print("M_SLOW      : "); Serial.println(macstr);
   sprintf(macstr, "%.1f", MM_FAST*1.0E-3);
   Serial.print("M_FAST      : "); Serial.println(macstr);
-  Serial.print("SEGMENT_LENGTH_M: "); Serial.println(SEGMENT_LENGTH_MM/1000);
+  Serial.print("REARTH_M: "); Serial.println(REARTH_M);
+  Serial.print("ARROW_M: "); Serial.println(SEGMENT_LENGTH_MM/1000);
   Serial.print("SNAP_RANGE_M: "); Serial.println(SNAP_RANGE_M);
   Serial.print("SNAP_DECISION_M: "); Serial.println(SNAP_DECISION_MM/1000);
   Serial.print("ALIGN_TO_REVERSE_MIN_M: "); Serial.println(ALIGN_TO_REVERSE_MIN_MM/1000);
