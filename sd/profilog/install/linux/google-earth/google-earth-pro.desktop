@@ -1,3 +1,4 @@
+# /home/$USER/.local/share/applications/google-earth-pro.desktop
 [Desktop Entry]
 Version=1.0
 Name=Google Earth
@@ -10,3 +11,5 @@ Icon=google-earth-pro
 Type=Application
 Categories=Application;Network
 MimeType=application/vnd.google-earth.kml+xml;application/vnd.google-earth.kmz;application/earthviewer;application/keyhole
+
+# cp google-earth-pro.desktop ~/.local/share/applications/
