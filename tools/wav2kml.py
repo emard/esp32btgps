@@ -681,7 +681,7 @@ if len(argv): # filename in kml hame
   basename=argv[1][argv[1].rfind("/")+1:argv[1].rfind(".")]
   if len(basename):
     name+=" "+basename
-print(kml.header(name=name,version="wav2kml: 2.0.2"),end="")
+print(kml.header(name=name,version="wav2kml: 2.0.3"),end="")
 
 # buffer to read wav
 b=bytearray(12)
