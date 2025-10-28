@@ -403,7 +403,8 @@ class snap:
   def __init__(self):
     # cut data into segment length [m]
     segment_length = 100.0    # [m]
-    segment_snap   =  15.0    # [m]
+    search_snap    =  16.0    # [m] searching for snap during snapstate 0
+    exit_snap      =   8.0    # [m] exit from snap during snapstate 2
     start_length   =   0.0    # analyze from this length [m]
     stop_length    =   1.0e9  # analyze up to this length [m]
 
@@ -415,7 +416,8 @@ class snap:
     # multiple passes over the
     # same track will snap to same points
     # use 0 or negative segment_snap to disable snapping
-    self.segment_snap = segment_snap
+    self.search_snap = search_snap
+    self.exit_snap   = exit_snap
 
     self.start_length = start_length
     self.stop_length = stop_length
@@ -535,7 +537,7 @@ class snap:
         # so TODO: interpolate back in the current gps path to find the
         # closest point near the snap point - reset the segment length too
         if snapstate == 0:
-          if distance_m < self.segment_snap:
+          if distance_m < self.search_snap:
             # found a point within snap range
             if distance_m < prev_distance:
               snapstate = 1 # approaching a snap point
@@ -557,7 +559,7 @@ class snap:
             #self.cut_at_length = self.prev_gps_track_length + self.current_gps_segment_length - 1.0e3
             #print("snap to ", self.cut_at_length)
         elif snapstate >= 2:
-          if distance_m > self.segment_snap:
+          if distance_m > self.exit_snap:
             snapstate = 0
       else:
         # no nearest index -> snap state = 0
