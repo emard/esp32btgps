@@ -3,6 +3,7 @@
 # ./wav2kml.py 20210701.wav > 20210701.kml
 
 from sys import argv
+from subprocess import Popen, PIPE
 from colorsys import hsv_to_rgb
 from math import pi,ceil,sqrt,sin,cos,tan,asin,atan2
 from functools import reduce
@@ -705,9 +706,13 @@ if sampling_length != 0.05:
 #print(slope)
 
 for wavfile in argv[1:]:
-  f = open(wavfile, "rb")
+  if wavfile.lower().endswith(".wav"):
+    f = open(wavfile, "rb")
+  if wavfile.lower().endswith(".flac"):
+    f = Popen(["flac", "--silent", "--decode", wavfile, "--stdout"], stdout=PIPE, shell=False, text=False).stdout
   seek = 44+0*12
-  f.seek(seek)
+  #f.seek(seek)
+  f.read(seek)
   i = 0 # for PPS signal tracking
   prev_i = 0
   prev_corr_i = 0
