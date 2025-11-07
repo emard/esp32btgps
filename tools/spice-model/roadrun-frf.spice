@@ -81,14 +81,19 @@ XBPR  0  ROAD BPR_AXLE  BPR_BODY    QCAR_BPR
 
 * ac lin <number-of-points> <begin freq> <end freq>
 
-** axle and body velocity response to road velocity vs frequency
+** axle and body velocity response to road vertical velocity vs frequency
 ac lin 1000 0.01 40
 * hsri is used for IRI. bpr is for comparison
 * plot hsri,bpr frf^2 to compare hsri and bpr
 *plot (mag(v(hsri_body,hsri_axle))/mag(v(road)))^2, (mag(v(bpr_body,bpr_axle))/mag(v(road)))^2
 * plot hsri,bpr frf to compare hsri and bpr
 plot mag(v(hsri_axle,hsri_body))/mag(v(road)), mag(v(bpr_axle,bpr_body))/mag(v(road))
+* plot velocity response to road vertical velocity
 plot mag(v(hsri_axle))/mag(v(road)), mag(v(hsri_axle,hsri_body))/mag(v(hsri_axle)), mag(v(hsri_body))/mag(v(road)), mag(v(hsri_axle,hsri_body))/mag(v(road))
+* plot inverse response - conversion from axle to road vertical velocity
+*plot mag(v(road))/mag(v(hsri_axle))
+* plot inverse response - conversion from axle to road vertical velocity
+plot mag(v(road))/mag(v(hsri_body))
 set filetype = ascii
 write frf_road_axle_car.txt mag(v(hsri_axle))/mag(v(road))
 write frf_road_body_car.txt mag(v(hsri_body))/mag(v(road))
