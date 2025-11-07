@@ -73,21 +73,22 @@ XBPR  0  ROAD BPR_AXLE  BPR_BODY    QCAR_BPR
 * black text and grid (color1)
 *set color1 = black
 
-* WHITE ON BLACK
+* WHITE ON BLACK (default)
 * white background (color0)
-set color0 = black
+*set color0 = black
 * black text and grid (color1)
-set color1 = white
+*set color1 = white
 
 * ac lin <number-of-points> <begin freq> <end freq>
 
-** axle-to-body vs. road
+** axle and body velocity response to road velocity vs frequency
 ac lin 1000 0.01 40
-* plot hsri,bpr frf^2
-* plot (mag(v(hsri_body,hsri_axle))/mag(v(road)))^2, (mag(v(bpr_body,bpr_axle))/mag(v(road)))^2
-* plot hsri,bpr frf when using road profile as input
+* hsri is used for IRI. bpr is for comparison
+* plot hsri,bpr frf^2 to compare hsri and bpr
+*plot (mag(v(hsri_body,hsri_axle))/mag(v(road)))^2, (mag(v(bpr_body,bpr_axle))/mag(v(road)))^2
+* plot hsri,bpr frf to compare hsri and bpr
 plot mag(v(hsri_axle,hsri_body))/mag(v(road)), mag(v(bpr_axle,bpr_body))/mag(v(road))
-plot mag(v(hsri_axle))/mag(v(road)), mag(v(hsri_axle,hsri_body))/mag(v(hsri_axle)), mag(v(hsri_body))/mag(v(road)),
+plot mag(v(hsri_axle))/mag(v(road)), mag(v(hsri_axle,hsri_body))/mag(v(hsri_axle)), mag(v(hsri_body))/mag(v(road)), mag(v(hsri_axle,hsri_body))/mag(v(road))
 set filetype = ascii
 write frf_road_axle_car.txt mag(v(hsri_axle))/mag(v(road))
 write frf_road_body_car.txt mag(v(hsri_body))/mag(v(road))
