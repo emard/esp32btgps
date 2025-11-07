@@ -14,11 +14,11 @@ m_car: 1e-3;
 ms: m_car/4;
 
 /* relations */
-kt_ms: 653.0; /* tyre stiffness to body mass */
-ks_ms:  62.3; /* tyre to body spring stiffness to body mass */
-mt_ms: 0.15;  /* tyre to body mass */
-cs_ms: 6.0;   /* damping of shock absorber to body mass */
-ct_ms: 0;     /* damping of tyre to body mass */
+kt_ms: 643.0; /* tyre stiffness to body mass */
+ks_ms: 128.7; /* tyre to body spring stiffness to body mass */
+mt_ms: 0.162; /* tyre to body mass */
+cs_ms:  3.86; /* damping of shock absorber to body mass */
+ct_ms:     0; /* damping of tyre to body mass */
 
 /* tyre stiffness -> inductance */
 lt: float(1/(kt_ms * ms));
