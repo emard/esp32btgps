@@ -1,0 +1,136 @@
+* quarter car run over sinewave FM surface
+
+* this will plot FRF function |arv(body,axle)/arv(road)|^2 = |H(f)|^2
+* arv = average rectified velocity
+
+* see http://lpsa.swarthmore.edu/Analogs/ElectricalMechanicalAnalogs.html
+
+* simulated axle acceleration 1 mA = 1 m/s^2
+* SFFM(VO VA CARRIER_FREQ mod_index MODULATION_FREQ) 
+IACCEL  0 ZSPEEDA1  0mA  AC 1mA  SFFM(0mA 10mA 10Hz 8 0.5Hz)
+* ampermeter for plotting
+VZAXLE ZSPEEDA1 ZSPEEDA 0V
+* integrator converts axle z-accel to z-speed 1 V = 1 m/s
+CINTEG  ZSPEEDA 0  1mF
+* leakage resistor stabilizes integration and helps to return to zero
+RINTEG  ZSPEEDA 0  1k
+* amplifier to transfer weak voltage (meaning speed) to the model
+* (voltage controlled voltage source, gain=1)
+*EAMP   HSRI_AXLE 0  ZSPEEDA 0   1
+*EAMP   BPR_AXLE  0  ZSPEEDA 0   1
+* only one EAMP can be enabled
+
+* simulated road z-profile 1mA = 1mm
+*IPROFILE 0 ZSPEED1   0mA  AC 1mA  SFFM(0mA 3mA 10Hz 8 0.5Hz)
+* this will result in cca IRI=6
+*IPROFILE 0 ZSPEED1   0mA  AC 1mA  SFFM(0mA 3mA 7.5Hz 0 0.5Hz)
+* this two will result in about IRI=8.1
+* validation: IRI=7.93 (proval 3.4)
+IPROFILE1 0 ZSPEED1   0mA  AC 1mA  SFFM(0mA 3mA 10Hz  1.8868  1.17777Hz)
+IPROFILE2 0 ZSPEED1   0mA  AC 0mA  SFFM(0mA 2mA  2Hz  1.8182  0.24444Hz)
+* ampermeter
+VPROFILE ZSPEED1 ZSPEED 0V
+* send profile current to derivator to get speed -> 1V = 1 m/s
+LDERIV ZSPEED 0   1H
+* amplify speed and send it as road z-speed to quarter car model
+EAMP  ROAD 0  ZSPEED 0   1
+
+* unitary source, 1V for AC freq sweep
+* speed of the road surface in Z-direction
+* (perpendicular to road)
+* SIN(VO VA FREQ TD THETA PHASE). (theta is damping factor)
+*VZ  ROAD 0  0V  AC 1V  SIN(0V 1V 10Hz 0ms 0 0)
+* single frequency FM
+* SFFM(VO VA CARRIER_FREQ mod_index MODULATION_FREQ) 
+* no modulation (pure sinewave)
+*VZ  ROAD 0  0V  AC 1V  SFFM(0V 1V 10Hz 0 0.5Hz)
+* large modulation
+*VZ  ROAD 0  0V  AC 1V  SFFM(0V 1V 10Hz 8 0.5Hz)
+
+XHSRI 0  ROAD HSRI_AXLE HSRI_BODY   QCAR_HSRI
+XBPR  0  ROAD BPR_AXLE  BPR_BODY    QCAR_BPR
+
+* the model
+* force - current                    F = I
+* mass - capacity                    m = C
+* spring stiffness - 1/inductance    k = 1/L
+* damper - 1/resistor                c = 1/R
+* velocity - voltage                 v = V
+
+.INCLUDE qcar_hsri.spice
+.INCLUDE qcar_bpr.spice
+
+.TRAN 1us 2ms 0ms 1us UIC
+.OPTIONS reltol=0.001 abtol=1e-6 vntol=1e-3 itl1=20000 temp=25
+.END
+
+* .control card accepts commands like from interactive mode see: 
+* http://bwrcs.eecs.berkeley.edu/Classes/IcBook/SPICE/UserGuide/interactive_fr.html
+.CONTROL
+* BLACK ON WHITE (print on paper)
+* white background (color0)
+*set color0 = white
+* black text and grid (color1)
+*set color1 = black
+
+* WHITE ON BLACK
+* white background (color0)
+set color0 = black
+* black text and grid (color1)
+set color1 = white
+
+* ac lin <number-of-points> <begin freq> <end freq>
+
+** axle-to-body vs. road
+ac lin 1000 0.01 40
+* plot hsri,bpr frf^2
+* plot (mag(v(hsri_body,hsri_axle))/mag(v(road)))^2, (mag(v(bpr_body,bpr_axle))/mag(v(road)))^2
+* plot hsri,bpr frf when using road profile as input
+plot mag(v(hsri_axle,hsri_body))/mag(v(road)), mag(v(bpr_axle,bpr_body))/mag(v(road))
+plot mag(v(hsri_axle))/mag(v(road)), mag(v(hsri_axle,hsri_body))/mag(v(hsri_axle)), mag(v(hsri_body))/mag(v(road)),
+set filetype = ascii
+write frf_road_axle_car.txt mag(v(hsri_axle))/mag(v(road))
+write frf_road_body_car.txt mag(v(hsri_body))/mag(v(road))
+* when using hsri axle acceleration as input
+* plot mag(v(hsri_body,hsri_axle))/mag(v(hsri_axle)), mag(v(bpr_body,bpr_axle))/mag(v(road))
+* check axle-absolute frf
+* plot mag(v(hsri_axle))
+
+* a frf axle-to-body vs. axle-absolute
+*plot mag(v(hsri_body,hsri_axle))/mag(v(hsri_axle)) 
+* plot average rectified velocity (ARV), IRI = ARV/22.22
+
+* tran <printing_step> <end> <start> <max_calculation_step> uic
+
+* 4.5 seconds of driving with 22.222m/s is 100m
+tran 1ms 4.5s 0s 1ms uic
+* 22.5 seconds is 500m
+* tran 1ms 22.5s 0s 5ms uic
+
+* output postscript
+set hcopydevtype=postscript
+set hcopypscolor=true
+hardcopy iri.ps 1000*avg(abs(v(hsri_axle,hsri_body)))/22.22222 xl 1ms 5s
+
+* plot average rectified velocity (ARV), IRI = ARV/22.22
+*plot v(road),v(hsri_axle,hsri_body),avg(abs(v(hsri_axle,hsri_body)))
+* plot average squared velocity (ASV)
+* plot v(road),v(hsri_axle,hsri_body),2*avg((v(hsri_axle,hsri_body))^2)
+* conclusion
+* H is response amplitude
+* H^2 is 2*ASV (double average squared velocity)
+* IRI = ARV[m/s] / 22.222222[m/s]
+* plot iri in mm/m
+* when using road profile as input
+plot avg(abs(v(hsri_axle,hsri_body)))/22.22222,avg(abs(v(bpr_axle,bpr_body)))/22.22222,i(vprofile)
+* when using axle acceleration as input
+* plot i(vzaxle)*1e-1,v(hsri_axle)*1e-2,avg(abs(v(hsri_axle,hsri_body)))/22.22222
+* integrator test
+*plot v(road)
+* derivator test
+*plot v(zspeed)
+
+* plot additional axle speed
+*plot v(road),v(hsri_axle,hsri_body),avg(abs(v(hsri_axle,hsri_body))),v(hsri_axle)
+
+.ENDC
