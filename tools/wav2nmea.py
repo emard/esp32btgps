@@ -3,6 +3,7 @@
 # ./wav2nmea.py 20210701.wav > 20210701.nmea
 
 from sys import argv
+from subprocess import Popen, PIPE
 from functools import reduce
 from operator import xor
 
@@ -11,10 +12,13 @@ b=bytearray(12)
 mvb=memoryview(b)
 
 for wavfile in argv[1:]:
+  if wavfile.lower().endswith(".wav"):
+    f = open(wavfile, "rb")
+  if wavfile.lower().endswith(".flac"):
+    f = Popen(["flac", "--silent", "--decode", wavfile, "--stdout"], stdout=PIPE, shell=False, text=False).stdout
   i = 0
-  f = open(wavfile, "rb")
   seek = 44+0*12
-  f.seek(seek)
+  f.read(seek)
   nmea=bytearray(0)
   while f.readinto(mvb):
     seek += 12 # bytes per sample
