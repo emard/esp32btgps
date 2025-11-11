@@ -2,7 +2,9 @@
 
 for x in $*
 do
-  ln -s $x /tmp/doc.kml
-  zip -j $(dirname $x)/$(basename $x .kml).kmz /tmp/doc.kml
-  rm /tmp/doc.kml
+  rm -f /tmp/doc.kml
+  cp $x /tmp/doc.kml
+  zip --junk-paths $(dirname $x)/$(basename $x .kml).kmz.part /tmp/doc.kml
+  mv $(dirname $x)/$(basename $x .kml).kmz.part $(dirname $x)/$(basename $x .kml).kmz
+  rm -f /tmp/doc.kml
 done
