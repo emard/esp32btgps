@@ -92,8 +92,8 @@ plot mag(v(hsri_axle,hsri_body))/mag(v(road)), mag(v(bpr_axle,bpr_body))/mag(v(r
 plot mag(v(hsri_axle))/mag(v(road)), mag(v(hsri_axle,hsri_body))/mag(v(hsri_axle)), mag(v(hsri_body))/mag(v(road)), mag(v(hsri_axle,hsri_body))/mag(v(road))
 * plot inverse response - conversion from axle to road vertical velocity
 *plot mag(v(road))/mag(v(hsri_axle))
-* plot inverse response - conversion from axle to road vertical velocity
-plot mag(v(road))/mag(v(hsri_body))
+* plot inverse response dB - conversion from axle to road vertical velocity
+plot 10*log10(mag(v(road))/mag(v(hsri_body)))
 set filetype = ascii
 write frf_road_axle_car.txt mag(v(hsri_axle))/mag(v(road))
 write frf_road_body_car.txt mag(v(hsri_body))/mag(v(road))
