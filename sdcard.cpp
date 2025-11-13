@@ -908,8 +908,8 @@ void read_cfg(void)
     else if(varname.equalsIgnoreCase("log_mode")) log_wav_kml = strtol(varvalue.c_str(), NULL,0); // dec or hex 0x
     else if(varname.equalsIgnoreCase("red_iri" )) red_iri = strtof(varvalue.c_str(), NULL);
     else if(varname.equalsIgnoreCase("g_range" )) G_RANGE = strtol(varvalue.c_str(), NULL,10);
-    else if(varname.equalsIgnoreCase("filter_adxl355" )) FILTER_ADXL355_CONF  = strtol(varvalue.c_str(), NULL,10);
-    else if(varname.equalsIgnoreCase("filter_adxrs290")) FILTER_ADXRS290_CONF = strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("filter_adxl355" )) FILTER_ADXL355_CONF  = strtol(varvalue.c_str(), NULL,0); // dec or hex 0x
+    else if(varname.equalsIgnoreCase("filter_adxrs290")) FILTER_ADXRS290_CONF = strtol(varvalue.c_str(), NULL,0); // dec or hex 0x
     else if(varname.equalsIgnoreCase("tl_offset_adxl355" )) T_OFFSET_ADXL355_CONF[0]  = strtof(varvalue.c_str(), NULL);
     else if(varname.equalsIgnoreCase("tl_slope_adxl355" )) T_SLOPE_ADXL355_CONF[0]  = strtof(varvalue.c_str(), NULL);
     else if(varname.equalsIgnoreCase("tr_offset_adxl355" )) T_OFFSET_ADXL355_CONF[1]  = strtof(varvalue.c_str(), NULL);
@@ -961,8 +961,8 @@ void read_cfg(void)
   char chr_red_iri[20]; sprintf(chr_red_iri, "%.1f", red_iri);
   Serial.print("RED_IRI  : "); Serial.println(chr_red_iri);
   Serial.print("G_RANGE  : "); Serial.println(G_RANGE);
-  Serial.print("FILTER_ADXL355     : "); Serial.println(FILTER_ADXL355_CONF);
-  Serial.print("FILTER_ADXRS290    : "); Serial.println(FILTER_ADXRS290_CONF);
+  Serial.print("FILTER_ADXL355     : 0x"); Serial.println(FILTER_ADXL355_CONF, HEX);
+  Serial.print("FILTER_ADXRS290    : 0x"); Serial.println(FILTER_ADXRS290_CONF, HEX);
   for(int i = 0; i < 2; i++)
   {
     char lr = i ? 'R' : 'L';

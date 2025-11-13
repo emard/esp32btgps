@@ -771,8 +771,14 @@ void init_srvz_iri(void)
     // 1e-6 for srvz [um/m]
     // 1e-3 = 1e3 * 1e-6
     // 0.5e-6 = (1e-3 * 0.05/100) 2g range, coefficients_pack.vhd: interval_mm :=  50; length_m := 100
-    srvz_iri100 = G_RANGE == 2 ? 0.5e-6 : G_RANGE == 4 ? 1.0e-6 : /* G_RANGE == 8 ? */  2.0e-6 ; // normal IRI-100
-    srvz2_iri20 = G_RANGE == 2 ? 2.5e-6 : G_RANGE == 4 ? 5.0e-6 : /* G_RANGE == 8 ? */ 10.0e-6 ; // normal IRI-20
+    //adjust for variable G_RANGE to result in same iri (used in v4.4.1 and earlier)
+    //srvz_iri100 = G_RANGE == 2 ? 0.5e-6 : G_RANGE == 4 ? 1.0e-6 : /* G_RANGE == 8 ? */  2.0e-6 ; // normal IRI-100
+    //srvz2_iri20 = G_RANGE == 2 ? 2.5e-6 : G_RANGE == 4 ? 5.0e-6 : /* G_RANGE == 8 ? */ 10.0e-6 ; // normal IRI-20
+    // always calculate as if G_RANGE = 8 : iri increases 2x when G_RANGE is decreased 2x
+    // In profilog.cfg use G_RANGE : 2 and FILTER_ADXL355 : 0x23
+    // amplify high freq for body-to-road conversion (uaed in v4.4.2)
+    srvz_iri100 = /* G_RANGE == 2 ? 0.5e-6 : G_RANGE == 4 ? 1.0e-6 : */ /* G_RANGE == 8 ? */  2.0e-6 ; // normal IRI-100
+    srvz2_iri20 = /* G_RANGE == 2 ? 2.5e-6 : G_RANGE == 4 ? 5.0e-6 : */ /* G_RANGE == 8 ? */ 10.0e-6 ; // normal IRI-20
     // 2.5e-6 = (1e-3 * 0.25/100) 2g range, coefficients_pack.vhd: interval_mm := 250; length_m := 100
     // 2.5e-6 = (1e-3 * 0.05/20 ) 2g range, coefficients_pack.vhd: interval_mm :=  50; length_m :=  20
     //srvz_iri100 = G_RANGE == 2 ?  2.5e-6 : G_RANGE == 4 ?  5.0e-6 : /* G_RANGE == 8 ? */ 10.0e-6 ;
