@@ -176,6 +176,7 @@ esp32
     [ ] load .sta at boot and try to continue with arrows
     [ ] configurable earth radius for calculating distance
     [ ] configurable number of stat points
+    [ ] use Serial.printf() in sdcard.cpp printing profilog.cfg parameters
 
 core
 
