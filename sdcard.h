@@ -14,7 +14,7 @@ extern int speed_kmh; // km/h speed
 extern int fast_enough; // logging flag when fast enough
 extern int mode_obd_gps;
 extern uint8_t gps_obd_configured;
-extern float srvz_iri100, iri[2], iriavg, srvz2_iri20, iri20[2], iri20avg;
+extern float iri[2], iriavg, iri20[2], iri20avg;
 extern float temp[2]; // sensor temperature
 extern char iri2digit[4];
 extern char iri99avg2digit[4];
@@ -39,6 +39,7 @@ extern uint8_t log_wav_kml; // 1-wav 2-kml 3-both
 extern uint8_t KMH_START, KMH_STOP;
 extern uint8_t KMH_BTN;
 extern uint8_t G_RANGE; // +-2/4/8 g sensor range for reading +-32000
+extern float   CALIB[2]; // calibration factors for IRI output
 extern uint8_t FILTER_ADXL355_CONF; // see datasheet adxl355 p.38 0:1kHz ... 10:0.977Hz
 extern uint8_t FILTER_ADXRS290_CONF; // see datasheet adxrs290 p.11 0:480Hz ... 7:20Hz
 extern float T_OFFSET_ADXL355_CONF[2]  ; // L,R

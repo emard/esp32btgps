@@ -169,6 +169,7 @@ int travel_report2, travel_report2_prev = 0; // previous  20 m travel
 int session_log = 0; // request new timestamp filename when reconnected
 int speak_search = 0; // 0 - don't speak search, 1-search gps
 uint32_t srvz[4];
+float srvz_iri100[2], srvz2_iri20[2];
 int stopcount = 0;
 
 // form nmea and travel in GPS mode;
@@ -763,8 +764,10 @@ void handle_fast_enough(void)
 void init_srvz_iri(void)
 {
   // default ADXRS290, ignore G_RANGE, use as if G_RANGE=2
-  srvz_iri100 = 0.5e-6;
-  srvz2_iri20 = 2.5e-6;
+  srvz_iri100[0] = 0.5e-6 * CALIB[0];
+  srvz_iri100[1] = 0.5e-6 * CALIB[1];
+  srvz2_iri20[0] = 2.5e-6 * CALIB[0];
+  srvz2_iri20[1] = 2.5e-6 * CALIB[1];
   if(adxl_devid_detected == 0xED) // ADXL355
   {
     // 1e3  for IRI  [mm/m]
@@ -772,8 +775,10 @@ void init_srvz_iri(void)
     // 1e-3 = 1e3 * 1e-6
     // 0.5e-6 = (1e-3 * 0.05/100) 2g range, coefficients_pack.vhd: interval_mm :=  50; length_m := 100
     //adjust for variable G_RANGE to result in same iri
-    srvz_iri100 = G_RANGE == 2 ? 0.5e-6 : G_RANGE == 4 ? 1.0e-6 : /* G_RANGE == 8 ? */  2.0e-6 ; // normal IRI-100
-    srvz2_iri20 = G_RANGE == 2 ? 2.5e-6 : G_RANGE == 4 ? 5.0e-6 : /* G_RANGE == 8 ? */ 10.0e-6 ; // normal IRI-20
+    srvz_iri100[0] = (G_RANGE == 2 ? 0.5e-6 : G_RANGE == 4 ? 1.0e-6 : /* G_RANGE == 8 ? */  2.0e-6) * CALIB[0]; // normal IRI-100
+    srvz_iri100[1] = (G_RANGE == 2 ? 0.5e-6 : G_RANGE == 4 ? 1.0e-6 : /* G_RANGE == 8 ? */  2.0e-6) * CALIB[1]; // normal IRI-100
+    srvz2_iri20[0] = (G_RANGE == 2 ? 2.5e-6 : G_RANGE == 4 ? 5.0e-6 : /* G_RANGE == 8 ? */ 10.0e-6) * CALIB[0]; // normal IRI-20
+    srvz2_iri20[1] = (G_RANGE == 2 ? 2.5e-6 : G_RANGE == 4 ? 5.0e-6 : /* G_RANGE == 8 ? */ 10.0e-6) * CALIB[1]; // normal IRI-20
     // always calculate as if G_RANGE = 8 : iri increases 2x when G_RANGE is decreased 2x
     // In profilog.cfg use G_RANGE : 2 and FILTER_ADXL355 : 0x23
     // amplify high freq for body-to-road conversion
@@ -792,14 +797,14 @@ void init_srvz_iri(void)
 void get_iri(void)
 {
   spi_srvz_read(srvz);
-  iri[0] = srvz[0]*srvz_iri100;
-  iri[1] = srvz[1]*srvz_iri100;
+  iri[0] = srvz[0]*srvz_iri100[0];
+  iri[1] = srvz[1]*srvz_iri100[1];
   iriavg = sensor_check_status == 0 ? 0.0
          : sensor_check_status == 1 ? iri[0]
          : sensor_check_status == 2 ? iri[1]
          : (iri[0]+iri[1])/2;  // 3, average of both sensors
-  iri20[0] = srvz[2]*srvz2_iri20;
-  iri20[1] = srvz[3]*srvz2_iri20;
+  iri20[0] = srvz[2]*srvz2_iri20[0];
+  iri20[1] = srvz[3]*srvz2_iri20[1];
   iri20avg = sensor_check_status == 0 ? 0.0
          : sensor_check_status == 1 ? iri20[0]
          : sensor_check_status == 2 ? iri20[1]

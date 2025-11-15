@@ -49,7 +49,7 @@ uint32_t REARTH_M = 6378137; // [m] earth radius to calculate distance
 int mode_obd_gps = 0; // alternates 0:OBD and 1:GPS
 uint8_t gps_obd_configured = 0; // existence of (1<<0):OBD config, (1<<1):GPS config
 uint32_t MS_SILENCE_RECONNECT = 0; // [ms] milliseconds of silence to reconnect
-float srvz_iri100, iri[2], iriavg, srvz2_iri20, iri20[2], iri20avg;
+float iri[2], iriavg, iri20[2], iri20avg;
 float temp[2]; // sensor temperature
 char iri2digit[4] = "0.0";
 char iri99avg2digit[4] = "0.0";
@@ -59,6 +59,7 @@ double last_dlatlon[2];
 struct tm tm, tm_session; // tm_session gives new filename_data when reconnected
 uint8_t log_wav_kml = 3; // 1-wav 2-kml 3-both 4-csv 16-flac 32-kmz
 uint8_t G_RANGE = 8; // +-2/4/8 g sensor range (at digital reading +-32000)
+float   CALIB[2] = {/*0:L*/1.0, /*1:R*/1.0}; // calibration factors for IRI output
 uint8_t FILTER_ADXL355_CONF = 0; // see datasheet adxl355 p.38 0:1kHz ... 10:0.977Hz
 uint8_t FILTER_ADXRS290_CONF = 0; // see datasheet adxrs290 p.11 0:480Hz ... 7:20Hz
 float   T_OFFSET_ADXL355_CONF[2]  = {0.0, 0.0}; // L,R
@@ -908,6 +909,8 @@ void read_cfg(void)
     else if(varname.equalsIgnoreCase("log_mode")) log_wav_kml = strtol(varvalue.c_str(), NULL,0); // dec or hex 0x
     else if(varname.equalsIgnoreCase("red_iri" )) red_iri = strtof(varvalue.c_str(), NULL);
     else if(varname.equalsIgnoreCase("g_range" )) G_RANGE = strtol(varvalue.c_str(), NULL,10);
+    else if(varname.equalsIgnoreCase("calib_l" )) CALIB[0] = strtof(varvalue.c_str(), NULL);
+    else if(varname.equalsIgnoreCase("calib_r" )) CALIB[1] = strtof(varvalue.c_str(), NULL);
     else if(varname.equalsIgnoreCase("filter_adxl355" )) FILTER_ADXL355_CONF  = strtol(varvalue.c_str(), NULL,0); // dec or hex 0x
     else if(varname.equalsIgnoreCase("filter_adxrs290")) FILTER_ADXRS290_CONF = strtol(varvalue.c_str(), NULL,0); // dec or hex 0x
     else if(varname.equalsIgnoreCase("tl_offset_adxl355" )) T_OFFSET_ADXL355_CONF[0]  = strtof(varvalue.c_str(), NULL);
@@ -942,16 +945,13 @@ void read_cfg(void)
       Serial.println(linecount);
     }
   }
-  char macstr[80];
   Serial.print("GPS_NAME : "); Serial.println(GPS_NAME);
-  sprintf(macstr, "GPS_MAC  : %02X:%02X:%02X:%02X:%02X:%02X",
+  Serial.printf("GPS_MAC  : %02X:%02X:%02X:%02X:%02X:%02X\n",
     GPS_MAC[0], GPS_MAC[1], GPS_MAC[2], GPS_MAC[3], GPS_MAC[4], GPS_MAC[5]);
-  Serial.println(macstr);
   Serial.print("GPS_PIN  : "); Serial.println(GPS_PIN);
   Serial.print("OBD_NAME : "); Serial.println(OBD_NAME);
-  sprintf(macstr, "OBD_MAC  : %02X:%02X:%02X:%02X:%02X:%02X",
+  Serial.printf("OBD_MAC  : %02X:%02X:%02X:%02X:%02X:%02X\n",
     OBD_MAC[0], OBD_MAC[1], OBD_MAC[2], OBD_MAC[3], OBD_MAC[4], OBD_MAC[5]);
-  Serial.println(macstr);
   Serial.print("OBD_PIN  : "); Serial.println(OBD_PIN);
   Serial.print("SILENCE_RECONNECT  : "); Serial.println(MS_SILENCE_RECONNECT/1000);
   for(int i = 0; i < ap_n; i++)
@@ -961,26 +961,22 @@ void read_cfg(void)
   char chr_red_iri[20]; sprintf(chr_red_iri, "%.1f", red_iri);
   Serial.print("RED_IRI  : "); Serial.println(chr_red_iri);
   Serial.print("G_RANGE  : "); Serial.println(G_RANGE);
+  Serial.printf("CALIB_L  : %.3f\n", CALIB[0]);
+  Serial.printf("CALIB_R  : %.3f\n", CALIB[1]);
   Serial.print("FILTER_ADXL355     : 0x"); Serial.println(FILTER_ADXL355_CONF, HEX);
   Serial.print("FILTER_ADXRS290    : 0x"); Serial.println(FILTER_ADXRS290_CONF, HEX);
   for(int i = 0; i < 2; i++)
   {
     char lr = i ? 'R' : 'L';
-    sprintf(macstr, "T%c_OFFSET_ADXL355  : %.1f", lr, T_OFFSET_ADXL355_CONF[i]);
-    Serial.println(macstr);
-    sprintf(macstr, "T%c_SLOPE_ADXL355   : %.1f", lr, T_SLOPE_ADXL355_CONF[i]);
-    Serial.println(macstr);
-    sprintf(macstr, "T%c_OFFSET_ADXRS290 : %.1f", lr, T_OFFSET_ADXRS290_CONF[i]);
-    Serial.println(macstr);
-    sprintf(macstr, "T%c_SLOPE_ADXRS290  : %.1f", lr, T_SLOPE_ADXRS290_CONF[i]);
-    Serial.println(macstr);
+    Serial.printf("T%c_OFFSET_ADXL355  : %.1f\n", lr, T_OFFSET_ADXL355_CONF[i]);
+    Serial.printf("T%c_SLOPE_ADXL355   : %.1f\n", lr, T_SLOPE_ADXL355_CONF[i]);
+    Serial.printf("T%c_OFFSET_ADXRS290 : %.1f\n", lr, T_OFFSET_ADXRS290_CONF[i]);
+    Serial.printf("T%c_SLOPE_ADXRS290  : %.1f\n", lr, T_SLOPE_ADXRS290_CONF[i]);
   }
   Serial.print("M_REPORT1   : "); Serial.println(MM_REPORT1/1000);
   Serial.print("M_REPORT2   : "); Serial.println(MM_REPORT2/1000);
-  sprintf(macstr, "%.1f", MM_SLOW*1.0E-3);
-  Serial.print("M_SLOW      : "); Serial.println(macstr);
-  sprintf(macstr, "%.1f", MM_FAST*1.0E-3);
-  Serial.print("M_FAST      : "); Serial.println(macstr);
+  Serial.printf("M_SLOW      : %.1f\n", MM_SLOW*1.0E-3);
+  Serial.printf("M_FAST      : %.1f\n", MM_FAST*1.0E-3);
   Serial.print("REARTH_M: "); Serial.println(REARTH_M);
   Serial.print("ARROW_M: "); Serial.println(SEGMENT_LENGTH_MM/1000);
   Serial.print("SNAP_RANGE_M: "); Serial.println(SNAP_RANGE_M);
