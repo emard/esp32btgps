@@ -177,6 +177,25 @@ esp32
     [ ] configurable earth radius for calculating distance
     [ ] configurable number of stat points
     [ ] use Serial.printf() in sdcard.cpp printing profilog.cfg parameters
+    [ ] local kmz icon
+
+You have an absolute reference to the file in your KML file (C:\Users\Steve...). If image is inside your KMZ then you should reference the relative file location instead. Also, the file path C:... is not a valid URL which should be of the form http:// or file:// if using an absolute URL.
+
+Let's assume the KMZ file has two entries (in this order):
+
+    doc.kml
+    IMG_20121025_163656.jpg
+
+The IconStyle within the doc.kml should be rewritten like this:
+
+<IconStyle>
+    <scale>1.1</scale>
+    <Icon>
+        <href>IMG_20121025_163656.jpg</href>
+    </Icon>
+</IconStyle>
+
+
 
 core
 
